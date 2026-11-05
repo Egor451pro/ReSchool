@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
-  <rect width="800" height="600" fill="#e7eef5"/>
-  <rect x="180" y="220" width="440" height="28" rx="4" fill="#8aa4bf"/>
-  <rect x="220" y="248" width="24" height="150" fill="#5d7590"/>
-  <rect x="556" y="248" width="24" height="150" fill="#5d7590"/>
-  <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#1f3a5f">515;L</text>
+  <rect width="800" height="600" fill="#f7fbf4"/>
+  <rect x="180" y="220" width="440" height="28" rx="4" fill="#9dc88d"/>
+  <rect x="220" y="248" width="24" height="150" fill="#4d774e"/>
+  <rect x="556" y="248" width="24" height="150" fill="#4d774e"/>
+  <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#164a41">Мебель</text>
 </svg>

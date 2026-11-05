@@ -17,3 +17,17 @@ body {
   color: var(--color-ink);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+input,
+select,
+textarea {
+  background: #ffffff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #164a41;
+  outline: 2px solid #f1b24a;
+  outline-offset: 1px;
+}

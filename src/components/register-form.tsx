@@ -14,30 +14,30 @@ export function RegisterForm({
 
   return (
     <form action={action} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm text-zinc-700">
+      <label className="flex flex-col gap-1 text-sm text-leaf">
         ФИО
         <input
           name="fullName"
           autoComplete="name"
           required
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-base text-zinc-900"
+          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
         />
         {state.fields?.fullName ? (
-          <span className="text-red-700">{state.fields.fullName}</span>
+          <span className="font-medium text-ink">{state.fields.fullName}</span>
         ) : null}
       </label>
-      <label className="flex flex-col gap-1 text-sm text-zinc-700">
+      <label className="flex flex-col gap-1 text-sm text-leaf">
         Почта
         <input
           name="email"
           type="email"
           autoComplete="email"
           required
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-base text-zinc-900"
+          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
         />
-        {state.fields?.email ? <span className="text-red-700">{state.fields.email}</span> : null}
+        {state.fields?.email ? <span className="font-medium text-ink">{state.fields.email}</span> : null}
       </label>
-      <label className="flex flex-col gap-1 text-sm text-zinc-700">
+      <label className="flex flex-col gap-1 text-sm text-leaf">
         Пароль
         <input
           name="password"
@@ -45,19 +45,19 @@ export function RegisterForm({
           autoComplete="new-password"
           required
           minLength={8}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-base text-zinc-900"
+          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
         />
         {state.fields?.password ? (
-          <span className="text-red-700">{state.fields.password}</span>
+          <span className="font-medium text-ink">{state.fields.password}</span>
         ) : null}
       </label>
-      <label className="flex flex-col gap-1 text-sm text-zinc-700">
+      <label className="flex flex-col gap-1 text-sm text-leaf">
         Учреждение
         <select
           name="institutionId"
           required
           defaultValue=""
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base text-zinc-900"
+          className="rounded-lg border border-mint bg-white px-3 py-2 text-base text-ink"
         >
           <option value="" disabled>
             Выберите учреждение
@@ -69,14 +69,16 @@ export function RegisterForm({
           ))}
         </select>
         {state.fields?.institutionId ? (
-          <span className="text-red-700">{state.fields.institutionId}</span>
+          <span className="font-medium text-ink">{state.fields.institutionId}</span>
         ) : null}
       </label>
-      {state.error ? <p className="text-sm text-red-700">{state.error}</p> : null}
+      {state.error ? (
+        <p className="rounded-lg bg-gold/40 px-3 py-2 text-sm text-ink">{state.error}</p>
+      ) : null}
       <button
         type="submit"
         disabled={pending}
-        className="h-11 rounded-lg bg-sky-800 text-sm font-medium text-white hover:bg-sky-900 disabled:opacity-60"
+        className="h-11 rounded-lg bg-ink text-sm font-medium text-white hover:bg-leaf disabled:opacity-60"
       >
         {pending ? "Создаём учётку…" : "Зарегистрироваться"}
       </button>

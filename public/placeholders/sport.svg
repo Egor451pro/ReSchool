@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
-  <rect width="800" height="600" fill="#e7eef5"/>
-  <circle cx="400" cy="250" r="90" fill="#8aa4bf"/>
-  <circle cx="400" cy="250" r="70" fill="none" stroke="#5d7590" stroke-width="8"/>
-  <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#1f3a5f">!?>@B8=25=B0@L</text>
+  <rect width="800" height="600" fill="#f7fbf4"/>
+  <circle cx="400" cy="250" r="90" fill="#9dc88d"/>
+  <circle cx="400" cy="250" r="70" fill="none" stroke="#4d774e" stroke-width="8"/>
+  <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#164a41">Спортинвентарь</text>
 </svg>
