@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { distanceKm, formatDistanceKm } from "./distance";
-import { planOrderAdvance, planOrderCancel, planUnrepairable } from "./order-item-sync";
+import {
+  planCloseCompleted,
+  planOrderAdvance,
+  planOrderCancel,
+  planUnrepairable,
+} from "./order-item-sync";
 
 describe("синхронизация заказа и предмета", () => {
   it("ведёт пару статусов по демо-конвейеру", () => {
@@ -30,6 +35,14 @@ describe("синхронизация заказа и предмета", () => {
       closeReason: "UNREPAIRABLE",
     });
     expect(() => planUnrepairable("REQUESTED", "ASSIGNED")).toThrow(/начатый ремонт/);
+  });
+
+  it("закрывает переданный предмет со снимком", () => {
+    expect(planCloseCompleted("DELIVERED")).toMatchObject({
+      itemTo: "CLOSED",
+      closeReason: "COMPLETED",
+    });
+    expect(() => planCloseCompleted("READY")).toThrow(/Недопустимый переход/);
   });
 });
 

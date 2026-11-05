@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import {
   advanceOrderAction,
   cancelOrderAction,
+  closeOrderAction,
   deliverOrderAction,
   unrepairableOrderAction,
   type OrderFormState,
@@ -60,6 +61,7 @@ export function OrderActions({
   const next = nextOrderStatus(orderStatus);
   const canCancel = orderStatus === "ASSIGNED" || orderStatus === "IN_PROGRESS";
   const canDeliver = orderStatus === "COMPLETED" && itemStatus === "READY";
+  const canClose = orderStatus === "COMPLETED" && itemStatus === "DELIVERED";
   const canUnrepair = orderStatus === "IN_PROGRESS" && itemStatus === "IN_REPAIR";
 
   return (
@@ -86,8 +88,16 @@ export function OrderActions({
           pendingLabel="Сохраняем…"
         />
       ) : null}
-      {orderStatus === "COMPLETED" && itemStatus === "DELIVERED" ? (
-        <p className="text-xs text-leaf">Передано. Закрытие со снимком экономии — следующий этап.</p>
+      {canClose ? (
+        <ActionButton
+          action={closeOrderAction}
+          orderId={orderId}
+          label="Закрыть со снимком"
+          pendingLabel="Фиксируем…"
+        />
+      ) : null}
+      {orderStatus === "COMPLETED" && itemStatus === "CLOSED" ? (
+        <p className="text-xs text-leaf">Закрыто. Экономия зафиксирована снимком.</p>
       ) : null}
       {canCancel ? (
         <ActionButton

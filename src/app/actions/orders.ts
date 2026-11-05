@@ -9,6 +9,7 @@ import {
   markOrderDelivered,
   markOrderUnrepairable,
 } from "@/server/services/order-service";
+import { closeDeliveredOrder } from "@/server/services/economy-service";
 
 export type OrderFormState = { error?: string };
 
@@ -66,6 +67,16 @@ export async function unrepairableOrderAction(
 ): Promise<OrderFormState> {
   const actor = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
   const result = await markOrderUnrepairable(actor, text(formData, "orderId"));
+  if (!result.ok) return { error: result.error };
+  redirect("/orders");
+}
+
+export async function closeOrderAction(
+  _state: OrderFormState,
+  formData: FormData,
+): Promise<OrderFormState> {
+  const actor = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
+  const result = await closeDeliveredOrder(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
   redirect("/orders");
 }

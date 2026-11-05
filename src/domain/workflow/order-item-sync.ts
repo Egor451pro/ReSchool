@@ -89,3 +89,17 @@ export function planUnrepairable(itemStatus: ItemStatus, orderStatus: OrderStatu
     comment: "Ремонт в рамках практики признан нецелесообразным.",
   };
 }
+
+/** После передачи: фиксируем снимок экономии и закрываем карточку. */
+export function planCloseCompleted(itemStatus: ItemStatus): {
+  itemTo: ItemStatus;
+  closeReason: CloseReason;
+  comment: string;
+} {
+  assertItemTransition(itemStatus, "CLOSED", "COMPLETED");
+  return {
+    itemTo: "CLOSED",
+    closeReason: "COMPLETED",
+    comment: "Заказ закрыт, экономия зафиксирована снимком.",
+  };
+}
