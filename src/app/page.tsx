@@ -2,14 +2,13 @@ const accounts = [
   ["Завхоз школы №1", "zavhoz@school1.demo"],
   ["Мастер столярного дела", "master.wood@college.demo"],
   ["Мастер ремонта компьютеров", "master.pc@college.demo"],
-  ["Учащийся, группа СТ-21", "student.bondar@college.demo"],
   ["Аналитик отдела образования", "analyst@district.demo"],
   ["Администратор", "admin@reschool.demo"],
 ];
 
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 bg-white px-6 py-12 text-ink">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 bg-white px-6 py-12 text-ink">
       <p className="rounded-lg bg-gold px-4 py-3 text-sm text-ink">
         Демонстрационные синтетические данные. Цифры экономики — допущения, они
         подлежат уточнению и не являются официальными нормативами.

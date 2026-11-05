@@ -22,7 +22,9 @@ export function assertEconomyInput(input: ItemEconomyInput): void {
   assertIntInRange("substitutionMilli", input.substitutionMilli, 0, 1000);
 }
 
-export function formatByn(kop: number): string {
+const MAX_RUBLES = 10_000_000;
+
+export function formatBynAmount(kop: number): string {
   if (!Number.isInteger(kop)) {
     throw new Error("Сумма в копейках должна быть целым числом");
   }
@@ -32,5 +34,25 @@ export function formatByn(kop: number): string {
   const rubles = Math.floor(abs / 100);
   const kopecks = abs % 100;
   const grouped = rubles.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  return `${sign}${grouped},${kopecks.toString().padStart(2, "0")} BYN`;
+  return `${sign}${grouped},${kopecks.toString().padStart(2, "0")}`;
+}
+
+export function formatByn(kop: number): string {
+  return `${formatBynAmount(kop)} BYN`;
+}
+
+/** Разбирает ввод завхоза: «180», «180,50», «1 800.5». */
+export function parseBynToKop(raw: string): number {
+  const cleaned = raw.trim().replace(/[\s\u00a0]/g, "").replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) {
+    throw new Error("Цена в белорусских рублях, не больше двух знаков после запятой");
+  }
+
+  const [rublesText, fraction = ""] = cleaned.split(".");
+  const rubles = Number(rublesText);
+  if (rubles > MAX_RUBLES) {
+    throw new Error("Цена слишком большая");
+  }
+
+  return rubles * 100 + Number(fraction.padEnd(2, "0"));
 }

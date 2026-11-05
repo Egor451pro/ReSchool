@@ -24,7 +24,7 @@ async function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-1 flex-col">
       <div className="border-b border-mint/50 bg-mint/15">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
           <SectionNav links={links} />
           <div className="flex items-center gap-3">
             <span className="text-sm text-ink">

@@ -12,7 +12,7 @@ export default async function LoginPage({
   const next = (await searchParams).next;
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-8">
       <div className="flex max-w-md flex-col gap-2">
         <h1 className="text-2xl font-semibold text-ink">Вход</h1>
         <p className="text-leaf">
@@ -27,7 +27,7 @@ export default async function LoginPage({
             <Link href="/register" className="font-medium text-leaf">
               зарегистрироваться
             </Link>
-            . Учащихся регистрирует учреждение, в демо они уже есть в сиде.
+            . Аналитик и администратор в пилоте приходят из сида.
           </p>
         </div>
         <DemoLogins next={next} />

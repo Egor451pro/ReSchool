@@ -8,10 +8,6 @@ export const demoAccounts: { label: string; email: string }[] = [
   { label: "Мастер ремонта компьютеров", email: "master.pc@college.demo" },
   { label: "Мастер слесарного дела", email: "master.metal@vocation.demo" },
   { label: "Мастер электромонтажа", email: "master.electro@vocation.demo" },
-  { label: "Учащийся, группа СТ-21", email: "student.bondar@college.demo" },
-  { label: "Учащийся, группа КТ-22", email: "student.sherba@college.demo" },
-  { label: "Учащийся, группа СЛ-11", email: "student.levchuk@vocation.demo" },
-  { label: "Учащийся, группа ЭМ-12", email: "student.savitsky@vocation.demo" },
   { label: "Аналитик отдела образования", email: "analyst@district.demo" },
   { label: "Администратор", email: "admin@reschool.demo" },
 ];

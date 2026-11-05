@@ -9,7 +9,7 @@ export default async function AdminPage() {
   const users = await listUsers();
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-6 py-8">
       <h1 className="text-2xl font-semibold text-ink">Участники</h1>
       <p className="text-leaf">
         Список видит только администратор. Почты здесь нужны для демо-входа, это

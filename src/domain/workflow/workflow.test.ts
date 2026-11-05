@@ -1,0 +1,43 @@
+import { describe, expect, it } from "vitest";
+import { distanceKm, formatDistanceKm } from "./distance";
+import { planOrderAdvance, planOrderCancel, planUnrepairable } from "./order-item-sync";
+
+describe("синхронизация заказа и предмета", () => {
+  it("ведёт пару статусов по демо-конвейеру", () => {
+    expect(planOrderAdvance("ASSIGNED", "REQUESTED")).toMatchObject({
+      orderTo: "IN_PROGRESS",
+      itemTo: "IN_REPAIR",
+    });
+    expect(planOrderAdvance("IN_PROGRESS", "IN_REPAIR").itemTo).toBeNull();
+    expect(planOrderAdvance("QUALITY_CHECK", "IN_REPAIR")).toMatchObject({
+      orderTo: "COMPLETED",
+      itemTo: "READY",
+    });
+  });
+
+  it("возвращает карточку в каталог при отказе", () => {
+    expect(planOrderCancel("ASSIGNED", "REQUESTED")).toMatchObject({
+      orderTo: "CANCELLED",
+      itemTo: "LISTED",
+    });
+    expect(planOrderCancel("IN_PROGRESS", "IN_REPAIR").itemTo).toBe("LISTED");
+  });
+
+  it("закрывает предмет как неремонтопригодный после начала ремонта", () => {
+    expect(planUnrepairable("IN_REPAIR", "IN_PROGRESS")).toMatchObject({
+      orderTo: "CANCELLED",
+      itemTo: "CLOSED",
+      closeReason: "UNREPAIRABLE",
+    });
+    expect(() => planUnrepairable("REQUESTED", "ASSIGNED")).toThrow(/начатый ремонт/);
+  });
+});
+
+describe("расстояние", () => {
+  it("считает километры между точками пилота", () => {
+    const km = distanceKm({ lat: 53.908, lng: 27.548 }, { lat: 53.92, lng: 27.56 });
+    expect(km).toBeGreaterThan(1);
+    expect(km).toBeLessThan(3);
+    expect(formatDistanceKm(0.35)).toBe("350 м");
+  });
+});

@@ -26,7 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col">
         <header className="border-b border-mint/50 bg-paper">
-          <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-3">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3">
             <Link href="/" className="text-sm font-semibold tracking-wide text-ink">
               ReSchool
             </Link>

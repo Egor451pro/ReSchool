@@ -6,6 +6,7 @@ describe("конвейер предмета", () => {
   it("пропускает соседние статусы демо-сценария", () => {
     expect(() => assertItemTransition("LISTED", "REQUESTED")).not.toThrow();
     expect(() => assertItemTransition("REQUESTED", "IN_REPAIR")).not.toThrow();
+    expect(() => assertItemTransition("IN_REPAIR", "LISTED")).not.toThrow();
     expect(() => assertItemTransition("IN_REPAIR", "READY")).not.toThrow();
     expect(() => assertItemTransition("READY", "DELIVERED")).not.toThrow();
     expect(() => assertItemTransition("DELIVERED", "CLOSED", "COMPLETED")).not.toThrow();

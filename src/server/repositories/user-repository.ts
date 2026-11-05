@@ -63,21 +63,6 @@ export function listLedGroups(masterId: string) {
   });
 }
 
-export function listOwnPortfolio(studentId: string) {
-  return prisma.portfolioEntry.findMany({
-    where: { studentId },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      skills: true,
-      grade: true,
-      minutes: true,
-      masterComment: true,
-      order: { select: { item: { select: { title: true } } } },
-    },
-  });
-}
-
 export function countDistrict(district: string | null) {
   const institutionWhere = district ? { district } : {};
   return Promise.all([

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sumSnapshots } from "./aggregate";
 import { calculateItemEconomy, paybackYears } from "./calculate";
-import { formatByn } from "./money";
+import { formatByn, parseBynToKop } from "./money";
 import { projectYear } from "./project";
 
 describe("calculateItemEconomy", () => {
@@ -152,6 +152,21 @@ describe("sumSnapshots", () => {
       combinedKop: 125,
       minutes: 90,
     });
+  });
+});
+
+describe("parseBynToKop", () => {
+  it("принимает рубли с запятой, точкой и пробелом", () => {
+    expect(parseBynToKop("180")).toBe(18_000);
+    expect(parseBynToKop("180,5")).toBe(18_050);
+    expect(parseBynToKop("180.50")).toBe(18_050);
+    expect(parseBynToKop("1 800,00")).toBe(180_000);
+  });
+
+  it("отклоняет лишние знаки и отрицательную цену", () => {
+    expect(() => parseBynToKop("180,555")).toThrow(/двух знаков/);
+    expect(() => parseBynToKop("-1")).toThrow(/рублях/);
+    expect(() => parseBynToKop("")).toThrow(/рублях/);
   });
 });
 

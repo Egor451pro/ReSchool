@@ -20,6 +20,13 @@ export async function loginWithPassword(
   const matches = await bcrypt.compare(password, user.passwordHash);
   if (!matches) return { ok: false, error: INVALID_LOGIN };
 
+  if (user.role === "STUDENT") {
+    return {
+      ok: false,
+      error: "Вход учащегося в MVP отключён. Работают учётки учреждений и мастерских.",
+    };
+  }
+
   return { ok: true, userId: user.id, role: user.role };
 }
 

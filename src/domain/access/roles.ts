@@ -59,6 +59,7 @@ export type AppSection = {
   roles: readonly UserRole[];
 };
 
+/** MVP без личного кабинета учащегося: платформой пользуются учреждения и мастерские. */
 export const appSections: readonly AppSection[] = [
   { href: "/cabinet", label: "Кабинет", roles: ["DONOR_STAFF", "PLATFORM_ADMIN"] },
   {
@@ -68,11 +69,6 @@ export const appSections: readonly AppSection[] = [
   },
   { href: "/workshop", label: "Биржа", roles: ["WORKSHOP_MASTER", "PLATFORM_ADMIN"] },
   { href: "/orders", label: "Заказы", roles: ["WORKSHOP_MASTER", "PLATFORM_ADMIN"] },
-  {
-    href: "/portfolio",
-    label: "Портфолио",
-    roles: ["STUDENT", "WORKSHOP_MASTER", "PLATFORM_ADMIN"],
-  },
   { href: "/district", label: "Район", roles: ["DISTRICT_ANALYST", "PLATFORM_ADMIN"] },
   { href: "/admin", label: "Участники", roles: ["PLATFORM_ADMIN"] },
 ];
@@ -80,7 +76,7 @@ export const appSections: readonly AppSection[] = [
 const homes: Record<UserRole, string> = {
   DONOR_STAFF: "/cabinet",
   WORKSHOP_MASTER: "/workshop",
-  STUDENT: "/portfolio",
+  STUDENT: "/",
   DISTRICT_ANALYST: "/district",
   PLATFORM_ADMIN: "/admin",
 };

@@ -8,7 +8,7 @@ export default async function DistrictPage() {
   const [institutions, items, snapshots] = await countDistrict(user.district);
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-6 py-8">
       <h1 className="text-2xl font-semibold text-ink">Район</h1>
       <p className="text-leaf">{user.district ?? "Все районы в базе"}.</p>
       <ul className="grid gap-3 sm:grid-cols-3">

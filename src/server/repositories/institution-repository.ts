@@ -18,3 +18,12 @@ export function findInstitutionById(id: string) {
     select: { id: true, type: true },
   });
 }
+
+export async function listDistricts() {
+  const rows = await prisma.institution.findMany({
+    distinct: ["district"],
+    orderBy: { district: "asc" },
+    select: { district: true },
+  });
+  return rows.map((row) => row.district);
+}

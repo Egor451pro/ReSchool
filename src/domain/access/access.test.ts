@@ -4,24 +4,26 @@ import {
   roleForInstitutionType,
   roleHome,
   safeNextPath,
+  sectionsForRole,
 } from "./roles";
 
 describe("доступ по ролям", () => {
-  it("пускает завхоза в кабинет и не пускает в портфолио", () => {
+  it("пускает завхоза в кабинет и не открывает биржу", () => {
     expect(canAccess("DONOR_STAFF", "/cabinet")).toBe(true);
     expect(canAccess("DONOR_STAFF", "/cabinet/items")).toBe(true);
-    expect(canAccess("DONOR_STAFF", "/portfolio")).toBe(false);
+    expect(canAccess("DONOR_STAFF", "/workshop")).toBe(false);
     expect(canAccess("DONOR_STAFF", "/admin")).toBe(false);
   });
 
-  it("оставляет учащемуся только портфолио", () => {
-    expect(canAccess("STUDENT", "/portfolio")).toBe(true);
+  it("не даёт учащемуся рабочих разделов MVP", () => {
+    expect(sectionsForRole("STUDENT")).toEqual([]);
     expect(canAccess("STUDENT", "/cabinet")).toBe(false);
     expect(canAccess("STUDENT", "/catalog")).toBe(false);
-    expect(roleHome("STUDENT")).toBe("/portfolio");
+    expect(canAccess("STUDENT", "/portfolio")).toBe(false);
+    expect(roleHome("STUDENT")).toBe("/");
   });
 
-  it("открывает администратору все разделы", () => {
+  it("открывает администратору все разделы MVP", () => {
     expect(canAccess("PLATFORM_ADMIN", "/admin")).toBe(true);
     expect(canAccess("PLATFORM_ADMIN", "/district")).toBe(true);
     expect(canAccess("PLATFORM_ADMIN", "/workshop")).toBe(true);
@@ -31,7 +33,7 @@ describe("доступ по ролям", () => {
 
 describe("безопасный переход после входа", () => {
   it("отбрасывает чужой раздел и внешний адрес", () => {
-    expect(safeNextPath("/admin", "STUDENT")).toBe("/portfolio");
+    expect(safeNextPath("/admin", "STUDENT")).toBe("/");
     expect(safeNextPath("//evil.example", "DONOR_STAFF")).toBe("/cabinet");
     expect(safeNextPath("https://evil.example", "DONOR_STAFF")).toBe("/cabinet");
     expect(safeNextPath(null, "WORKSHOP_MASTER")).toBe("/workshop");
