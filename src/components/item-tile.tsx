@@ -22,7 +22,7 @@ export function ItemTile({ item, showPlace }: { item: ItemTileData; showPlace?: 
   return (
     <Link
       href={`/catalog/${item.id}`}
-      className="flex flex-col overflow-hidden rounded-xl border border-mint/70 bg-paper hover:border-leaf"
+      className="flex h-full flex-col overflow-hidden rounded-xl border border-mint/70 bg-paper hover:border-leaf"
     >
       <div className="aspect-[4/3] bg-mint/20">
         {photo ? (

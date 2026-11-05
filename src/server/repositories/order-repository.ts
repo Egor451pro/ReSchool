@@ -43,9 +43,14 @@ const orderCardSelect = {
       status: true,
       condition: true,
       quantity: true,
-      institution: { select: { name: true, district: true } },
+      institutionId: true,
+      institution: { select: { id: true, name: true, district: true } },
       photos: { orderBy: { sort: "asc" as const }, take: 1, select: { id: true, path: true } },
     },
+  },
+  documents: {
+    orderBy: { createdAt: "asc" as const },
+    select: { id: true, type: true, number: true, createdAt: true },
   },
 } satisfies Prisma.RepairOrderSelect;
 

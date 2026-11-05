@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { logoutAction } from "@/app/actions/auth";
-import { roleLabels, sectionsForRole } from "@/domain/access/roles";
+import { mvpRoleLabel, roleHome, sectionsForRole } from "@/domain/access/roles";
 import { requireUser } from "@/server/auth/current-user";
 import { SectionNav } from "@/components/section-nav";
 
@@ -19,23 +20,29 @@ async function AppShell({ children }: { children: ReactNode }) {
   const links = sectionsForRole(user.role).map((section) => ({
     href: section.href,
     label: section.label,
+    hint: section.hint,
   }));
 
   return (
     <div className="flex flex-1 flex-col">
       <div className="border-b border-mint/50 bg-mint/15">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <SectionNav links={links} />
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href={roleHome(user.role)}
+              className="text-sm font-semibold tracking-wide text-ink"
+            >
+              ReSchool
+            </Link>
+            <SectionNav links={links} />
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-ink">
               {user.fullName}
-              <span className="text-leaf"> · {roleLabels[user.role]}</span>
+              <span className="text-leaf"> · {mvpRoleLabel(user.role)}</span>
             </span>
             <form action={logoutAction}>
-              <button
-                type="submit"
-                className="rounded-lg border border-mint px-3 py-1.5 text-sm text-ink hover:bg-paper"
-              >
+              <button type="submit" className="btn-ghost btn-sm">
                 Выйти
               </button>
             </form>

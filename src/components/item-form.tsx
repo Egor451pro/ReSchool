@@ -9,7 +9,6 @@ import {
 import { conditionLabels, itemConditions } from "@/domain/items/labels";
 
 const initialState: CabinetFormState = {};
-const controlClass = "rounded-lg border border-mint bg-paper px-3 py-2 text-base text-ink";
 
 type CategoryOption = { id: string; name: string };
 
@@ -78,7 +77,7 @@ export function ItemForm({
           minLength={3}
           maxLength={160}
           defaultValue={values.title}
-          className={controlClass}
+          className="field"
         />
       </Field>
       <Field label="Описание" error={state.fields?.description}>
@@ -89,11 +88,11 @@ export function ItemForm({
           maxLength={2000}
           rows={4}
           defaultValue={values.description}
-          className={controlClass}
+          className="field"
         />
       </Field>
       <Field label="Категория" error={state.fields?.categoryId}>
-        <select name="categoryId" required defaultValue={values.categoryId} className={controlClass}>
+        <select name="categoryId" required defaultValue={values.categoryId} className="field">
           <option value="">Выберите</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
@@ -107,7 +106,7 @@ export function ItemForm({
         hint="Лом остаётся в каталоге для учёта, в учебный ремонт его не передаём."
         error={state.fields?.condition}
       >
-        <select name="condition" required defaultValue={values.condition} className={controlClass}>
+        <select name="condition" required defaultValue={values.condition} className="field">
           <option value="">Выберите</option>
           {itemConditions.map((condition) => (
             <option key={condition} value={condition}>
@@ -124,7 +123,7 @@ export function ItemForm({
             inputMode="numeric"
             min={1}
             defaultValue={values.quantity}
-            className={controlClass}
+            className="field"
           />
         </Field>
         <Field label="Год выпуска" error={state.fields?.year}>
@@ -133,7 +132,7 @@ export function ItemForm({
             inputMode="numeric"
             placeholder="2012"
             defaultValue={values.year}
-            className={controlClass}
+            className="field"
           />
         </Field>
       </div>
@@ -148,7 +147,7 @@ export function ItemForm({
           inputMode="decimal"
           placeholder="180,00"
           defaultValue={values.price}
-          className={controlClass}
+          className="field"
         />
       </Field>
       <Field
@@ -162,11 +161,7 @@ export function ItemForm({
         <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="text-sm text-ink" />
       </Field>
       {state.error ? <p className="rounded-lg bg-gold/40 px-3 py-2 text-sm text-ink">{state.error}</p> : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="h-11 rounded-lg bg-ink text-sm font-medium text-white hover:bg-leaf disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Сохраняем…" : itemId ? "Сохранить" : "Опубликовать"}
       </button>
     </form>

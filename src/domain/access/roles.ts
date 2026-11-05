@@ -26,12 +26,20 @@ export function isUserRole(value: unknown): value is UserRole {
 }
 
 export const roleLabels: Record<UserRole, string> = {
-  DONOR_STAFF: "Сотрудник учреждения",
-  WORKSHOP_MASTER: "Мастер производственного обучения",
+  DONOR_STAFF: "Школа",
+  WORKSHOP_MASTER: "Мастерская",
   STUDENT: "Учащийся",
   DISTRICT_ANALYST: "Аналитик отдела образования",
   PLATFORM_ADMIN: "Администратор",
 };
+
+/** Короткие подписи MVP для шапки и демо-входа. */
+export function mvpRoleLabel(role: UserRole): string {
+  if (role === "DONOR_STAFF") return "Школа";
+  if (role === "WORKSHOP_MASTER") return "Мастерская";
+  if (role === "PLATFORM_ADMIN") return "Администратор";
+  return roleLabels[role];
+}
 
 export const institutionTypeLabels: Record<InstitutionType, string> = {
   SCHOOL: "Школа",
@@ -56,21 +64,37 @@ export function roleForInstitutionType(type: InstitutionType): UserRole | null {
 export type AppSection = {
   href: string;
   label: string;
+  hint: string;
   roles: readonly UserRole[];
 };
 
-/** MVP без личного кабинета учащегося: платформой пользуются учреждения и мастерские. */
+/** MVP: школа публикует, мастерская чинит. Дашборд района скрыт из навигации. */
 export const appSections: readonly AppSection[] = [
-  { href: "/cabinet", label: "Кабинет", roles: ["DONOR_STAFF", "PLATFORM_ADMIN"] },
+  {
+    href: "/cabinet",
+    label: "Кабинет",
+    hint: "мои вещи",
+    roles: ["DONOR_STAFF", "PLATFORM_ADMIN"],
+  },
   {
     href: "/catalog",
     label: "Каталог",
-    roles: ["DONOR_STAFF", "WORKSHOP_MASTER", "DISTRICT_ANALYST", "PLATFORM_ADMIN"],
+    hint: "все предметы",
+    roles: ["DONOR_STAFF", "WORKSHOP_MASTER", "PLATFORM_ADMIN"],
   },
-  { href: "/workshop", label: "Биржа", roles: ["WORKSHOP_MASTER", "PLATFORM_ADMIN"] },
-  { href: "/orders", label: "Заказы", roles: ["WORKSHOP_MASTER", "PLATFORM_ADMIN"] },
-  { href: "/district", label: "Район", roles: ["DISTRICT_ANALYST", "PLATFORM_ADMIN"] },
-  { href: "/admin", label: "Участники", roles: ["PLATFORM_ADMIN"] },
+  {
+    href: "/workshop",
+    label: "Биржа",
+    hint: "взять в работу",
+    roles: ["WORKSHOP_MASTER", "PLATFORM_ADMIN"],
+  },
+  {
+    href: "/orders",
+    label: "Заказы",
+    hint: "ход ремонта",
+    roles: ["WORKSHOP_MASTER", "PLATFORM_ADMIN"],
+  },
+  { href: "/admin", label: "Участники", hint: "учётки", roles: ["PLATFORM_ADMIN"] },
 ];
 
 const homes: Record<UserRole, string> = {

@@ -13,13 +13,7 @@ export function LoginForm({ next }: { next?: string }) {
       {next ? <input type="hidden" name="next" value={next} /> : null}
       <label className="flex flex-col gap-1 text-sm text-leaf">
         Почта
-        <input
-          name="email"
-          type="email"
-          autoComplete="username"
-          required
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
-        />
+        <input name="email" type="email" autoComplete="username" required className="field" />
         {state.fields?.email ? <span className="font-medium text-ink">{state.fields.email}</span> : null}
       </label>
       <label className="flex flex-col gap-1 text-sm text-leaf">
@@ -29,7 +23,7 @@ export function LoginForm({ next }: { next?: string }) {
           type="password"
           autoComplete="current-password"
           required
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.password ? (
           <span className="font-medium text-ink">{state.fields.password}</span>
@@ -38,11 +32,7 @@ export function LoginForm({ next }: { next?: string }) {
       {state.error ? (
         <p className="rounded-lg bg-gold/40 px-3 py-2 text-sm text-ink">{state.error}</p>
       ) : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="h-11 rounded-lg bg-ink text-sm font-medium text-white hover:bg-leaf disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Входим…" : "Войти"}
       </button>
     </form>

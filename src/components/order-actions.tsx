@@ -37,11 +37,7 @@ function ActionButton({
       <button
         type="submit"
         disabled={pending}
-        className={
-          tone === "primary"
-            ? "h-9 rounded-lg bg-ink px-3 text-sm font-medium text-white hover:bg-leaf disabled:opacity-60"
-            : "h-9 rounded-lg border border-mint px-3 text-sm font-medium text-ink hover:bg-mint/30 disabled:opacity-60"
-        }
+        className={tone === "primary" ? "btn-primary btn-sm w-full" : "btn-ghost btn-sm w-full"}
       >
         {pending ? pendingLabel : label}
       </button>

@@ -1,4 +1,5 @@
 import { RegisterForm } from "@/components/register-form";
+import { SiteHeader } from "@/components/site-header";
 import { institutionTypeLabels, type InstitutionType } from "@/domain/access/roles";
 import { listJoinableInstitutions } from "@/server/repositories/institution-repository";
 import Link from "next/link";
@@ -9,6 +10,8 @@ export default async function RegisterPage() {
   const institutions = await listJoinableInstitutions();
 
   return (
+    <>
+      <SiteHeader />
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-6 py-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-ink">Регистрация</h1>
@@ -31,5 +34,6 @@ export default async function RegisterPage() {
         </Link>
       </p>
     </main>
+    </>
   );
 }

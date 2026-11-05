@@ -2,20 +2,21 @@ import "server-only";
 
 import type { UserRole } from "@/domain/access/roles";
 import {
-  planItemDeliver,
   planOrderAdvance,
   planOrderCancel,
-  planUnrepairable,
 } from "@/domain/workflow/order-item-sync";
 import { prisma } from "@/server/db";
 import {
-  applyItemOnlyTransition,
   applyOrderTransition,
   claimItemOrder,
   findClaimableItem,
   findOrderForMaster,
   listMasterGroups,
 } from "@/server/repositories/order-repository";
+import {
+  deliverOrderWithAct,
+  markUnrepairableWithAct,
+} from "@/server/services/document-service";
 
 export type OrderActor = {
   id: string;
@@ -153,57 +154,16 @@ export async function cancelOrder(actor: OrderActor, orderId: string): Promise<O
 }
 
 export async function markOrderDelivered(actor: OrderActor, orderId: string): Promise<OrderResult> {
-  const order = await findOrderForMaster(orderId);
-  if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другой мастерской" };
-  if (order.status !== "COMPLETED") {
-    return { ok: false, error: "Сначала завершите проверку качества" };
-  }
-
-  try {
-    const plan = planItemDeliver(order.item.status);
-    const ok = await applyItemOnlyTransition({
-      itemId: order.item.id,
-      orderId: order.id,
-      fromItem: order.item.status,
-      toItem: plan.itemTo,
-      actorId: actor.id,
-      comment: plan.comment,
-    });
-    if (!ok) return { ok: false, error: "Предмет уже передан или закрыт" };
-    return { ok: true, orderId: order.id };
-  } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Нельзя отметить передачу" };
-  }
+  const result = await deliverOrderWithAct(actor, orderId);
+  if (!result.ok) return { ok: false, error: result.error };
+  return { ok: true, orderId: result.orderId };
 }
 
 export async function markOrderUnrepairable(
   actor: OrderActor,
   orderId: string,
 ): Promise<OrderResult> {
-  const order = await findOrderForMaster(orderId);
-  if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другой мастерской" };
-
-  try {
-    const plan = planUnrepairable(order.item.status, order.status);
-    const ok = await applyOrderTransition({
-      orderId: order.id,
-      itemId: order.item.id,
-      fromOrder: order.status,
-      toOrder: plan.orderTo,
-      fromItem: order.item.status,
-      toItem: plan.itemTo,
-      closeReason: plan.closeReason ?? null,
-      actorId: actor.id,
-      comment: plan.comment,
-    });
-    if (!ok) return { ok: false, error: "Статус уже изменился" };
-    return { ok: true, orderId: order.id };
-  } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : "Нельзя закрыть как неремонтопригодный",
-    };
-  }
+  const result = await markUnrepairableWithAct(actor, orderId);
+  if (!result.ok) return { ok: false, error: result.error };
+  return { ok: true, orderId: result.orderId };
 }

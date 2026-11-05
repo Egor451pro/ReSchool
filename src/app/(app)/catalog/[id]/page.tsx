@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DocumentLinks } from "@/components/document-links";
 import { StatusBadge } from "@/components/status-badge";
 import { formatByn } from "@/domain/economy/money";
 import { itemManageState } from "@/domain/items/access";
@@ -11,6 +12,7 @@ import {
 } from "@/domain/items/labels";
 import { itemPhotoSrc } from "@/domain/items/photo";
 import { requireRoles } from "@/server/auth/current-user";
+import { listDocumentsForItem } from "@/server/repositories/document-repository";
 import { findItemCard } from "@/server/repositories/item-repository";
 
 export const instant = false;
@@ -36,6 +38,7 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
   ]);
   const item = await findItemCard(id);
   if (!item) notFound();
+  const documents = await listDocumentsForItem(item.id);
 
   const manage = itemManageState(user, item);
   const lineTotal = item.newUnitPriceKop * item.quantity;
@@ -135,6 +138,13 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
         <h2 className="text-lg font-semibold text-ink">Описание</h2>
         <p className="whitespace-pre-wrap leading-7 text-ink">{item.description}</p>
       </section>
+
+      {documents.length > 0 ? (
+        <section className="flex max-w-3xl flex-col gap-3">
+          <h2 className="text-lg font-semibold text-ink">Черновики актов</h2>
+          <DocumentLinks documents={documents} />
+        </section>
+      ) : null}
 
       <section className="flex max-w-3xl flex-col gap-3">
         <h2 className="text-lg font-semibold text-ink">История статусов</h2>

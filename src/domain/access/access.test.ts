@@ -23,10 +23,11 @@ describe("доступ по ролям", () => {
     expect(roleHome("STUDENT")).toBe("/");
   });
 
-  it("открывает администратору все разделы MVP", () => {
+  it("открывает администратору разделы MVP", () => {
     expect(canAccess("PLATFORM_ADMIN", "/admin")).toBe(true);
-    expect(canAccess("PLATFORM_ADMIN", "/district")).toBe(true);
     expect(canAccess("PLATFORM_ADMIN", "/workshop")).toBe(true);
+    expect(canAccess("PLATFORM_ADMIN", "/cabinet")).toBe(true);
+    expect(canAccess("DISTRICT_ANALYST", "/district")).toBe(false);
     expect(roleHome("PLATFORM_ADMIN")).toBe("/admin");
   });
 });

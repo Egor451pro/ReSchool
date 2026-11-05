@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function SectionNav({ links }: { links: { href: string; label: string }[] }) {
+export function SectionNav({
+  links,
+}: {
+  links: { href: string; label: string; hint?: string }[];
+}) {
   const pathname = usePathname();
 
   return (
@@ -16,11 +20,16 @@ export function SectionNav({ links }: { links: { href: string; label: string }[]
             href={link.href}
             className={
               active
-                ? "rounded-full bg-gold px-3 py-1.5 text-sm font-medium text-ink"
-                : "rounded-full bg-mint/35 px-3 py-1.5 text-sm font-medium text-ink hover:bg-mint/70"
+                ? "min-w-[7.5rem] rounded-xl bg-gold px-3 py-2 text-sm font-medium text-ink"
+                : "min-w-[7.5rem] rounded-xl bg-mint/35 px-3 py-2 text-sm font-medium text-ink hover:bg-mint/70"
             }
           >
-            {link.label}
+            <span className="block leading-5">{link.label}</span>
+            {link.hint ? (
+              <span className={active ? "block text-xs text-ink/70" : "block text-xs text-leaf"}>
+                {link.hint}
+              </span>
+            ) : null}
           </Link>
         );
       })}
