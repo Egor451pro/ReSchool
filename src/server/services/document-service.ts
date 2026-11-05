@@ -239,6 +239,25 @@ export async function markUnrepairableWithAct(
   }
 }
 
+function canViewDocument(
+  actor: DocumentActor,
+  document: {
+    order: {
+      masterId: string;
+      item: { institutionId: string };
+    };
+  },
+): boolean {
+  if (actor.role === "PLATFORM_ADMIN" || actor.role === "DISTRICT_ANALYST") return true;
+  if (actor.role === "DONOR_STAFF") {
+    return actor.institutionId === document.order.item.institutionId;
+  }
+  if (actor.role === "FREELANCER") {
+    return actor.id === document.order.masterId;
+  }
+  return false;
+}
+
 export async function loadActPdfBytes(
   actor: DocumentActor,
   documentId: string,
@@ -246,7 +265,8 @@ export async function loadActPdfBytes(
   if (!catalogRoles.includes(actor.role)) return null;
 
   const document = await findDocumentById(documentId);
-  if (!document) return null;
+  if (!document?.order) return null;
+  if (!canViewDocument(actor, { order: document.order })) return null;
 
   const bytes = await renderActPdf({
     number: document.number,

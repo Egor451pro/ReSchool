@@ -21,6 +21,7 @@ export function findDocumentById(id: string) {
       order: {
         select: {
           id: true,
+          masterId: true,
           item: {
             select: {
               id: true,

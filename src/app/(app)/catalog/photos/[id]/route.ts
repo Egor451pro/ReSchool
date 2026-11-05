@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { connection } from "next/server";
 import { photoMediaType, type PhotoKind } from "@/domain/items/image-file";
+import { requireRoles } from "@/server/auth/current-user";
 import { findPhotoFile } from "@/server/repositories/item-repository";
 import { uploadedPhotoPath } from "@/server/storage/item-photos";
 
@@ -13,6 +14,8 @@ function kindOf(name: string): PhotoKind | null {
 
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   await connection();
+  await requireRoles(["DONOR_STAFF", "FREELANCER", "DISTRICT_ANALYST", "PLATFORM_ADMIN"]);
+
   const { id } = await context.params;
   const photo = await findPhotoFile(id);
   if (!photo) return new Response("Не найдено", { status: 404 });

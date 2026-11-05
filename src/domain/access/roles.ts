@@ -64,17 +64,33 @@ export type AppSection = {
   href: string;
   label: string;
   hint: string;
+  /** Кому можно открывать раздел (proxy / canAccess). */
   roles: readonly UserRole[];
+  /** Кому показывать пункт в меню; по умолчанию = roles. */
+  navRoles?: readonly UserRole[];
 };
 
 /**
  * Меню по ролям:
- * - завхоз — кабинет заявок, каталог, кошелёк;
- * - фрилансер — биржа, заказы, кошелёк;
- * - администратор — сводка и каталог.
+ * - завхоз — кабинет, каталог, кошелёк;
+ * - фрилансер — биржа, заказы, кошелёк (каталог доступен по ссылке с биржи, без пункта меню);
+ * - аналитик — район и калькулятор;
+ * - администратор — сводка, район, каталог.
  */
 export const appSections: readonly AppSection[] = [
   { href: "/admin", label: "Сводка", hint: "экономия района", roles: ["PLATFORM_ADMIN"] },
+  {
+    href: "/district",
+    label: "Район",
+    hint: "факт и сценарии",
+    roles: ["DISTRICT_ANALYST", "PLATFORM_ADMIN"],
+  },
+  {
+    href: "/district/calculator",
+    label: "Калькулятор",
+    hint: "допущения",
+    roles: ["DISTRICT_ANALYST", "PLATFORM_ADMIN"],
+  },
   {
     href: "/cabinet",
     label: "Кабинет",
@@ -86,6 +102,7 @@ export const appSections: readonly AppSection[] = [
     label: "Каталог",
     hint: "объявления",
     roles: ["DONOR_STAFF", "FREELANCER", "PLATFORM_ADMIN"],
+    navRoles: ["DONOR_STAFF", "PLATFORM_ADMIN"],
   },
   {
     href: "/workshop",
@@ -119,13 +136,18 @@ export function roleHome(role: UserRole): string {
 }
 
 export function sectionsForRole(role: UserRole): AppSection[] {
-  return appSections.filter((section) => section.roles.includes(role));
+  return appSections.filter((section) => (section.navRoles ?? section.roles).includes(role));
 }
 
+/** Самый длинный подходящий раздел (чтобы /district/calculator не схлопывался в /district). */
 export function sectionForPath(pathname: string): AppSection | undefined {
-  return appSections.find(
-    (section) => pathname === section.href || pathname.startsWith(`${section.href}/`),
-  );
+  let best: AppSection | undefined;
+  for (const section of appSections) {
+    if (pathname === section.href || pathname.startsWith(`${section.href}/`)) {
+      if (!best || section.href.length > best.href.length) best = section;
+    }
+  }
+  return best;
 }
 
 export function canAccess(role: UserRole, pathname: string): boolean {

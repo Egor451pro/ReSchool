@@ -28,7 +28,7 @@ describe("карточка предмета", () => {
     );
     expect(itemManageState(donor, { institutionId: "gym", status: "LISTED" })).toBe("foreign");
     expect(itemManageState(donor, { institutionId: "school", status: "IN_REPAIR" })).toBe("locked");
-    expect(itemManageState(admin, { institutionId: "gym", status: "LISTED" })).toBe("edit");
+    expect(itemManageState(admin, { institutionId: "gym", status: "LISTED" })).toBe("locked");
   });
 
   it("оставляет в адресе каталога только известные фильтры", () => {

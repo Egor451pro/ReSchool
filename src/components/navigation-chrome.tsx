@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-const STATUS_WORDS = ["Loading", "Rendering", "Fetching", "Syncing", "Preparing"] as const;
+const STATUS_WORDS = ["Загрузка", "Рендер", "Запрос", "Синхронизация", "Подготовка"] as const;
 
 function isInternalNav(anchor: HTMLAnchorElement): boolean {
   if (anchor.target === "_blank" || anchor.hasAttribute("download")) return false;
@@ -103,7 +103,7 @@ export function NavigationChrome() {
     };
   }, [pending]);
 
-  const status = STATUS_WORDS[statusIndex] ?? "Loading";
+    const status = STATUS_WORDS[statusIndex] ?? "Загрузка";
 
   return (
     <>

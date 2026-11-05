@@ -15,10 +15,12 @@ export function itemManageState(
   actor: ItemActor,
   item: { institutionId: string; status: string },
 ): "edit" | "locked" | "foreign" {
-  const owns =
-    actor.role === "PLATFORM_ADMIN" ||
-    (actor.role === "DONOR_STAFF" && actor.institutionId === item.institutionId);
-  if (!owns) return "foreign";
-  if (item.status !== "LISTED") return "locked";
-  return "edit";
+  // Править может только завхоз своего учреждения — не админ (у него нет /cabinet edit).
+  if (actor.role === "DONOR_STAFF" && actor.institutionId === item.institutionId) {
+    return item.status === "LISTED" ? "edit" : "locked";
+  }
+  if (actor.role === "PLATFORM_ADMIN") {
+    return "locked";
+  }
+  return "foreign";
 }

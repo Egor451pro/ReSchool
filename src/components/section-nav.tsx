@@ -10,10 +10,14 @@ export function SectionNav({
 }) {
   const pathname = usePathname();
 
+  const activeHref = links
+    .filter((link) => pathname === link.href || pathname.startsWith(`${link.href}/`))
+    .sort((left, right) => right.href.length - left.href.length)[0]?.href;
+
   return (
     <nav className="flex flex-wrap gap-2">
       {links.map((link) => {
-        const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
+        const active = link.href === activeHref;
         return (
           <Link
             key={link.href}

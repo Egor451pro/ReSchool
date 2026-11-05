@@ -19,12 +19,7 @@ export default async function CatalogPage({
     status?: string | string[];
   }>;
 }) {
-  const user = await requireRoles([
-    "DONOR_STAFF",
-    "FREELANCER",
-    "DISTRICT_ANALYST",
-    "PLATFORM_ADMIN",
-  ]);
+  const user = await requireRoles(["DONOR_STAFF", "FREELANCER", "PLATFORM_ADMIN"]);
   const raw = await searchParams;
   const query = readCatalogQuery({
     category: raw.category,
@@ -36,7 +31,7 @@ export default async function CatalogPage({
 
   const description =
     user.role === "FREELANCER"
-      ? "Свободные объявления района. Взятые в работу здесь не показываются — они на бирже и в заказах."
+      ? "Обзор объявлений. Взять заказ в работу — на бирже; активные заказы — в разделе «Заказы»."
       : "Свободные объявления района. Свои карточки публикуйте в кабинете; взятые в работу из каталога пропадают.";
 
   return (
