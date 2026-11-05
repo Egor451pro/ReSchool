@@ -1,15 +1,17 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { AcceptOrderButton } from "@/components/accept-order-button";
 import { ConfirmRepairButton } from "@/components/confirm-repair-button";
 import { DeleteItemButton } from "@/components/delete-item-button";
 import { ItemForm } from "@/components/item-form";
 import { ItemTile } from "@/components/item-tile";
+import { OrderChat } from "@/components/order-chat";
 import { RepairHistoryPanel } from "@/components/repair-history-panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
 import { compareCategorySlug, itemsCountLabel, type CloseReason } from "@/domain/items/labels";
 import { requireRoles } from "@/server/auth/current-user";
+import { listOrderMessages } from "@/server/repositories/chat-repository";
 import {
   listCategories,
   listInstitutionActiveItems,
@@ -45,12 +47,20 @@ export default async function CabinetPage() {
     listInstitutionRepairHistory(user.institutionId),
   ]);
 
+  const chatEntries = await Promise.all(
+    active
+      .map((item) => item.orders[0]?.id)
+      .filter((id): id is string => Boolean(id))
+      .map(async (orderId) => [orderId, await listOrderMessages(orderId)] as const),
+  );
+  const chatByOrder = new Map(chatEntries);
+
   return (
     <PageShell>
       <PageHeader
         title="Кабинет"
         description={`${user.institutionName}. Сейчас ${itemsCountLabel(active.length)} в работе.`}
-        banner="Сначала примите предложение фрилансера с ценой. После ремонта подтвердите получение."
+        banner="Примите заказ фрилансера → обсудите детали в чате → после ремонта подтвердите выполнение."
       />
 
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
@@ -69,36 +79,45 @@ export default async function CabinetPage() {
                     item.status === "REQUESTED" &&
                     order?.status === "ASSIGNED" &&
                     !order.schoolAcceptedAt;
+                  const inProgressWithChat =
+                    Boolean(order) && item.status !== "LISTED" && item.status !== "CLOSED";
                   return (
-                    <div key={item.id} className="flex flex-col">
+                    <div key={item.id} className="flex flex-col gap-2">
                       <ItemTile item={item} />
                       {item.status === "LISTED" ? <DeleteItemButton itemId={item.id} /> : null}
                       {awaitingAccept && order ? (
-                        <Surface className="mt-2 border-leaf/40 bg-mint/10 p-3">
-                          <p className="text-sm text-leaf">
+                        <Surface className="border-transparent bg-deep p-3 text-cream shadow-[0_12px_28px_rgba(47,36,28,0.14)]">
+                          <p className="text-sm text-cream/75">
                             Фрилансер предложил ремонт за{" "}
-                            <span className="font-medium text-ink">
+                            <span className="font-medium text-cream">
                               {formatByn(order.agreedFeeKop)}
                             </span>
-                            . Примите заказ, чтобы он мог начать работу.
+                            . Примите заказ — у него появится «Начать ремонт».
                           </p>
                           <AcceptOrderButton orderId={order.id} />
                         </Surface>
                       ) : null}
-                      {item.status === "READY" ? (
-                        <Surface className="mt-2 border-leaf/40 bg-mint/10 p-3">
+                      {item.status === "READY" && order ? (
+                        <Surface className="border-line-strong bg-gold/15 p-3 shadow-[0_8px_24px_rgba(47,36,28,0.05)]">
                           <p className="text-sm text-leaf">
-                            Ремонт завершён. Подтвердите получение — карточка уйдёт в историю.
+                            Фрилансер завершил заказ. Подтвердите выполнение — карточка уйдёт в
+                            историю, выплата начислится.
                           </p>
                           <ConfirmRepairButton itemId={item.id} />
                         </Surface>
                       ) : null}
+                      {inProgressWithChat && order ? (
+                        <OrderChat
+                          orderId={order.id}
+                          currentUserId={user.id}
+                          messages={chatByOrder.get(order.id) ?? []}
+                          title="Чат с фрилансером"
+                        />
+                      ) : null}
                       {item.status !== "LISTED" &&
                       item.status !== "READY" &&
                       !awaitingAccept ? (
-                        <p className="mt-2 px-1 text-xs text-leaf">
-                          Уже в работе — удалить нельзя.
-                        </p>
+                        <p className="px-1 text-xs text-leaf">Уже в работе — удалить нельзя.</p>
                       ) : null}
                     </div>
                   );

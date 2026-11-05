@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ClaimItemForm } from "@/components/claim-item-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
@@ -47,11 +47,21 @@ export default async function WorkshopPage() {
             );
             return (
               <Surface key={item.id} as="li" className="flex h-full flex-col gap-3">
-                <div className="aspect-[4/3] overflow-hidden rounded-lg bg-mint/20">
+                <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-placeholder">
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={itemPhotoSrc(photo)} alt="" className="h-full w-full object-cover" />
-                  ) : null}
+                    <img
+                      src={itemPhotoSrc(photo)}
+                      alt=""
+                      className="h-full w-full bg-placeholder object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-leaf" aria-hidden>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-10 w-10 opacity-70">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8l-9-4.5L3 8m18 0v8l-9 4.5M21 8l-9 4.5M3 8v8l9 4.5m0-8V21" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-1 flex-col gap-1">
                   <Link

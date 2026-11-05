@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
@@ -80,7 +80,7 @@ export default async function AdminPage() {
         ) : (
           <Surface className="overflow-x-auto p-0">
             <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-mint/60 text-leaf">
+              <thead className="border-b border-line text-leaf">
                 <tr>
                   <th className="px-4 py-3 font-medium">Предмет</th>
                   <th className="px-4 py-3 font-medium">Учреждение</th>

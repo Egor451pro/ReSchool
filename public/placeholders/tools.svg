@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
-  <rect width="800" height="600" fill="#f7fbf4"/>
-  <rect x="220" y="250" width="360" height="28" rx="6" fill="#4d774e"/>
-  <rect x="250" y="180" width="28" height="170" rx="6" fill="#9dc88d"/>
-  <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#164a41">Станки и инструмент</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" fill="none">
+  <g transform="translate(400 300)" stroke="#8b97a8" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M55 -70 A55 55 0 0 0 -5 -20 L-70 45 L-45 70 L20 5 A55 55 0 0 0 55 -70 Z"/>
+    <path d="M-55 55 L-75 75"/>
+  </g>
 </svg>

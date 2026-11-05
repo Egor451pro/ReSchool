@@ -1,6 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
-  <rect width="800" height="600" fill="#f7fbf4"/>
-  <path d="M340 150h40l30 90h-100z" fill="#9dc88d"/>
-  <rect x="300" y="240" width="120" height="150" rx="8" fill="#4d774e"/>
-  <text x="400" y="460" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#164a41">Лабораторное оборудование</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" fill="none">
+  <g transform="translate(400 300)" stroke="#8b97a8" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-40 -90 V-10 L-95 70 A50 50 0 0 0 95 70 L40 -10 V-90"/>
+    <path d="M-60 -90 H60"/>
+    <path d="M-55 40 H55"/>
+  </g>
 </svg>

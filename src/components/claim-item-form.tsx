@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import { claimItemAction, type OrderFormState } from "@/app/actions/orders";
@@ -28,7 +28,7 @@ export function ClaimItemForm({
   }
 
   return (
-    <form action={action} className="flex flex-col gap-3 rounded-lg border border-mint/70 bg-paper p-3">
+    <form action={action} className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgba(47,36,28,0.03)]">
       <input type="hidden" name="itemId" value={itemId} />
       <p className="text-xs leading-5 text-leaf">
         База — 14% от стоимости новых ({formatBynAmount(newPriceKop)} BYN). Можете изменить свою
@@ -42,7 +42,7 @@ export function ClaimItemForm({
           inputMode="decimal"
           required
           defaultValue={defaultFee}
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
       </label>
       {state.error ? <p className="text-sm text-ink">{state.error}</p> : null}

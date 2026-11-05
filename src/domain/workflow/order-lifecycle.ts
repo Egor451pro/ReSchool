@@ -10,7 +10,7 @@ export type OrderStatus = (typeof orderStatuses)[number];
 
 const transitions: Record<OrderStatus, readonly OrderStatus[]> = {
   ASSIGNED: ["IN_PROGRESS", "CANCELLED"],
-  IN_PROGRESS: ["QUALITY_CHECK", "CANCELLED"],
+  IN_PROGRESS: ["QUALITY_CHECK", "COMPLETED", "CANCELLED"],
   QUALITY_CHECK: ["COMPLETED"],
   COMPLETED: [],
   CANCELLED: [],

@@ -1,18 +1,42 @@
-import { statusLabels, type ItemStatus } from "@/domain/items/labels";
+import {
+  conditionLabels,
+  statusLabels,
+  type ItemCondition,
+  type ItemStatus,
+} from "@/domain/items/labels";
 
-const tone: Record<ItemStatus, string> = {
-  LISTED: "bg-mint/50 text-ink",
-  REQUESTED: "bg-ink text-white",
-  IN_REPAIR: "bg-ink text-white",
-  READY: "bg-leaf text-white",
-  DELIVERED: "bg-leaf text-white",
-  CLOSED: "border border-mint text-leaf",
+/** Приглушённые тона: полупрозрачные подложки, без неонового свечения в dark. */
+const statusTone: Record<ItemStatus, string> = {
+  LISTED: "bg-mint/20 text-ink ring-1 ring-mint/35",
+  REQUESTED: "bg-gold/15 text-leaf ring-1 ring-gold/30",
+  IN_REPAIR: "bg-gold/20 text-leaf ring-1 ring-gold/35",
+  READY: "bg-deep text-cream ring-1 ring-deep/25",
+  DELIVERED: "bg-muted text-ink ring-1 ring-line-strong",
+  CLOSED: "bg-transparent text-leaf ring-1 ring-line-strong",
 };
 
-export function StatusBadge({ status }: { status: ItemStatus }) {
+const conditionTone: Record<ItemCondition, string> = {
+  WORKING: "bg-mint/20 text-ink ring-1 ring-mint/35",
+  REPAIRABLE: "bg-gold/15 text-leaf ring-1 ring-gold/30",
+  SCRAP: "bg-deep/90 text-cream ring-1 ring-deep/25",
+};
+
+function BadgeShell({ className, children }: { className: string; children: string }) {
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${tone[status]}`}>
-      {statusLabels[status]}
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold tracking-wide transition-colors duration-300 ${className}`}
+    >
+      {children}
     </span>
+  );
+}
+
+export function StatusBadge({ status }: { status: ItemStatus }) {
+  return <BadgeShell className={statusTone[status]}>{statusLabels[status]}</BadgeShell>;
+}
+
+export function ConditionBadge({ condition }: { condition: ItemCondition }) {
+  return (
+    <BadgeShell className={conditionTone[condition]}>{conditionLabels[condition]}</BadgeShell>
   );
 }

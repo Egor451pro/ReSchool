@@ -1,4 +1,4 @@
-import { formatByn } from "@/domain/economy/money";
+﻿import { formatByn } from "@/domain/economy/money";
 
 export type EconomyBarRow = {
   key: string;
@@ -22,9 +22,11 @@ export function EconomyBars({ rows }: { rows: EconomyBarRow[] }) {
               <span className="tabular-nums text-leaf">{formatByn(row.valueKop)}</span>
             </div>
             {row.hint ? <p className="text-xs text-leaf">{row.hint}</p> : null}
-            <div className="h-2.5 overflow-hidden rounded bg-mint/35">
+            <div className="h-2.5 overflow-hidden rounded-full bg-placeholder">
               <div
-                className={row.highlight ? "h-full rounded bg-gold" : "h-full rounded bg-leaf"}
+                className={
+                  row.highlight ? "h-full rounded-full bg-deep" : "h-full rounded-full bg-gold"
+                }
                 style={{ width: `${width}%` }}
               />
             </div>

@@ -10,7 +10,7 @@ export type SyncedAdvance = {
 
 const orderAdvance: Partial<Record<OrderStatus, OrderStatus>> = {
   ASSIGNED: "IN_PROGRESS",
-  IN_PROGRESS: "QUALITY_CHECK",
+  IN_PROGRESS: "COMPLETED",
   QUALITY_CHECK: "COMPLETED",
 };
 
@@ -32,23 +32,28 @@ export function planOrderAdvance(from: OrderStatus, itemStatus: ItemStatus): Syn
     };
   }
 
-  if (from === "IN_PROGRESS" && orderTo === "QUALITY_CHECK") {
-    if (itemStatus !== "IN_REPAIR") {
-      throw new Error("Предмет должен быть в ремонте");
-    }
-    return {
-      orderTo,
-      itemTo: null,
-      comment: "Работа передана на проверку качества.",
-    };
-  }
-
-  if (from === "QUALITY_CHECK" && orderTo === "COMPLETED") {
+  if (from === "IN_PROGRESS" && orderTo === "COMPLETED") {
     assertItemTransition(itemStatus, "READY");
     return {
       orderTo,
       itemTo: "READY",
-      comment: "Исполнитель подтвердил качество.",
+      comment: "Фрилансер завершил ремонт. Ждём подтверждения завхоза.",
+    };
+  }
+
+  if (from === "QUALITY_CHECK" && orderTo === "COMPLETED") {
+    if (itemStatus === "READY") {
+      return {
+        orderTo,
+        itemTo: null,
+        comment: "Фрилансер завершил ремонт. Ждём подтверждения завхоза.",
+      };
+    }
+    assertItemTransition(itemStatus, "READY");
+    return {
+      orderTo,
+      itemTo: "READY",
+      comment: "Фрилансер завершил ремонт. Ждём подтверждения завхоза.",
     };
   }
 
@@ -86,7 +91,7 @@ export function planUnrepairable(itemStatus: ItemStatus, orderStatus: OrderStatu
     orderTo: "CANCELLED",
     itemTo: "CLOSED",
     closeReason: "UNREPAIRABLE",
-    comment: "Ремонт в рамках практики признан нецелесообразным.",
+    comment: "Ремонт признан нецелесообразным.",
   };
 }
 

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { DocumentLinks } from "@/components/document-links";
 import { OrderActions } from "@/components/order-actions";
+import { OrderChat } from "@/components/order-chat";
 import { StatusBadge } from "@/components/status-badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
 import { requireRoles } from "@/server/auth/current-user";
+import { listOrderMessages } from "@/server/repositories/chat-repository";
 import { listMasterOrders } from "@/server/repositories/order-repository";
 
 export const instant = false;
@@ -19,11 +21,17 @@ export default async function OrdersPage() {
   const active = orders.filter((order) => activeStatuses.has(order.status));
   const done = orders.filter((order) => order.status === "COMPLETED");
 
+  const chatByOrder = new Map(
+    await Promise.all(
+      orders.map(async (order) => [order.id, await listOrderMessages(order.id)] as const),
+    ),
+  );
+
   return (
     <PageShell>
       <PageHeader
         title="Заказы"
-        description="Сначала завхоз принимает вашу цену, затем ведите ремонт шаг за шагом."
+        description="После принятия завхозом — начните и завершите ремонт. Детали обсуждайте в чате."
       />
 
       {orders.length === 0 ? (
@@ -36,8 +44,18 @@ export default async function OrdersPage() {
         </Surface>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          <BoardColumn title={`В работе · ${active.length}`} orders={active} />
-          <BoardColumn title={`Готово · ${done.length}`} orders={done} />
+          <BoardColumn
+            title={`В работе · ${active.length}`}
+            orders={active}
+            currentUserId={user.id}
+            chatByOrder={chatByOrder}
+          />
+          <BoardColumn
+            title={`Готово · ${done.length}`}
+            orders={done}
+            currentUserId={user.id}
+            chatByOrder={chatByOrder}
+          />
         </div>
       )}
     </PageShell>
@@ -47,9 +65,13 @@ export default async function OrdersPage() {
 function BoardColumn({
   title,
   orders,
+  currentUserId,
+  chatByOrder,
 }: {
   title: string;
   orders: Awaited<ReturnType<typeof listMasterOrders>>;
+  currentUserId: string;
+  chatByOrder: Map<string, Awaited<ReturnType<typeof listOrderMessages>>>;
 }) {
   return (
     <section className="flex flex-col gap-3">
@@ -80,6 +102,11 @@ function BoardColumn({
                 orderStatus={order.status}
                 itemStatus={order.item.status}
                 schoolAccepted={Boolean(order.schoolAcceptedAt)}
+              />
+              <OrderChat
+                orderId={order.id}
+                currentUserId={currentUserId}
+                messages={chatByOrder.get(order.id) ?? []}
               />
               <DocumentLinks documents={order.documents} compact />
             </Surface>

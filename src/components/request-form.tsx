@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useActionState, type ReactNode } from "react";
 import { publishRequestAction, type CabinetFormState } from "@/app/actions/cabinet";
 
 const initialState: CabinetFormState = {};
-const controlClass = "rounded-lg border border-mint bg-paper px-3 py-2 text-base text-ink";
+const controlClass = "field";
 
 function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
@@ -63,11 +63,11 @@ export function RequestForm({ categories }: { categories: { id: string; name: st
           className={controlClass}
         />
       </Field>
-      {state.error ? <p className="rounded-lg bg-gold/40 px-3 py-2 text-sm text-ink">{state.error}</p> : null}
+      {state.error ? <p className="rounded-2xl border border-line-strong bg-muted px-3 py-2 text-sm text-ink">{state.error}</p> : null}
       <button
         type="submit"
         disabled={pending}
-        className="h-11 rounded-lg bg-ink text-sm font-medium text-white hover:bg-leaf disabled:opacity-60"
+        className="h-11 rounded-2xl bg-deep px-4 text-sm font-medium text-cream shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90 disabled:opacity-60"
       >
         {pending ? "Сохраняем…" : "Добавить запрос"}
       </button>

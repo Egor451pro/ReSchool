@@ -1,11 +1,11 @@
-import { HomeStart } from "@/components/home-start";
+﻿import { HomeStart } from "@/components/home-start";
 import { SiteHeader } from "@/components/site-header";
 
 const steps = [
   { title: "Заявка", text: "Завхоз регистрирует школу и публикует вещь на ремонт" },
-  { title: "Биржа", text: "Объявление видят фрилансеры района" },
-  { title: "Ремонт", text: "Фрилансер берёт заказ первым и чинит" },
-  { title: "Возврат", text: "Завхоз подтверждает получение — бюджет экономит" },
+  { title: "Биржа", text: "Фрилансер предлагает цену, завхоз принимает заказ" },
+  { title: "Ремонт", text: "Обсуждают детали в чате, фрилансер чинит и завершает" },
+  { title: "Подтверждение", text: "Завхоз подтверждает выполнение — бюджет экономит" },
 ];
 
 export default function Home() {
@@ -29,9 +29,9 @@ export default function Home() {
             {steps.map((step, index) => (
               <li
                 key={step.title}
-                className="flex h-full flex-col gap-2 rounded-xl border border-mint/70 bg-paper p-4"
+                className="flex h-full flex-col gap-2 rounded-3xl border border-line bg-surface p-4 shadow-[0_10px_28px_rgba(47,36,28,0.04)]"
               >
-                <span className="text-sm font-medium text-gold">{index + 1}</span>
+                <span className="text-sm font-medium text-leaf">{index + 1}</span>
                 <span className="font-semibold text-ink">{step.title}</span>
                 <span className="text-sm leading-6 text-leaf">{step.text}</span>
               </li>

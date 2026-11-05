@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 
 export function PageHeader({
   title,
@@ -21,7 +21,9 @@ export function PageHeader({
         {actions ? <div className="shrink-0">{actions}</div> : null}
       </div>
       {banner ? (
-        <div className="rounded-xl bg-gold/35 px-4 py-3 text-sm leading-6 text-ink">{banner}</div>
+        <div className="rounded-2xl border border-line bg-mint/20 px-4 py-3 text-sm leading-6 text-ink shadow-[var(--shadow-soft)] transition-colors duration-300">
+          {banner}
+        </div>
       ) : null}
     </div>
   );

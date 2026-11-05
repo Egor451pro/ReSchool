@@ -31,13 +31,14 @@ describe("конвейер предмета", () => {
 });
 
 describe("конвейер заказа", () => {
-  it("ведёт заказ от назначения до закрытия и разрешает отказ до проверки качества", () => {
+  it("ведёт заказ от назначения до завершения и разрешает отказ до конца ремонта", () => {
     expect(() => assertOrderTransition("ASSIGNED", "IN_PROGRESS")).not.toThrow();
+    expect(() => assertOrderTransition("IN_PROGRESS", "COMPLETED")).not.toThrow();
     expect(() => assertOrderTransition("IN_PROGRESS", "CANCELLED")).not.toThrow();
     expect(() => assertOrderTransition("QUALITY_CHECK", "COMPLETED")).not.toThrow();
   });
 
-  it("не даёт закрыть заказ, минуя проверку качества", () => {
+  it("не даёт прыгать через старт ремонта и откатывать завершённый заказ", () => {
     expect(() => assertOrderTransition("ASSIGNED", "COMPLETED")).toThrow(
       /Недопустимый переход/,
     );

@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/ui/page-header";
+﻿import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
 import { requireRoles } from "@/server/auth/current-user";
@@ -27,9 +27,9 @@ export default async function WalletPage() {
         }
       />
 
-      <Surface className="flex flex-col gap-2">
-        <p className="text-sm text-leaf">Баланс</p>
-        <p className="text-3xl font-semibold text-ink">
+      <Surface className="flex flex-col gap-2 border-transparent bg-deep text-cream shadow-[0_16px_40px_rgba(47,36,28,0.16)]">
+        <p className="text-sm text-cream/65">Баланс</p>
+        <p className="text-3xl font-semibold text-cream">
           {formatByn(wallet?.balanceKop ?? 0)}
         </p>
       </Surface>

@@ -1,36 +1,107 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+
+  /* Page + layers */
+  --paper: #fdfbf7;
+  --surface: #fffcf9;
+  --muted: #f3eee8;
+  --placeholder: #ebe6df;
+  --line: #e8e2da;
+  --line-strong: #e0d8ce;
+
+  /* Text */
+  --ink: #2f241c;
+  --leaf: #7a8899;
+
+  /* Accents */
+  --mint: #c9b8a4;
+  --gold: #7a8899;
+
+  /* Deep accent fills + text on them */
+  --deep: #2f241c;
+  --cream: #f5f2eb;
+
+  /* Header glass */
+  --header: color-mix(in srgb, var(--paper) 80%, transparent);
+  --shadow-soft: 0 1px 2px rgba(47, 36, 28, 0.03), 0 10px 28px rgba(47, 36, 28, 0.04);
+  --shadow-header: 0 1px 0 rgba(47, 36, 28, 0.04), 0 8px 24px rgba(47, 36, 28, 0.04);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --paper: #12100e;
+  --surface: #231f1b;
+  --muted: #2a2420;
+  --placeholder: #2a2420;
+  --line: color-mix(in srgb, #7a8899 22%, transparent);
+  --line-strong: color-mix(in srgb, #7a8899 32%, transparent);
+
+  --ink: #f5f2eb;
+  --leaf: #a3b0bf;
+
+  --mint: #c9b8a4;
+  --gold: #8b97a8;
+
+  /* Beige fill with coffee text — premium contrast on dark */
+  --deep: #c9b8a4;
+  --cream: #2f241c;
+
+  --header: color-mix(in srgb, #12100e 78%, transparent);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25), 0 12px 32px rgba(0, 0, 0, 0.28);
+  --shadow-header: 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
 @theme inline {
-  --color-ink: #164a41;
-  --color-leaf: #4d774e;
-  --color-mint: #9dc88d;
-  --color-gold: #f1b24a;
-  --color-paper: #ffffff;
-  --color-background: #ffffff;
-  --color-foreground: #164a41;
+  --color-ink: var(--ink);
+  --color-mint: var(--mint);
+  --color-leaf: var(--leaf);
+  --color-gold: var(--gold);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-placeholder: var(--placeholder);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-deep: var(--deep);
+  --color-cream: var(--cream);
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100%;
+  transition: background-color 300ms ease, color 300ms ease;
 }
 
 .field {
   width: 100%;
-  border-radius: 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--color-mint) 80%, white);
-  background: #ffffff;
-  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--mint) 45%, var(--line));
+  background: var(--surface);
+  padding: 0.55rem 0.85rem;
   font-size: 1rem;
-  color: var(--color-ink);
+  color: var(--ink);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
+  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
 }
 
 .field:focus {
-  border-color: var(--color-ink);
-  outline: 2px solid var(--color-gold);
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--line));
+  outline: 2px solid color-mix(in srgb, var(--gold) 28%, transparent);
   outline-offset: 1px;
 }
 
@@ -39,20 +110,28 @@ body {
   height: 2.75rem;
   align-items: center;
   justify-content: center;
-  border-radius: 0.5rem;
-  background: var(--color-ink);
-  padding: 0 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--mint) 70%, var(--cream));
+  background: var(--mint);
+  padding: 0 1.1rem;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: white;
+  font-weight: 550;
+  color: #2f241c;
+  box-shadow: 0 1px 2px rgba(47, 36, 28, 0.06);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    color 300ms ease;
 }
 
 .btn-primary:hover {
-  background: var(--color-leaf);
+  background: color-mix(in srgb, var(--mint) 88%, #2f241c);
+  border-color: color-mix(in srgb, var(--mint) 40%, #2f241c);
 }
 
 .btn-primary:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .btn-ghost {
@@ -60,24 +139,40 @@ body {
   height: 2.75rem;
   align-items: center;
   justify-content: center;
-  border-radius: 0.5rem;
-  border: 1px solid var(--color-mint);
-  background: transparent;
-  padding: 0 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  padding: 0 1.1rem;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-ink);
+  font-weight: 550;
+  color: var(--ink);
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 300ms ease;
 }
 
 .btn-ghost:hover {
-  background: color-mix(in srgb, var(--color-mint) 30%, white);
+  border-color: color-mix(in srgb, var(--gold) 45%, var(--line));
+  background: color-mix(in srgb, var(--gold) 12%, var(--surface));
 }
 
 .btn-ghost:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .btn-sm {
   height: 2.25rem;
-  padding: 0 0.75rem;
+  padding: 0 0.85rem;
+  border-radius: 0.75rem;
+}
+
+.site-header {
+  background: var(--header);
+  border-bottom: 1px solid var(--line);
+  box-shadow: var(--shadow-header);
+  transition:
+    background-color 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
 }

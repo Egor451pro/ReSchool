@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState } from "react";
 import { deleteItemAction, type DeleteItemState } from "@/app/actions/cabinet";
@@ -22,7 +22,7 @@ export function DeleteItemButton({ itemId }: { itemId: string }) {
   }
 
   return (
-    <form action={formAction} className="mt-2 flex flex-col gap-2 rounded-xl border border-mint/70 p-3">
+    <form action={formAction} className="mt-2 flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3 shadow-[0_6px_18px_rgba(47,36,28,0.03)]">
       <input type="hidden" name="itemId" value={itemId} />
       <p className="text-xs leading-5 text-leaf">
         Карточка исчезнет из каталога и кабинета. Удалить можно, пока её не взяли в работу.

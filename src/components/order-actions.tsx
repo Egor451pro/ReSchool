@@ -7,7 +7,6 @@ import {
   unrepairableOrderAction,
   type OrderFormState,
 } from "@/app/actions/orders";
-import { nextOrderStatus } from "@/domain/workflow/order-item-sync";
 import type { OrderStatus } from "@/domain/orders/labels";
 import { orderStatusLabels } from "@/domain/orders/labels";
 import type { ItemStatus } from "@/domain/items/labels";
@@ -55,7 +54,10 @@ export function OrderActions({
   schoolAccepted: boolean;
 }) {
   const waitingAccept = orderStatus === "ASSIGNED" && !schoolAccepted;
-  const next = waitingAccept ? null : nextOrderStatus(orderStatus);
+  const canStart = orderStatus === "ASSIGNED" && schoolAccepted;
+  const canFinish =
+    orderStatus === "IN_PROGRESS" ||
+    (orderStatus === "QUALITY_CHECK" && itemStatus === "IN_REPAIR");
   const canCancel = orderStatus === "ASSIGNED" || orderStatus === "IN_PROGRESS";
   const canUnrepair = orderStatus === "IN_PROGRESS" && itemStatus === "IN_REPAIR";
   const waitingSchool = orderStatus === "COMPLETED" && itemStatus === "READY";
@@ -65,30 +67,33 @@ export function OrderActions({
     <div className="flex flex-col gap-2">
       {waitingAccept ? (
         <p className="text-xs leading-5 text-leaf">
-          Предложение отправлено. Ждём, пока завхоз примет заказ — потом можно начать ремонт.
+          Предложение отправлено. Ждём, пока завхоз примет заказ — потом появится «Начать
+          ремонт».
         </p>
       ) : null}
-      {next ? (
+      {canStart ? (
         <ActionButton
           action={advanceOrderAction}
           orderId={orderId}
-          label={
-            next === "IN_PROGRESS"
-              ? "Начать ремонт"
-              : next === "QUALITY_CHECK"
-                ? "На проверку"
-                : "Подтвердить качество"
-          }
+          label="Начать ремонт"
           pendingLabel="Сохраняем…"
+        />
+      ) : null}
+      {canFinish ? (
+        <ActionButton
+          action={advanceOrderAction}
+          orderId={orderId}
+          label="Завершить заказ"
+          pendingLabel="Завершаем…"
         />
       ) : null}
       {waitingSchool ? (
         <p className="text-xs text-leaf">
-          Качество подтверждено. Завхоз подтвердит получение в кабинете.
+          Ремонт завершён. Завхоз подтвердит выполнение в кабинете.
         </p>
       ) : null}
       {closed ? (
-        <p className="text-xs text-leaf">Завхоз подтвердил ремонт. Экономия зафиксирована.</p>
+        <p className="text-xs text-leaf">Завхоз подтвердил выполнение. Выплата в кошельке.</p>
       ) : null}
       {canCancel ? (
         <ActionButton

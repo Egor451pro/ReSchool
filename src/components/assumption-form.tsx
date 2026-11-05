@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState } from "react";
 import {
@@ -23,7 +23,7 @@ export function AssumptionForm({
   const current = state.values ?? values;
 
   return (
-    <form action={formAction} className="flex flex-col gap-4 rounded-xl border border-mint/70 bg-paper p-4">
+    <form action={formAction} className="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgba(47,36,28,0.03)]">
       <input type="hidden" name="kind" value={kind} />
       <div className="flex flex-col gap-1">
         <h2 className="text-lg font-semibold text-ink">{title}</h2>
@@ -83,14 +83,14 @@ export function AssumptionForm({
           name="basisNote"
           rows={4}
           defaultValue={current.basisNote}
-          className="rounded-lg border border-mint bg-white px-3 py-2 text-ink"
+          className="field"
         />
       </label>
 
       <button
         type="submit"
         disabled={pending}
-        className="h-10 self-start rounded-lg bg-ink px-4 text-sm font-medium text-white hover:bg-leaf disabled:opacity-60"
+        className="h-10 self-start rounded-2xl bg-deep px-4 text-sm font-medium text-cream shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90 disabled:opacity-60"
       >
         {pending ? "Сохраняем…" : "Сохранить сценарий"}
       </button>
@@ -113,7 +113,7 @@ function Field({
       <input
         name={name}
         defaultValue={defaultValue}
-        className="h-10 rounded-lg border border-mint bg-white px-3 text-ink"
+        className="field h-10"
       />
     </label>
   );

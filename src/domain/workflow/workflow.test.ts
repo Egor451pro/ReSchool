@@ -13,7 +13,10 @@ describe("синхронизация заказа и предмета", () => {
       orderTo: "IN_PROGRESS",
       itemTo: "IN_REPAIR",
     });
-    expect(planOrderAdvance("IN_PROGRESS", "IN_REPAIR").itemTo).toBeNull();
+    expect(planOrderAdvance("IN_PROGRESS", "IN_REPAIR")).toMatchObject({
+      orderTo: "COMPLETED",
+      itemTo: "READY",
+    });
     expect(planOrderAdvance("QUALITY_CHECK", "IN_REPAIR")).toMatchObject({
       orderTo: "COMPLETED",
       itemTo: "READY",

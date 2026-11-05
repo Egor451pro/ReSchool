@@ -112,6 +112,7 @@ model User {
   skills         FreelancerSkill[]
   wallet         Wallet?
   statusEvents   StatusEvent[]
+  chatMessages   OrderMessage[]
 }
 
 model Category {
@@ -204,6 +205,7 @@ model RepairOrder {
   /** Когда завхоз принял предложение фрилансера. До этого ремонт не стартует. */
   schoolAcceptedAt    DateTime?
   events              StatusEvent[]
+  messages            OrderMessage[]
   snapshot            EconomySnapshot?
   documents           Document[]
   walletTxns          WalletTransaction[]
@@ -212,6 +214,18 @@ model RepairOrder {
 
   @@index([masterId, status])
   @@index([itemId])
+}
+
+model OrderMessage {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     RepairOrder @relation(fields: [orderId], references: [id])
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime    @default(now())
+
+  @@index([orderId, createdAt])
 }
 
 model StatusEvent {

@@ -41,7 +41,7 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
 
       {manage === "edit" ? (
         <div className="grid max-w-xl gap-6">
-          <section className="rounded-xl border border-mint/70 p-4">
+          <section className="rounded-3xl border border-line bg-surface p-4 shadow-[var(--shadow-soft)] transition-colors duration-300">
             <ItemForm
               itemId={item.id}
               categories={(await listCategories()).sort((left, right) =>

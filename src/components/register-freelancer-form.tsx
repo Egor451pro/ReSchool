@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState } from "react";
 import { registerFreelancerAction, type AuthFormState } from "@/app/actions/auth";
@@ -20,7 +20,7 @@ export function RegisterFreelancerForm({
           name="fullName"
           autoComplete="name"
           required
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.fullName ? (
           <span className="font-medium text-ink">{state.fields.fullName}</span>
@@ -33,7 +33,7 @@ export function RegisterFreelancerForm({
           type="email"
           autoComplete="email"
           required
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.email ? <span className="font-medium text-ink">{state.fields.email}</span> : null}
       </label>
@@ -45,7 +45,7 @@ export function RegisterFreelancerForm({
           autoComplete="new-password"
           required
           minLength={8}
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.password ? (
           <span className="font-medium text-ink">{state.fields.password}</span>
@@ -63,13 +63,11 @@ export function RegisterFreelancerForm({
         </div>
       </fieldset>
       {state.error ? (
-        <p className="rounded-lg bg-gold/40 px-3 py-2 text-sm text-ink">{state.error}</p>
+        <p className="rounded-2xl border border-line-strong bg-muted px-3 py-2 text-sm text-ink">
+          {state.error}
+        </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="h-11 rounded-lg bg-ink text-sm font-medium text-white hover:bg-leaf disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Создаём учётку…" : "Стать фрилансером"}
       </button>
     </form>

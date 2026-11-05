@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState } from "react";
 import { registerDonorAction, type AuthFormState } from "@/app/actions/auth";
@@ -22,7 +22,7 @@ export function RegisterForm() {
           name="fullName"
           autoComplete="name"
           required
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.fullName ? (
           <span className="font-medium text-ink">{state.fields.fullName}</span>
@@ -35,7 +35,7 @@ export function RegisterForm() {
           type="email"
           autoComplete="email"
           required
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.email ? <span className="font-medium text-ink">{state.fields.email}</span> : null}
       </label>
@@ -47,7 +47,7 @@ export function RegisterForm() {
           autoComplete="new-password"
           required
           minLength={8}
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.password ? (
           <span className="font-medium text-ink">{state.fields.password}</span>
@@ -61,7 +61,7 @@ export function RegisterForm() {
           name="institutionName"
           required
           placeholder="ГУО «Средняя школа №…»"
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.institutionName ? (
           <span className="font-medium text-ink">{state.fields.institutionName}</span>
@@ -73,7 +73,7 @@ export function RegisterForm() {
           name="institutionType"
           required
           defaultValue=""
-          className="rounded-lg border border-mint bg-white px-3 py-2 text-base text-ink"
+          className="field"
         >
           <option value="" disabled>
             Выберите тип
@@ -94,7 +94,7 @@ export function RegisterForm() {
           name="district"
           required
           placeholder="Пилотный район"
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.district ? (
           <span className="font-medium text-ink">{state.fields.district}</span>
@@ -105,7 +105,7 @@ export function RegisterForm() {
         <input
           name="address"
           required
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.address ? (
           <span className="font-medium text-ink">{state.fields.address}</span>
@@ -116,7 +116,7 @@ export function RegisterForm() {
         <input
           name="phone"
           required
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.phone ? <span className="font-medium text-ink">{state.fields.phone}</span> : null}
       </label>
@@ -126,7 +126,7 @@ export function RegisterForm() {
           name="institutionEmail"
           type="email"
           required
-          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+          className="field"
         />
         {state.fields?.institutionEmail ? (
           <span className="font-medium text-ink">{state.fields.institutionEmail}</span>
@@ -134,13 +134,11 @@ export function RegisterForm() {
       </label>
 
       {state.error ? (
-        <p className="rounded-lg bg-gold/40 px-3 py-2 text-sm text-ink">{state.error}</p>
+        <p className="rounded-2xl border border-line-strong bg-muted px-3 py-2 text-sm text-ink">
+          {state.error}
+        </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={pending}
-        className="h-11 rounded-lg bg-ink text-sm font-medium text-white hover:bg-leaf disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Создаём учётку…" : "Зарегистрировать школу"}
       </button>
     </form>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,13 +18,21 @@ export const metadata: Metadata = {
   description: "Повторное использование школьного имущества через практику ПТО",
 };
 
+const themeBoot = `(function(){try{var t=localStorage.getItem('reschool-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}if(t==='dark')document.documentElement.classList.add('dark')}catch(e){}})();`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ru"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col bg-paper text-ink transition-colors duration-300">
+        <Script id="reschool-theme" strategy="beforeInteractive">
+          {themeBoot}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }

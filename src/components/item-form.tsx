@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, type ReactNode } from "react";
 import {
@@ -160,7 +160,7 @@ export function ItemForm({
         ) : null}
         <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="text-sm text-ink" />
       </Field>
-      {state.error ? <p className="rounded-lg bg-gold/40 px-3 py-2 text-sm text-ink">{state.error}</p> : null}
+      {state.error ? <p className="rounded-2xl border border-line-strong bg-muted px-3 py-2 text-sm text-ink">{state.error}</p> : null}
       <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Сохраняем…" : itemId ? "Сохранить" : "Опубликовать"}
       </button>

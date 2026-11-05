@@ -10,7 +10,9 @@ export function Surface({
   as?: "div" | "section" | "li" | "article";
 }) {
   return (
-    <Tag className={`rounded-xl border border-mint/70 bg-paper p-4 ${className}`.trim()}>
+    <Tag
+      className={`rounded-3xl border border-line/90 bg-surface/95 p-4 shadow-[var(--shadow-soft)] transition-colors duration-300 ${className}`.trim()}
+    >
       {children}
     </Tag>
   );
