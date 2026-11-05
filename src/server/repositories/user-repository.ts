@@ -130,10 +130,18 @@ export function listUsers() {
   });
 }
 
-/** Учётки, зарегистрированные пользователями (без сидовых *.demo). */
+/**
+ * Учётки для быстрого входа по роли:
+ * саморегистрации (не *.demo) + сидовый аналитик района.
+ */
 export function listRegisteredAccounts() {
   return prisma.user.findMany({
-    where: { NOT: { email: { endsWith: ".demo" } } },
+    where: {
+      OR: [
+        { NOT: { email: { endsWith: ".demo" } } },
+        { role: "DISTRICT_ANALYST" },
+      ],
+    },
     orderBy: [{ role: "asc" }, { fullName: "asc" }],
     select: {
       id: true,

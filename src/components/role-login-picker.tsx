@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { quickLoginAction } from "@/app/actions/auth";
+import { demoAnalystLoginAction, quickLoginAction } from "@/app/actions/auth";
 import { LoginForm } from "@/components/login-form";
 import type { LoginRoleChoice } from "@/domain/access/demo-accounts";
+import { isSeedDemoEmail } from "@/domain/access/saved-accounts";
 import { mvpRoleLabel, type UserRole } from "@/domain/access/roles";
 
 export type PickerAccount = {
@@ -39,10 +40,10 @@ const roleCards: {
     roles: ["FREELANCER"],
   },
   {
-    id: "OTHER",
-    title: "Другая роль",
-    text: "Аналитик района или администратор платформы",
-    roles: ["DISTRICT_ANALYST", "PLATFORM_ADMIN"],
+    id: "DISTRICT_ANALYST",
+    title: "Я аналитик",
+    text: "Дашборд района, экономия и калькулятор сценариев",
+    roles: ["DISTRICT_ANALYST"],
   },
 ];
 
@@ -56,7 +57,14 @@ function initials(name: string): string {
 function parseInitialRole(value?: string): LoginRoleChoice | null {
   if (value === "donor" || value === "zavhoz" || value === "DONOR_STAFF") return "DONOR_STAFF";
   if (value === "freelancer" || value === "FREELANCER") return "FREELANCER";
-  if (value === "other" || value === "admin") return "OTHER";
+  if (
+    value === "analyst" ||
+    value === "other" ||
+    value === "admin" ||
+    value === "DISTRICT_ANALYST"
+  ) {
+    return "DISTRICT_ANALYST";
+  }
   return null;
 }
 
@@ -73,7 +81,7 @@ export function RoleLoginPicker({
   showRegister?: boolean;
   initialRole?: string;
   rememberedUserId?: string | null;
-  /** Зарегистрированные учётки из БД (без сидовых .demo) */
+  /** Зарегистрированные учётки из БД (+ сидовый аналитик) */
   accounts?: PickerAccount[];
 }) {
   const [role, setRole] = useState<LoginRoleChoice | null>(() => parseInitialRole(initialRole));
@@ -150,17 +158,46 @@ export function RoleLoginPicker({
           ) : (
             <>
               <p className="text-sm text-leaf">
-                Выберите свой аккаунт и введите пароль
-                {rememberedUserId ? " (или «Это я» для последнего входа)" : ""}.
+                {role === "DISTRICT_ANALYST"
+                  ? "Выберите профиль аналитика"
+                  : `Выберите свой аккаунт и введите пароль${
+                      rememberedUserId ? " (или «Это я» для последнего входа)" : ""
+                    }.`}
               </p>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {accounts.map((account) => {
+                  const seedAnalyst =
+                    role === "DISTRICT_ANALYST" && isSeedDemoEmail(account.email);
                   const canQuick =
-                    Boolean(rememberedUserId) && rememberedUserId === account.userId;
+                    !seedAnalyst &&
+                    Boolean(rememberedUserId) &&
+                    rememberedUserId === account.userId;
                   const selected = picked?.email === account.email;
                   return (
                     <li key={account.email} className="flex flex-col gap-2">
-                      {canQuick ? (
+                      {seedAnalyst ? (
+                        <form action={demoAnalystLoginAction}>
+                          {next ? <input type="hidden" name="next" value={next} /> : null}
+                          <input type="hidden" name="email" value={account.email} />
+                          <button
+                            type="submit"
+                            className="flex w-full items-center gap-3 rounded-2xl border border-line bg-surface px-3 py-3 text-left shadow-[var(--shadow-soft)] transition hover:border-mint hover:bg-muted/50"
+                          >
+                            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint/35 text-xs font-semibold text-ink ring-1 ring-line-strong">
+                              {initials(account.fullName)}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-medium text-ink">
+                                {account.fullName}
+                              </span>
+                              <span className="block truncate text-xs text-leaf">
+                                {account.hint || mvpRoleLabel(account.role)} · {account.email}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-sm font-medium text-gold">Войти</span>
+                          </button>
+                        </form>
+                      ) : canQuick ? (
                         <form action={quickLoginAction}>
                           {next ? <input type="hidden" name="next" value={next} /> : null}
                           <button
@@ -207,7 +244,7 @@ export function RoleLoginPicker({
                           </span>
                         </button>
                       )}
-                      {selected && !canQuick ? (
+                      {selected && !canQuick && !seedAnalyst ? (
                         <div className="rounded-2xl border border-line bg-surface p-3">
                           <p className="mb-3 text-xs text-leaf">
                             Пароль для {account.fullName}

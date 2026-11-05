@@ -7,16 +7,10 @@ import { saveAssumptionSet } from "@/server/services/economy-service";
 
 export type AssumptionFormValues = {
   expectedListedPerYear: string;
-  avgNewPrice: string;
-  avgMaterials: string;
-  defaultTransport: string;
-  practiceConsumable: string;
-  substitutionPercent: string;
   completionPercent: string;
-  hostingAnnual: string;
-  supportAnnual: string;
-  illustrativeLaborHour: string;
-  basisNote: string;
+  avgNewPrice: string;
+  avgRepair: string;
+  platformAnnual: string;
   shownOnDashboard: boolean;
 };
 
@@ -33,16 +27,10 @@ function text(formData: FormData, key: string): string {
 function valuesFromForm(formData: FormData): AssumptionFormValues {
   return {
     expectedListedPerYear: text(formData, "expectedListedPerYear"),
-    avgNewPrice: text(formData, "avgNewPrice"),
-    avgMaterials: text(formData, "avgMaterials"),
-    defaultTransport: text(formData, "defaultTransport"),
-    practiceConsumable: text(formData, "practiceConsumable"),
-    substitutionPercent: text(formData, "substitutionPercent"),
     completionPercent: text(formData, "completionPercent"),
-    hostingAnnual: text(formData, "hostingAnnual"),
-    supportAnnual: text(formData, "supportAnnual"),
-    illustrativeLaborHour: text(formData, "illustrativeLaborHour"),
-    basisNote: text(formData, "basisNote"),
+    avgNewPrice: text(formData, "avgNewPrice"),
+    avgRepair: text(formData, "avgRepair"),
+    platformAnnual: text(formData, "platformAnnual"),
     shownOnDashboard: formData.get("shownOnDashboard") === "on",
   };
 }
@@ -57,16 +45,10 @@ export async function updateAssumptionAction(
     kind: text(formData, "kind"),
     shownOnDashboard: formData.get("shownOnDashboard") === "on" ? "on" : "",
     expectedListedPerYear: values.expectedListedPerYear,
-    avgNewPrice: values.avgNewPrice,
-    avgMaterials: values.avgMaterials,
-    defaultTransport: values.defaultTransport,
-    practiceConsumable: values.practiceConsumable,
-    substitutionPercent: values.substitutionPercent,
     completionPercent: values.completionPercent,
-    hostingAnnual: values.hostingAnnual,
-    supportAnnual: values.supportAnnual,
-    illustrativeLaborHour: values.illustrativeLaborHour,
-    basisNote: values.basisNote,
+    avgNewPrice: values.avgNewPrice,
+    avgRepair: values.avgRepair,
+    platformAnnual: values.platformAnnual,
   });
 
   if (!parsed.success) {
@@ -82,15 +64,11 @@ export async function updateAssumptionAction(
     shownOnDashboard: data.shownOnDashboard,
     expectedListedPerYear: data.expectedListedPerYear,
     avgNewPriceKop: data.avgNewPrice,
-    avgMaterialsKop: data.avgMaterials,
-    defaultTransportKop: data.defaultTransport,
-    practiceConsumableKop: data.practiceConsumable,
-    substitutionMilli: data.substitutionPercent * 10,
+    avgMaterialsKop: data.avgRepair,
+    defaultTransportKop: 0,
     completionMilli: data.completionPercent * 10,
-    hostingKopAnnual: data.hostingAnnual,
-    supportKopAnnual: data.supportAnnual,
-    illustrativeLaborKopHour: data.illustrativeLaborHour,
-    basisNote: data.basisNote,
+    hostingKopAnnual: data.platformAnnual,
+    supportKopAnnual: 0,
   });
 
   if (!result.ok) return { error: result.error, values };

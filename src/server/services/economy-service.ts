@@ -199,13 +199,9 @@ export async function saveAssumptionSet(
     avgNewPriceKop: number;
     avgMaterialsKop: number;
     defaultTransportKop: number;
-    practiceConsumableKop: number;
-    substitutionMilli: number;
     completionMilli: number;
     hostingKopAnnual: number;
     supportKopAnnual: number;
-    illustrativeLaborKopHour: number;
-    basisNote: string;
   },
 ): Promise<AssumptionUpdateResult> {
   if (actor.role !== "DISTRICT_ANALYST" && actor.role !== "PLATFORM_ADMIN") {
@@ -222,7 +218,21 @@ export async function saveAssumptionSet(
     };
   }
 
-  await updateAssumptionSet(input);
+  await updateAssumptionSet({
+    kind: input.kind,
+    shownOnDashboard: input.shownOnDashboard,
+    expectedListedPerYear: input.expectedListedPerYear,
+    avgNewPriceKop: input.avgNewPriceKop,
+    avgMaterialsKop: input.avgMaterialsKop,
+    defaultTransportKop: input.defaultTransportKop,
+    practiceConsumableKop: existing.practiceConsumableKop,
+    substitutionMilli: existing.substitutionMilli,
+    completionMilli: input.completionMilli,
+    hostingKopAnnual: input.hostingKopAnnual,
+    supportKopAnnual: input.supportKopAnnual,
+    illustrativeLaborKopHour: existing.illustrativeLaborKopHour,
+    basisNote: existing.basisNote,
+  });
   return { ok: true };
 }
 

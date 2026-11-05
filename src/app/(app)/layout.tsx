@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AccountHistorySync } from "@/components/account-history-sync";
 import { AuthHeader } from "@/components/auth-header";
+import { BrandLockup } from "@/components/brand-mark";
 import { SectionNav } from "@/components/section-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { roleHome, sectionsForRole } from "@/domain/access/roles";
@@ -40,9 +41,10 @@ async function AppShell({ children }: { children: ReactNode }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href={roleHome(user.role)}
-              className="text-sm font-semibold tracking-wide text-ink"
+              className="inline-flex items-center"
+              aria-label="ReSchool"
             >
-              ReSchool
+              <BrandLockup />
             </Link>
             <SectionNav links={links} />
           </div>
@@ -50,7 +52,6 @@ async function AppShell({ children }: { children: ReactNode }) {
             <ThemeToggle />
             <AuthHeader
               user={{ fullName: user.fullName, role: user.role, email: user.email }}
-              remembered={null}
             />
           </div>
         </div>

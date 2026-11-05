@@ -2,11 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import {
-  logoutAction,
-  quickLoginAction,
-  switchAccountAction,
-} from "@/app/actions/auth";
+import { logoutAction, switchAccountAction } from "@/app/actions/auth";
 import { mvpRoleLabel, roleHome, type UserRole } from "@/domain/access/roles";
 
 export type AuthHeaderProfile = {
@@ -42,34 +38,6 @@ function GuestActions() {
     <Link href="/login" className="btn-ghost btn-sm">
       Войти / Зарегистрироваться
     </Link>
-  );
-}
-
-function RememberedActions({ profile }: { profile: AuthHeaderProfile }) {
-  const firstName = profile.fullName.trim().split(/\s+/)[0] ?? profile.fullName;
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex items-center gap-2 rounded-2xl border border-line bg-surface/90 py-1 pl-1 pr-2 shadow-[var(--shadow-soft)]">
-        <Avatar name={profile.fullName} />
-        <div className="min-w-0 pr-1">
-          <p className="truncate text-sm font-medium text-ink">
-            {firstName}{" "}
-            <span className="font-normal text-leaf">({mvpRoleLabel(profile.role)})</span>
-          </p>
-          <p className="truncate text-[11px] text-leaf">Войти как…</p>
-        </div>
-        <form action={quickLoginAction}>
-          <button type="submit" className="btn-primary btn-sm whitespace-nowrap">
-            Это я
-          </button>
-        </form>
-      </div>
-      <form action={switchAccountAction}>
-        <button type="submit" className="text-xs text-leaf underline-offset-2 hover:text-ink hover:underline">
-          Сменить аккаунт
-        </button>
-      </form>
-    </div>
   );
 }
 
@@ -151,14 +119,7 @@ function AuthedMenu({ profile }: { profile: AuthHeaderProfile }) {
   );
 }
 
-export function AuthHeader({
-  user,
-  remembered,
-}: {
-  user: AuthHeaderProfile | null;
-  remembered: AuthHeaderProfile | null;
-}) {
+export function AuthHeader({ user }: { user: AuthHeaderProfile | null }) {
   if (user) return <AuthedMenu profile={user} />;
-  if (remembered) return <RememberedActions profile={remembered} />;
   return <GuestActions />;
 }

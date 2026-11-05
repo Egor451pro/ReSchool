@@ -30,7 +30,7 @@ export default async function DistrictPage() {
           href="/district/calculator"
           className="panel-accent inline-flex h-10 items-center justify-center rounded-2xl px-4 text-sm font-medium shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90"
         >
-          Калькулятор сценариев
+          Калькулятор
         </Link>
       </div>
 

@@ -57,7 +57,7 @@ const percentField = (label: string) =>
     .transform((value) => Number(value))
     .refine((value) => value >= 0 && value <= 100, `${label} от 0 до 100`);
 
-/** Форма калькулятора: рубли и проценты, внутри — копейки и milli. */
+/** Упрощённая форма калькулятора аналитика. */
 export const assumptionFormSchema = z.object({
   kind: z.enum(scenarioKinds),
   shownOnDashboard: z
@@ -65,16 +65,10 @@ export const assumptionFormSchema = z.object({
     .optional()
     .transform((value) => value === "true" || value === "on"),
   expectedListedPerYear: intField("Карточек в год", 10_000),
-  avgNewPrice: bynField,
-  avgMaterials: bynField,
-  defaultTransport: bynField,
-  practiceConsumable: bynField,
-  substitutionPercent: percentField("Замещение"),
   completionPercent: percentField("Доля до выдачи"),
-  hostingAnnual: bynField,
-  supportAnnual: bynField,
-  illustrativeLaborHour: bynField,
-  basisNote: z.string().trim().min(10, "Кратко опишите основу допущений"),
+  avgNewPrice: bynField,
+  avgRepair: bynField,
+  platformAnnual: bynField,
 });
 
 export type AssumptionFormInput = z.infer<typeof assumptionFormSchema>;

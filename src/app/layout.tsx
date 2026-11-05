@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ReSchool",
-  description: "Повторное использование школьного имущества через практику ПТО",
+  description: "Повторное использование школьного имущества через ремонт и биржу фрилансеров",
+  applicationName: "ReSchool",
 };
 
 const themeBoot = `(function(){try{var t=localStorage.getItem('reschool-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}if(t==='dark')document.documentElement.classList.add('dark')}catch(e){}})();`;
@@ -31,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Script id="reschool-theme" strategy="beforeInteractive">
           {themeBoot}
         </Script>
-        {children}
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

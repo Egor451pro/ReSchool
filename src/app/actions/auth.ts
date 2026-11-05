@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { DEMO_PASSWORD } from "@/domain/access/demo-accounts";
 import { roleHome, safeNextPath } from "@/domain/access/roles";
 import {
   loginSchema,
@@ -15,7 +16,7 @@ import {
   writeRememberedProfile,
   writeSession,
 } from "@/server/auth/cookies";
-import { findUserById } from "@/server/repositories/user-repository";
+import { findUserByEmail, findUserById } from "@/server/repositories/user-repository";
 import {
   loginWithPassword,
   registerDonorWithInstitution,
@@ -136,6 +137,28 @@ export async function registerAction(
 
 export async function demoLoginAction(formData: FormData): Promise<void> {
   await loginAction({}, formData);
+}
+
+/** Однокликовый вход в сидовый профиль аналитика (*.demo). */
+export async function demoAnalystLoginAction(formData: FormData): Promise<void> {
+  const emailRaw = formData.get("email");
+  const email = typeof emailRaw === "string" ? emailRaw.trim().toLowerCase() : "";
+  if (!email || !isSeedDemoEmail(email)) {
+    redirect("/login?role=analyst");
+  }
+
+  const user = await findUserByEmail(email);
+  if (!user || user.role !== "DISTRICT_ANALYST") {
+    redirect("/login?role=analyst");
+  }
+
+  const result = await loginWithPassword(email, DEMO_PASSWORD);
+  if (!result.ok) {
+    redirect("/login?role=analyst");
+  }
+
+  await establishSession(result);
+  redirect(safeNextPath(readNext(formData), result.role));
 }
 
 /** Выход из сессии, но профиль для быстрого входа сохраняется. */
