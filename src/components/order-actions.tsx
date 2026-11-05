@@ -4,8 +4,6 @@ import { useActionState } from "react";
 import {
   advanceOrderAction,
   cancelOrderAction,
-  closeOrderAction,
-  deliverOrderAction,
   unrepairableOrderAction,
   type OrderFormState,
 } from "@/app/actions/orders";
@@ -56,9 +54,9 @@ export function OrderActions({
 }) {
   const next = nextOrderStatus(orderStatus);
   const canCancel = orderStatus === "ASSIGNED" || orderStatus === "IN_PROGRESS";
-  const canDeliver = orderStatus === "COMPLETED" && itemStatus === "READY";
-  const canClose = orderStatus === "COMPLETED" && itemStatus === "DELIVERED";
   const canUnrepair = orderStatus === "IN_PROGRESS" && itemStatus === "IN_REPAIR";
+  const waitingSchool = orderStatus === "COMPLETED" && itemStatus === "READY";
+  const closed = orderStatus === "COMPLETED" && itemStatus === "CLOSED";
 
   return (
     <div className="flex flex-col gap-2">
@@ -76,24 +74,13 @@ export function OrderActions({
           pendingLabel="Сохраняем…"
         />
       ) : null}
-      {canDeliver ? (
-        <ActionButton
-          action={deliverOrderAction}
-          orderId={orderId}
-          label="Отметить передачу"
-          pendingLabel="Сохраняем…"
-        />
+      {waitingSchool ? (
+        <p className="text-xs text-leaf">
+          Качество подтверждено. Школа подтвердит получение в кабинете.
+        </p>
       ) : null}
-      {canClose ? (
-        <ActionButton
-          action={closeOrderAction}
-          orderId={orderId}
-          label="Закрыть со снимком"
-          pendingLabel="Фиксируем…"
-        />
-      ) : null}
-      {orderStatus === "COMPLETED" && itemStatus === "CLOSED" ? (
-        <p className="text-xs text-leaf">Закрыто. Экономия зафиксирована снимком.</p>
+      {closed ? (
+        <p className="text-xs text-leaf">Школа подтвердила ремонт. Экономия зафиксирована.</p>
       ) : null}
       {canCancel ? (
         <ActionButton

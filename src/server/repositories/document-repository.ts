@@ -127,6 +127,113 @@ export async function createReturnOrTransferAct(input: {
   });
 }
 
+/** Школа подтверждает ремонт: акт возврата + закрытие со снимком экономии. */
+export async function confirmSchoolRepair(input: {
+  orderId: string;
+  itemId: string;
+  actorId: string;
+  fromInstitutionId: string;
+  toInstitutionId: string;
+  payloadJson: string;
+  assumptionId: string;
+  materialsKop: number;
+  transportKop: number;
+  newPriceKop: number;
+  procurementSavingKop: number;
+  avoidedDisposalKop: number;
+  propertyBudgetKop: number;
+  practiceSavingKop: number;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const existingAct = await tx.document.count({
+      where: {
+        orderId: input.orderId,
+        type: { in: ["RETURN_ACT", "TRANSFER_ACT"] },
+      },
+    });
+    if (existingAct > 0) return { ok: false as const, reason: "exists" as const };
+
+    const existingSnapshot = await tx.economySnapshot.findUnique({
+      where: { orderId: input.orderId },
+      select: { id: true },
+    });
+    if (existingSnapshot) return { ok: false as const, reason: "snapshot" as const };
+
+    const delivered = await tx.item.updateMany({
+      where: { id: input.itemId, status: "READY" },
+      data: { status: "DELIVERED" },
+    });
+    if (delivered.count !== 1) return { ok: false as const, reason: "locked" as const };
+
+    const number = await nextActNumber(tx);
+    const document = await tx.document.create({
+      data: {
+        type: "RETURN_ACT",
+        number,
+        orderId: input.orderId,
+        payload: input.payloadJson,
+      },
+      select: documentSelect,
+    });
+
+    await tx.transfer.create({
+      data: {
+        itemId: input.itemId,
+        fromInstitutionId: input.fromInstitutionId,
+        toInstitutionId: input.toInstitutionId,
+        transferredAt: new Date(),
+        documentId: document.id,
+      },
+    });
+
+    await tx.statusEvent.create({
+      data: {
+        itemId: input.itemId,
+        orderId: input.orderId,
+        fromStatus: "READY",
+        toStatus: "DELIVERED",
+        actorId: input.actorId,
+        comment: "Школа подтвердила получение отремонтированного предмета.",
+      },
+    });
+
+    const closed = await tx.item.updateMany({
+      where: { id: input.itemId, status: "DELIVERED" },
+      data: { status: "CLOSED", closeReason: "COMPLETED" },
+    });
+    if (closed.count !== 1) {
+      throw new Error("Не удалось закрыть предмет после подтверждения");
+    }
+
+    await tx.economySnapshot.create({
+      data: {
+        orderId: input.orderId,
+        assumptionId: input.assumptionId,
+        newPriceKop: input.newPriceKop,
+        materialsKop: input.materialsKop,
+        transportKop: input.transportKop,
+        procurementSavingKop: input.procurementSavingKop,
+        avoidedDisposalKop: input.avoidedDisposalKop,
+        propertyBudgetKop: input.propertyBudgetKop,
+        practiceSavingKop: input.practiceSavingKop,
+      },
+    });
+
+    await tx.statusEvent.create({
+      data: {
+        itemId: input.itemId,
+        orderId: input.orderId,
+        fromStatus: "DELIVERED",
+        toStatus: "CLOSED",
+        actorId: input.actorId,
+        comment: "Ремонт подтверждён школой, экономия зафиксирована.",
+      },
+    });
+
+    return { ok: true as const, document };
+  });
+}
+
 export async function createWriteOffWithClose(input: {
   orderId: string;
   itemId: string;

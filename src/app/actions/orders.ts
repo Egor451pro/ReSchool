@@ -10,6 +10,7 @@ import {
   markOrderUnrepairable,
 } from "@/server/services/order-service";
 import { closeDeliveredOrder } from "@/server/services/economy-service";
+import { revalidateAppViews } from "@/server/revalidate";
 
 export type OrderFormState = { error?: string };
 
@@ -28,6 +29,7 @@ export async function claimItemAction(
     groupId: text(formData, "groupId"),
   });
   if (!result.ok) return { error: result.error };
+  revalidateAppViews();
   redirect("/orders");
 }
 
@@ -38,6 +40,7 @@ export async function advanceOrderAction(
   const actor = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
   const result = await advanceOrder(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
+  revalidateAppViews();
   redirect("/orders");
 }
 
@@ -48,6 +51,7 @@ export async function cancelOrderAction(
   const actor = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
   const result = await cancelOrder(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
+  revalidateAppViews();
   redirect("/orders");
 }
 
@@ -58,6 +62,7 @@ export async function deliverOrderAction(
   const actor = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
   const result = await markOrderDelivered(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
+  revalidateAppViews();
   redirect("/orders");
 }
 
@@ -68,6 +73,7 @@ export async function unrepairableOrderAction(
   const actor = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
   const result = await markOrderUnrepairable(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
+  revalidateAppViews();
   redirect("/orders");
 }
 
@@ -78,5 +84,6 @@ export async function closeOrderAction(
   const actor = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
   const result = await closeDeliveredOrder(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
+  revalidateAppViews();
   redirect("/orders");
 }

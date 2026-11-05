@@ -19,7 +19,7 @@ export default async function LoginPage({
       <PageShell>
         <PageHeader
           title="Вход"
-          description="Три профиля для демо: школа публикует, мастерская чинит, администратор видит всё."
+          description="Выберите школу или мастерскую — или войдите как администратор."
         />
         <DemoLogins next={next} />
         <Surface className="max-w-md">

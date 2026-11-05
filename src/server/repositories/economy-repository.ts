@@ -51,6 +51,9 @@ export function listDistrictSnapshots(district: string | null) {
     orderBy: { computedAt: "desc" },
     select: {
       id: true,
+      newPriceKop: true,
+      materialsKop: true,
+      transportKop: true,
       procurementSavingKop: true,
       avoidedDisposalKop: true,
       propertyBudgetKop: true,
@@ -61,9 +64,10 @@ export function listDistrictSnapshots(district: string | null) {
           actualMinutes: true,
           item: {
             select: {
+              id: true,
               quantity: true,
               title: true,
-              institution: { select: { id: true, name: true } },
+              institution: { select: { id: true, name: true, district: true } },
             },
           },
         },

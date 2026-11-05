@@ -40,6 +40,43 @@ export function listUsers() {
   });
 }
 
+/** Демо-профили сотрудников школ для выбора при входе. */
+export function listSchoolStaffProfiles() {
+  return prisma.user.findMany({
+    where: {
+      role: "DONOR_STAFF",
+      institutionId: { not: null },
+      institution: { type: { in: ["SCHOOL", "GYMNASIUM", "LYCEUM"] } },
+    },
+    orderBy: [{ institution: { name: "asc" } }],
+    select: {
+      email: true,
+      fullName: true,
+      institution: {
+        select: { id: true, name: true, type: true, address: true },
+      },
+    },
+  });
+}
+
+/** Демо-профили мастеров для выбора мастерской. */
+export function listWorkshopStaffProfiles() {
+  return prisma.user.findMany({
+    where: {
+      role: "WORKSHOP_MASTER",
+      institutionId: { not: null },
+    },
+    orderBy: [{ institution: { name: "asc" } }, { fullName: "asc" }],
+    select: {
+      email: true,
+      fullName: true,
+      institution: {
+        select: { id: true, name: true, type: true, address: true },
+      },
+    },
+  });
+}
+
 export function countInstitutionItems(institutionId: string) {
   return prisma.item.count({ where: { institutionId } });
 }

@@ -94,7 +94,7 @@ export const appSections: readonly AppSection[] = [
     hint: "ход ремонта",
     roles: ["WORKSHOP_MASTER", "PLATFORM_ADMIN"],
   },
-  { href: "/admin", label: "Участники", hint: "учётки", roles: ["PLATFORM_ADMIN"] },
+  { href: "/admin", label: "Сводка", hint: "экономия", roles: ["PLATFORM_ADMIN"] },
 ];
 
 const homes: Record<UserRole, string> = {

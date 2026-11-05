@@ -2,8 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { requireRoles } from "@/server/auth/current-user";
+import { confirmRepairBySchool } from "@/server/services/document-service";
 import { publishItem, reviseItem, withdrawItem } from "@/server/services/item-service";
 import { publishRequest } from "@/server/services/request-service";
+import { revalidateAppViews } from "@/server/revalidate";
 import { itemFormSchema, requestFormSchema } from "@/lib/validators/item";
 
 export type ItemFormValues = {
@@ -122,6 +124,7 @@ export async function publishItemAction(
   const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
   const result = await publishItem(actor, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
+  revalidateAppViews();
   redirect(`/catalog/${result.itemId}`);
 }
 
@@ -138,6 +141,7 @@ export async function reviseItemAction(
   const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
   const result = await reviseItem(actor, itemId, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
+  revalidateAppViews();
   redirect(`/catalog/${result.itemId}`);
 }
 
@@ -151,6 +155,7 @@ export async function withdrawItemAction(
   const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
   const result = await withdrawItem(actor, text(formData, "itemId"));
   if (!result.ok) return { error: result.error };
+  revalidateAppViews();
   redirect("/cabinet");
 }
 
@@ -168,4 +173,18 @@ export async function publishRequestAction(
   const result = await publishRequest(actor, parsed.data);
   if (!result.ok) return { error: result.error, request };
   redirect("/cabinet#needs");
+}
+
+export type ConfirmRepairState = { error?: string };
+
+export async function confirmRepairAction(
+  _state: ConfirmRepairState,
+  formData: FormData,
+): Promise<ConfirmRepairState> {
+  const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const result = await confirmRepairBySchool(actor, text(formData, "itemId"));
+  if (!result.ok) return { error: result.error };
+  // Без revalidate страница кабинета остаётся со старым RSC-снимком.
+  revalidateAppViews();
+  redirect("/cabinet");
 }

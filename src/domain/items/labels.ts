@@ -19,7 +19,7 @@ export const statusLabels: Record<ItemStatus, string> = {
   LISTED: "Опубликовано",
   REQUESTED: "Запрошено",
   IN_REPAIR: "В ремонте",
-  READY: "Готово",
+  READY: "Ждёт школы",
   DELIVERED: "Передано",
   CLOSED: "Закрыто",
 };

@@ -71,6 +71,7 @@ function BoardColumn({
                 >
                   {order.item.title}
                 </Link>
+                <p className="text-sm text-ink">{order.item.institution.name}</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={order.item.status} />
                   <span className="text-sm text-leaf">{order.group.name}</span>

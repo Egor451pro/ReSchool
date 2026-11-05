@@ -34,7 +34,8 @@ export function listCatalogItems(query: CatalogQuery) {
   if (query.district) where.institution = { district: query.district };
   if (query.category) where.category = { slug: query.category };
   if (query.condition) where.condition = query.condition;
-  if (query.status) where.status = query.status;
+  // В каталоге только свободные объявления — взятые в работу скрыты.
+  where.status = "LISTED";
 
   return prisma.item.findMany({
     where,
@@ -43,11 +44,62 @@ export function listCatalogItems(query: CatalogQuery) {
   });
 }
 
+/** Активные карточки школы: ещё не ушли в историю. */
+export function listInstitutionActiveItems(institutionId: string) {
+  return prisma.item.findMany({
+    where: { institutionId, status: { not: "CLOSED" } },
+    orderBy: [{ createdAt: "desc" }, { title: "asc" }],
+    select: tileSelect,
+  });
+}
+
+/** История завершённых ремонтов и снятых карточек. */
+export function listInstitutionRepairHistory(institutionId: string) {
+  return prisma.item.findMany({
+    where: { institutionId, status: "CLOSED" },
+    orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+    select: {
+      ...tileSelect,
+      closeReason: true,
+      updatedAt: true,
+    },
+  });
+}
+
 export function listInstitutionItems(institutionId: string) {
   return prisma.item.findMany({
     where: { institutionId },
     orderBy: [{ createdAt: "desc" }, { title: "asc" }],
     select: tileSelect,
+  });
+}
+
+export function findConfirmableOrderForItem(itemId: string) {
+  return prisma.repairOrder.findFirst({
+    where: {
+      itemId,
+      status: "COMPLETED",
+      item: { status: "READY" },
+    },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      status: true,
+      actualMaterialsKop: true,
+      transportKop: true,
+      item: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          quantity: true,
+          newUnitPriceKop: true,
+          categoryId: true,
+          institutionId: true,
+          institution: { select: { id: true, name: true } },
+        },
+      },
+    },
   });
 }
 

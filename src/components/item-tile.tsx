@@ -36,7 +36,16 @@ export function ItemTile({ item, showPlace }: { item: ItemTileData; showPlace?: 
           <span className="text-xs text-leaf">{conditionLabels[item.condition]}</span>
         </div>
         <h2 className="font-medium leading-6 text-ink">{item.title}</h2>
-        <p className="text-sm text-leaf">{showPlace ? item.institution.name : item.category.name}</p>
+        {showPlace ? (
+          <>
+            <p className="text-sm text-ink">{item.institution.name}</p>
+            <p className="text-xs text-leaf">
+              {item.category.name} · {item.institution.district}
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-leaf">{item.category.name}</p>
+        )}
         <p className="mt-auto text-sm text-ink">
           {item.quantity} шт. · {formatByn(item.newUnitPriceKop)} за штуку
         </p>

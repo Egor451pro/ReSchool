@@ -58,6 +58,29 @@ export type DistrictDashboard = {
   dashboardKind: ScenarioKind | null;
 };
 
+export type AdminRepairedItem = {
+  itemId: string;
+  title: string;
+  quantity: number;
+  institutionName: string;
+  district: string;
+  newPriceKop: number;
+  costsKop: number;
+  savingKop: number;
+  computedAt: Date;
+};
+
+export type AdminEconomyOverview = {
+  repairedCount: number;
+  /** Сколько стоило бы купить всё новое. */
+  newPriceTotalKop: number;
+  /** Материалы + транспорт по закрытым ремонтам. */
+  costsTotalKop: number;
+  /** Экономия закупки: новые − затраты на ремонт. */
+  savingTotalKop: number;
+  items: AdminRepairedItem[];
+};
+
 function canCloseOrder(
   actor: EconomyActor,
   order: { masterId: string; workshopInstitutionId: string },
@@ -134,6 +157,33 @@ export async function loadDistrictDashboard(
     topInstitutions: rankInstitutions(snapshots),
     scenarios,
     dashboardKind: dashboard?.kind ?? null,
+  };
+}
+
+/** Сводка кабинета администратора: факт по подтверждённым ремонтам. */
+export async function loadAdminEconomyOverview(): Promise<AdminEconomyOverview> {
+  const snapshots = await listDistrictSnapshots(null);
+  const items: AdminRepairedItem[] = snapshots.map((row) => {
+    const costsKop = row.materialsKop + row.transportKop;
+    return {
+      itemId: row.order.item.id,
+      title: row.order.item.title,
+      quantity: row.order.item.quantity,
+      institutionName: row.order.item.institution.name,
+      district: row.order.item.institution.district,
+      newPriceKop: row.newPriceKop,
+      costsKop,
+      savingKop: row.procurementSavingKop,
+      computedAt: row.computedAt,
+    };
+  });
+
+  return {
+    repairedCount: items.length,
+    newPriceTotalKop: items.reduce((sum, row) => sum + row.newPriceKop, 0),
+    costsTotalKop: items.reduce((sum, row) => sum + row.costsKop, 0),
+    savingTotalKop: items.reduce((sum, row) => sum + row.savingKop, 0),
+    items,
   };
 }
 
