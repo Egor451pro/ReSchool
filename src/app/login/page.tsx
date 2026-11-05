@@ -3,6 +3,7 @@ import { LoginForm } from "@/components/login-form";
 import { SiteHeader } from "@/components/site-header";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
+import Link from "next/link";
 
 export const instant = false;
 
@@ -19,19 +20,27 @@ export default async function LoginPage({
       <PageShell>
         <PageHeader
           title="Вход"
-          description="Войдите как завхоз, исполнитель или администратор."
+          description="Войдите по почте и паролю или выберите демо-роль ниже."
         />
-        <DemoLogins next={next} />
         <Surface className="max-w-md">
-          <details className="group">
-            <summary className="cursor-pointer list-none text-sm font-medium text-leaf hover:text-ink">
-              Войти по почте
-            </summary>
-            <div className="mt-4">
-              <LoginForm next={next} />
-            </div>
-          </details>
+          <h2 className="mb-4 text-base font-semibold text-ink">Почта и пароль</h2>
+          <LoginForm next={next} />
+          <p className="mt-4 text-sm text-leaf">
+            Нет учётки?{" "}
+            <Link href="/register" className="font-medium text-leaf underline hover:text-ink">
+              Зарегистрировать школу
+            </Link>{" "}
+            или{" "}
+            <Link
+              href="/register?role=freelancer"
+              className="font-medium text-leaf underline hover:text-ink"
+            >
+              стать фрилансером
+            </Link>
+            .
+          </p>
         </Surface>
+        <DemoLogins next={next} />
       </PageShell>
     </>
   );

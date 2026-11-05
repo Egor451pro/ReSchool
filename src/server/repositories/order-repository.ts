@@ -15,7 +15,9 @@ const exchangeSelect = {
       id: true,
       name: true,
       slug: true,
-      specialties: { select: { specialtyId: true, specialty: { select: { id: true, name: true } } } },
+      specialties: {
+        select: { specialtyId: true, specialty: { select: { id: true, name: true } } },
+      },
     },
   },
   institution: { select: { id: true, name: true, district: true, lat: true, lng: true } },
@@ -30,12 +32,11 @@ const orderCardSelect = {
   transportKop: true,
   plannedMinutes: true,
   actualMinutes: true,
+  agreedFeeKop: true,
+  schoolAcceptedAt: true,
   dueDate: true,
   createdAt: true,
   masterId: true,
-  workshopInstitutionId: true,
-  group: { select: { id: true, name: true } },
-  specialty: { select: { id: true, name: true } },
   item: {
     select: {
       id: true,
@@ -54,23 +55,8 @@ const orderCardSelect = {
   },
 } satisfies Prisma.RepairOrderSelect;
 
-export function listMasterGroups(masterId: string) {
-  return prisma.studyGroup.findMany({
-    where: { masterId },
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      specialtyId: true,
-      specialty: { select: { id: true, name: true } },
-      institutionId: true,
-    },
-  });
-}
-
-/** Все свободные объявления биржи. Фильтр по специальности в MVP не режем. */
-export function listExchangeItems(_specialtyIds?: string[]) {
-  void _specialtyIds;
+/** Все свободные объявления биржи. */
+export function listExchangeItems() {
   return prisma.item.findMany({
     where: {
       status: "LISTED",
@@ -79,14 +65,6 @@ export function listExchangeItems(_specialtyIds?: string[]) {
     },
     orderBy: { createdAt: "desc" },
     select: exchangeSelect,
-  });
-}
-
-export function listWorkshopOrders(workshopInstitutionId: string) {
-  return prisma.repairOrder.findMany({
-    where: { workshopInstitutionId },
-    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-    select: orderCardSelect,
   });
 }
 
@@ -104,8 +82,6 @@ export function findOrderForMaster(orderId: string) {
     select: {
       ...orderCardSelect,
       itemId: true,
-      specialtyId: true,
-      groupId: true,
     },
   });
 }
@@ -118,6 +94,7 @@ export function findClaimableItem(itemId: string) {
       status: true,
       condition: true,
       quantity: true,
+      newUnitPriceKop: true,
       categoryId: true,
       institutionId: true,
       category: {
@@ -133,19 +110,19 @@ export function findClaimableItem(itemId: string) {
   });
 }
 
-export function findWorkshopCoords(institutionId: string) {
-  return prisma.institution.findUnique({
-    where: { id: institutionId },
-    select: { id: true, name: true, lat: true, lng: true },
-  });
+export function listFreelancerSpecialtyIds(userId: string) {
+  return prisma.freelancerSkill
+    .findMany({
+      where: { userId },
+      select: { specialtyId: true },
+    })
+    .then((rows) => rows.map((row) => row.specialtyId));
 }
 
 export async function claimItemOrder(input: {
   itemId: string;
-  workshopInstitutionId: string;
-  specialtyId: string;
   masterId: string;
-  groupId: string;
+  agreedFeeKop: number;
   plannedMaterialsKop: number;
   transportKop: number;
   plannedMinutes: number;
@@ -166,10 +143,9 @@ export async function claimItemOrder(input: {
     const order = await tx.repairOrder.create({
       data: {
         itemId: input.itemId,
-        workshopInstitutionId: input.workshopInstitutionId,
-        specialtyId: input.specialtyId,
         masterId: input.masterId,
-        groupId: input.groupId,
+        agreedFeeKop: input.agreedFeeKop,
+        schoolAcceptedAt: null,
         status: "ASSIGNED",
         plannedMaterialsKop: input.plannedMaterialsKop,
         transportKop: input.transportKop,
@@ -186,7 +162,47 @@ export async function claimItemOrder(input: {
         fromStatus: "LISTED",
         toStatus: "REQUESTED",
         actorId: input.masterId,
-        comment: "Исполнитель взял предмет в работу.",
+        comment: "Фрилансер предложил заказ и цену. Ждём подтверждения завхоза.",
+      },
+    });
+
+    return { ok: true as const, orderId: order.id };
+  });
+}
+
+export async function acceptOrderBySchool(input: {
+  orderId: string;
+  itemId: string;
+  actorId: string;
+  institutionId: string;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.repairOrder.findFirst({
+      where: {
+        id: input.orderId,
+        itemId: input.itemId,
+        status: "ASSIGNED",
+        schoolAcceptedAt: null,
+        item: { institutionId: input.institutionId, status: "REQUESTED" },
+      },
+      select: { id: true },
+    });
+    if (!order) return { ok: false as const, reason: "locked" as const };
+
+    const updated = await tx.repairOrder.updateMany({
+      where: { id: order.id, status: "ASSIGNED", schoolAcceptedAt: null },
+      data: { schoolAcceptedAt: new Date() },
+    });
+    if (updated.count !== 1) return { ok: false as const, reason: "locked" as const };
+
+    await tx.statusEvent.create({
+      data: {
+        itemId: input.itemId,
+        orderId: order.id,
+        fromStatus: "REQUESTED",
+        toStatus: "REQUESTED",
+        actorId: input.actorId,
+        comment: "Завхоз принял заказ фрилансера.",
       },
     });
 

@@ -81,12 +81,9 @@ export type AdminEconomyOverview = {
   items: AdminRepairedItem[];
 };
 
-function canCloseOrder(
-  actor: EconomyActor,
-  order: { masterId: string; workshopInstitutionId: string },
-): boolean {
+function canCloseOrder(actor: EconomyActor, order: { masterId: string }): boolean {
   if (actor.role === "PLATFORM_ADMIN") return true;
-  if (actor.role !== "WORKSHOP_MASTER") return false;
+  if (actor.role !== "FREELANCER") return false;
   return order.masterId === actor.id;
 }
 
@@ -125,6 +122,7 @@ export async function loadDistrictDashboard(
       avoidedDisposalKop: row.avoidedDisposalKop,
       propertyBudgetKop: row.propertyBudgetKop,
       practiceSavingKop: row.practiceSavingKop,
+      freelancerFeeKop: row.freelancerFeeKop,
       minutes: row.order.actualMinutes,
     })),
   );
@@ -140,6 +138,7 @@ export async function loadDistrictDashboard(
       avgMaterialsKop: set.avgMaterialsKop,
       avgDisposalKop: set.avgDisposalKop,
       defaultTransportKop: set.defaultTransportKop,
+      freelancerAvgFeeKop: set.freelancerAvgFeeKop,
       practiceConsumableKop: set.practiceConsumableKop,
       substitutionMilli: set.substitutionMilli,
       completionMilli: set.completionMilli,
@@ -164,7 +163,7 @@ export async function loadDistrictDashboard(
 export async function loadAdminEconomyOverview(): Promise<AdminEconomyOverview> {
   const snapshots = await listDistrictSnapshots(null);
   const items: AdminRepairedItem[] = snapshots.map((row) => {
-    const costsKop = row.materialsKop + row.transportKop;
+    const costsKop = row.materialsKop + row.transportKop + row.freelancerFeeKop;
     return {
       itemId: row.order.item.id,
       title: row.order.item.title,
@@ -231,7 +230,7 @@ export async function closeDeliveredOrder(
   actor: EconomyActor,
   orderId: string,
 ): Promise<CloseEconomyResult> {
-  if (actor.role !== "WORKSHOP_MASTER" && actor.role !== "PLATFORM_ADMIN") {
+  if (actor.role !== "FREELANCER" && actor.role !== "PLATFORM_ADMIN") {
     return { ok: false, error: "Закрыть заказ может исполнитель или администратор" };
   }
 
@@ -259,11 +258,13 @@ export async function closeDeliveredOrder(
   const disposalPerUnitKop = rate?.perUnitKop ?? base.avgDisposalKop;
   const materialsKop = order.actualMaterialsKop;
   const transportKop = order.transportKop;
+  const freelancerFeeKop = order.agreedFeeKop;
   const economy = calculateItemEconomy({
     quantity: order.item.quantity,
     newUnitPriceKop: order.item.newUnitPriceKop,
     materialsKop,
     transportKop,
+    freelancerFeeKop,
     disposalPerUnitKop,
     practiceConsumableKop: base.practiceConsumableKop,
     substitutionMilli: base.substitutionMilli,
@@ -276,6 +277,7 @@ export async function closeDeliveredOrder(
     assumptionId: base.id,
     materialsKop,
     transportKop,
+    freelancerFeeKop: economy.freelancerFeeKop,
     newPriceKop: economy.newPriceKop,
     procurementSavingKop: economy.procurementSavingKop,
     avoidedDisposalKop: economy.avoidedDisposalKop,

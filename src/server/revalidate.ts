@@ -8,6 +8,7 @@ export function revalidateAppViews() {
   revalidatePath("/catalog");
   revalidatePath("/orders");
   revalidatePath("/workshop");
+  revalidatePath("/wallet");
   revalidatePath("/admin");
   refresh();
 }

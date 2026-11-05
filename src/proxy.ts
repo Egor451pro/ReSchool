@@ -17,7 +17,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL(roleHome(session.role), request.nextUrl));
   }
 
-  if ((path === "/login" || path === "/register") && session) {
+  // /register оставляем открытым: иначе кнопки «Я завхоз/фрилансер» с главной
+  // молча отбрасывают уже залогиненного пользователя обратно в кабинет роли.
+  if (path === "/login" && session) {
     return NextResponse.redirect(new URL(roleHome(session.role), request.nextUrl));
   }
 

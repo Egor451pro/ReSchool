@@ -1,7 +1,6 @@
 export const userRoles = [
   "DONOR_STAFF",
-  "WORKSHOP_MASTER",
-  "STUDENT",
+  "FREELANCER",
   "DISTRICT_ANALYST",
   "PLATFORM_ADMIN",
 ] as const;
@@ -27,13 +26,12 @@ export function isUserRole(value: unknown): value is UserRole {
 
 export const roleLabels: Record<UserRole, string> = {
   DONOR_STAFF: "Завхоз",
-  WORKSHOP_MASTER: "Исполнитель",
-  STUDENT: "Учащийся",
+  FREELANCER: "Фрилансер",
   DISTRICT_ANALYST: "Аналитик отдела образования",
   PLATFORM_ADMIN: "Администратор",
 };
 
-/** Подписи ролей в шапке и на входе — без ФИО и без привязки к типу учреждения. */
+/** Подписи ролей в шапке и на входе — без ФИО. */
 export function mvpRoleLabel(role: UserRole): string {
   return roleLabels[role];
 }
@@ -47,15 +45,19 @@ export const institutionTypeLabels: Record<InstitutionType, string> = {
   DEPARTMENT: "Отдел образования",
 };
 
-/** Саморегистрация не выдаёт роль учащегося, аналитика и администратора. */
-export function roleForInstitutionType(type: InstitutionType): UserRole | null {
-  if (type === "SCHOOL" || type === "GYMNASIUM" || type === "LYCEUM") {
-    return "DONOR_STAFF";
-  }
-  if (type === "COLLEGE" || type === "VOCATIONAL") {
-    return "WORKSHOP_MASTER";
-  }
-  return null;
+/** Типы учреждений, которые завхоз может зарегистрировать сам. */
+export const donorInstitutionTypes = [
+  "SCHOOL",
+  "GYMNASIUM",
+  "LYCEUM",
+  "COLLEGE",
+  "VOCATIONAL",
+] as const satisfies readonly InstitutionType[];
+
+export type DonorInstitutionType = (typeof donorInstitutionTypes)[number];
+
+export function isDonorInstitutionType(value: unknown): value is DonorInstitutionType {
+  return typeof value === "string" && (donorInstitutionTypes as readonly string[]).includes(value);
 }
 
 export type AppSection = {
@@ -67,8 +69,8 @@ export type AppSection = {
 
 /**
  * Меню по ролям:
- * - завхоз — кабинет заявок и каталог;
- * - исполнитель — заявки, биржа и заказы;
+ * - завхоз — кабинет заявок, каталог, кошелёк;
+ * - фрилансер — биржа, заказы, кошелёк;
  * - администратор — сводка и каталог.
  */
 export const appSections: readonly AppSection[] = [
@@ -77,32 +79,37 @@ export const appSections: readonly AppSection[] = [
     href: "/cabinet",
     label: "Кабинет",
     hint: "мои заявки",
-    roles: ["DONOR_STAFF", "WORKSHOP_MASTER"],
+    roles: ["DONOR_STAFF"],
   },
   {
     href: "/catalog",
     label: "Каталог",
     hint: "объявления",
-    roles: ["DONOR_STAFF", "WORKSHOP_MASTER", "PLATFORM_ADMIN"],
+    roles: ["DONOR_STAFF", "FREELANCER", "PLATFORM_ADMIN"],
   },
   {
     href: "/workshop",
     label: "Биржа",
     hint: "взять в работу",
-    roles: ["WORKSHOP_MASTER"],
+    roles: ["FREELANCER"],
   },
   {
     href: "/orders",
     label: "Заказы",
     hint: "ход ремонта",
-    roles: ["WORKSHOP_MASTER"],
+    roles: ["FREELANCER"],
+  },
+  {
+    href: "/wallet",
+    label: "Кошелёк",
+    hint: "выплаты",
+    roles: ["DONOR_STAFF", "FREELANCER"],
   },
 ];
 
 const homes: Record<UserRole, string> = {
   DONOR_STAFF: "/cabinet",
-  WORKSHOP_MASTER: "/cabinet",
-  STUDENT: "/",
+  FREELANCER: "/workshop",
   DISTRICT_ANALYST: "/district",
   PLATFORM_ADMIN: "/admin",
 };

@@ -13,7 +13,7 @@ export const instant = false;
 
 export default async function EditItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
+  const user = await requireRoles(["DONOR_STAFF"]);
   const item = await findItemForEdit(id);
   if (!item) notFound();
 

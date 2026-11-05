@@ -28,7 +28,6 @@ export function findDocumentById(id: string) {
               institution: { select: { district: true } },
             },
           },
-          workshopInstitutionId: true,
         },
       },
     },
@@ -127,11 +126,14 @@ export async function createReturnOrTransferAct(input: {
   });
 }
 
-/** Школа подтверждает ремонт: акт возврата + закрытие со снимком экономии. */
+/** Школа подтверждает ремонт: акт возврата + закрытие со снимком экономии + симуляция выплат. */
 export async function confirmSchoolRepair(input: {
   orderId: string;
   itemId: string;
   actorId: string;
+  freelancerId: string;
+  agreedFeeKop: number;
+  zavhozBonusKop: number;
   fromInstitutionId: string;
   toInstitutionId: string;
   payloadJson: string;
@@ -143,6 +145,7 @@ export async function confirmSchoolRepair(input: {
   avoidedDisposalKop: number;
   propertyBudgetKop: number;
   practiceSavingKop: number;
+  freelancerFeeKop: number;
 }) {
   return prisma.$transaction(async (tx) => {
     const existingAct = await tx.document.count({
@@ -212,12 +215,63 @@ export async function confirmSchoolRepair(input: {
         newPriceKop: input.newPriceKop,
         materialsKop: input.materialsKop,
         transportKop: input.transportKop,
+        freelancerFeeKop: input.freelancerFeeKop,
         procurementSavingKop: input.procurementSavingKop,
         avoidedDisposalKop: input.avoidedDisposalKop,
         propertyBudgetKop: input.propertyBudgetKop,
         practiceSavingKop: input.practiceSavingKop,
       },
     });
+
+    if (input.agreedFeeKop > 0) {
+      const freelancerWallet =
+        (await tx.wallet.findUnique({
+          where: { userId: input.freelancerId },
+          select: { id: true },
+        })) ??
+        (await tx.wallet.create({
+          data: { userId: input.freelancerId, balanceKop: 0 },
+          select: { id: true },
+        }));
+      await tx.wallet.update({
+        where: { id: freelancerWallet.id },
+        data: { balanceKop: { increment: input.agreedFeeKop } },
+      });
+      await tx.walletTransaction.create({
+        data: {
+          walletId: freelancerWallet.id,
+          kind: "PAYOUT",
+          amountKop: input.agreedFeeKop,
+          orderId: input.orderId,
+          note: "Выплата фрилансеру за подтверждённый ремонт",
+        },
+      });
+    }
+
+    if (input.zavhozBonusKop > 0) {
+      const zavhozWallet =
+        (await tx.wallet.findUnique({
+          where: { userId: input.actorId },
+          select: { id: true },
+        })) ??
+        (await tx.wallet.create({
+          data: { userId: input.actorId, balanceKop: 0 },
+          select: { id: true },
+        }));
+      await tx.wallet.update({
+        where: { id: zavhozWallet.id },
+        data: { balanceKop: { increment: input.zavhozBonusKop } },
+      });
+      await tx.walletTransaction.create({
+        data: {
+          walletId: zavhozWallet.id,
+          kind: "BONUS",
+          amountKop: input.zavhozBonusKop,
+          orderId: input.orderId,
+          note: "Премия завхозу из освобождённого фонда слесарей",
+        },
+      });
+    }
 
     await tx.statusEvent.create({
       data: {
@@ -226,7 +280,7 @@ export async function confirmSchoolRepair(input: {
         fromStatus: "DELIVERED",
         toStatus: "CLOSED",
         actorId: input.actorId,
-        comment: "Ремонт подтверждён завхозом, экономия зафиксирована.",
+        comment: "Ремонт подтверждён завхозом, экономия и выплаты зафиксированы.",
       },
     });
 

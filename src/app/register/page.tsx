@@ -1,38 +1,68 @@
 import { RegisterForm } from "@/components/register-form";
+import { RegisterFreelancerForm } from "@/components/register-freelancer-form";
 import { SiteHeader } from "@/components/site-header";
-import { institutionTypeLabels, type InstitutionType } from "@/domain/access/roles";
-import { listJoinableInstitutions } from "@/server/repositories/institution-repository";
+import { listSpecialties } from "@/server/repositories/user-repository";
 import Link from "next/link";
 
 export const instant = false;
 
-export default async function RegisterPage() {
-  const institutions = await listJoinableInstitutions();
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ role?: string }>;
+}) {
+  const params = await searchParams;
+  const asFreelancer = params.role === "freelancer";
+  const specialties = asFreelancer ? await listSpecialties() : [];
 
   return (
     <>
       <SiteHeader />
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-6 py-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold text-ink">Регистрация</h1>
-        <p className="text-sm leading-6 text-leaf">
-          Школа, гимназия и лицей получают роль завхоза. Колледж и ПТУ — роль исполнителя.
-          Учащийся, аналитик района и администратор самостоятельно не регистрируются.
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-6 py-8">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold text-ink">
+            {asFreelancer ? "Регистрация фрилансера" : "Регистрация завхоза"}
+          </h1>
+          <p className="text-sm leading-6 text-leaf">
+            {asFreelancer
+              ? "Создайте учётку исполнителя и берите заказы на бирже."
+              : "Введите данные своей школы или учреждения — список выбирать не нужно."}
+          </p>
+        </div>
+
+        <div className="flex gap-2 text-sm">
+          <Link
+            href="/register"
+            className={
+              asFreelancer ? "text-leaf underline" : "font-medium text-ink"
+            }
+          >
+            Я завхоз
+          </Link>
+          <span className="text-leaf">·</span>
+          <Link
+            href="/register?role=freelancer"
+            className={
+              asFreelancer ? "font-medium text-ink" : "text-leaf underline"
+            }
+          >
+            Я фрилансер
+          </Link>
+        </div>
+
+        {asFreelancer ? (
+          <RegisterFreelancerForm specialties={specialties} />
+        ) : (
+          <RegisterForm />
+        )}
+
+        <p className="text-sm text-leaf">
+          Уже есть учётка?{" "}
+          <Link href="/login" className="font-medium text-leaf">
+            Войти
+          </Link>
         </p>
-      </div>
-      <RegisterForm
-        institutions={institutions.map((institution) => ({
-          id: institution.id,
-          name: `${institutionTypeLabels[institution.type as InstitutionType]}. ${institution.name}`,
-        }))}
-      />
-      <p className="text-sm text-leaf">
-        Уже есть учётка?{" "}
-        <Link href="/login" className="font-medium text-leaf">
-          Войти
-        </Link>
-      </p>
-    </main>
+      </main>
     </>
   );
 }

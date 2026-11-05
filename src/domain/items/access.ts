@@ -6,12 +6,9 @@ export type ItemActor = {
   institutionId: string | null;
 };
 
-/** Школы и колледжи публикуют заявки от своего учреждения. */
+/** Публикует заявки только завхоз своего учреждения. */
 export function canPublishItems(actor: ItemActor): boolean {
-  return (
-    (actor.role === "DONOR_STAFF" || actor.role === "WORKSHOP_MASTER") &&
-    actor.institutionId !== null
-  );
+  return actor.role === "DONOR_STAFF" && actor.institutionId !== null;
 }
 
 export function itemManageState(
@@ -20,8 +17,7 @@ export function itemManageState(
 ): "edit" | "locked" | "foreign" {
   const owns =
     actor.role === "PLATFORM_ADMIN" ||
-    ((actor.role === "DONOR_STAFF" || actor.role === "WORKSHOP_MASTER") &&
-      actor.institutionId === item.institutionId);
+    (actor.role === "DONOR_STAFF" && actor.institutionId === item.institutionId);
   if (!owns) return "foreign";
   if (item.status !== "LISTED") return "locked";
   return "edit";

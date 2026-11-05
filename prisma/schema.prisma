@@ -9,6 +9,7 @@ datasource db {
 
 // Деньги в приложении хранятся целыми копейками.
 // Отдел образования — учреждение типа DEPARTMENT, не школа.
+// Ремонт выполняют только фрилансеры.
 
 enum InstitutionType {
   SCHOOL
@@ -21,8 +22,7 @@ enum InstitutionType {
 
 enum UserRole {
   DONOR_STAFF
-  WORKSHOP_MASTER
-  STUDENT
+  FREELANCER
   DISTRICT_ANALYST
   PLATFORM_ADMIN
 }
@@ -66,6 +66,7 @@ enum DocumentType {
   TRANSFER_ACT
   RETURN_ACT
   WRITE_OFF_DRAFT
+  PAYOUT_ACT
 }
 
 enum ScenarioKind {
@@ -74,20 +75,24 @@ enum ScenarioKind {
   OPTIMISTIC
 }
 
+enum WalletTxnKind {
+  PAYOUT
+  BONUS
+  ADJUSTMENT
+}
+
 model Institution {
   id        String          @id @default(cuid())
   name      String
   type      InstitutionType
   district  String
   address   String
-  lat       Float
-  lng       Float
+  lat       Float?
+  lng       Float?
   phone     String
   email     String
   users     User[]
   items     Item[]
-  groups    StudyGroup[]
-  orders    RepairOrder[]   @relation("WorkshopOrders")
   requests  Request[]
   sent      Transfer[]      @relation("TransferFrom")
   received  Transfer[]      @relation("TransferTo")
@@ -95,20 +100,17 @@ model Institution {
 }
 
 model User {
-  id             String             @id @default(cuid())
+  id             String            @id @default(cuid())
   fullName       String
   role           UserRole
-  email          String             @unique
+  email          String            @unique
   passwordHash   String
   institutionId  String?
-  institution    Institution?       @relation(fields: [institutionId], references: [id])
-  groupId        String?
-  group          StudyGroup?        @relation("GroupStudents", fields: [groupId], references: [id])
-  ledGroups      StudyGroup[]       @relation("GroupMaster")
-  listedItems    Item[]             @relation("ListedBy")
-  ordersLed      RepairOrder[]      @relation("OrderMaster")
-  participations OrderParticipant[]
-  portfolio      PortfolioEntry[]
+  institution    Institution?      @relation(fields: [institutionId], references: [id])
+  listedItems    Item[]            @relation("ListedBy")
+  ordersLed      RepairOrder[]     @relation("OrderMaster")
+  skills         FreelancerSkill[]
+  wallet         Wallet?
   statusEvents   StatusEvent[]
 }
 
@@ -123,12 +125,11 @@ model Category {
 }
 
 model Specialty {
-  id         String              @id @default(cuid())
-  slug       String              @unique
-  name       String              @unique
-  categories CategorySpecialty[]
-  groups     StudyGroup[]
-  orders     RepairOrder[]
+  id          String              @id @default(cuid())
+  slug        String              @unique
+  name        String              @unique
+  categories  CategorySpecialty[]
+  freelancers FreelancerSkill[]
 }
 
 model CategorySpecialty {
@@ -140,17 +141,13 @@ model CategorySpecialty {
   @@id([categoryId, specialtyId])
 }
 
-model StudyGroup {
-  id            String        @id @default(cuid())
-  name          String
-  institutionId String
-  institution   Institution   @relation(fields: [institutionId], references: [id])
-  specialtyId   String
-  specialty     Specialty     @relation(fields: [specialtyId], references: [id])
-  masterId      String
-  master        User          @relation("GroupMaster", fields: [masterId], references: [id])
-  students      User[]        @relation("GroupStudents")
-  orders        RepairOrder[]
+model FreelancerSkill {
+  userId      String
+  specialtyId String
+  user        User      @relation(fields: [userId], references: [id])
+  specialty   Specialty @relation(fields: [specialtyId], references: [id])
+
+  @@id([userId, specialtyId])
 }
 
 model Item {
@@ -191,43 +188,30 @@ model ItemPhoto {
 }
 
 model RepairOrder {
-  id                    String             @id @default(cuid())
-  itemId                String
-  item                  Item               @relation(fields: [itemId], references: [id])
-  workshopInstitutionId String
-  workshop              Institution        @relation("WorkshopOrders", fields: [workshopInstitutionId], references: [id])
-  specialtyId           String
-  specialty             Specialty          @relation(fields: [specialtyId], references: [id])
-  masterId              String
-  master                User               @relation("OrderMaster", fields: [masterId], references: [id])
-  groupId               String
-  group                 StudyGroup         @relation(fields: [groupId], references: [id])
-  status                OrderStatus
-  dueDate               DateTime?
-  plannedMaterialsKop   Int
-  actualMaterialsKop    Int                @default(0)
-  transportKop          Int                @default(0)
-  plannedMinutes        Int
-  actualMinutes         Int                @default(0)
-  events                StatusEvent[]
-  participants          OrderParticipant[]
-  portfolio             PortfolioEntry[]
-  snapshot              EconomySnapshot?
-  documents             Document[]
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
+  id                  String             @id @default(cuid())
+  itemId              String
+  item                Item               @relation(fields: [itemId], references: [id])
+  masterId            String
+  master              User               @relation("OrderMaster", fields: [masterId], references: [id])
+  status              OrderStatus
+  dueDate             DateTime?
+  plannedMaterialsKop Int
+  actualMaterialsKop  Int                @default(0)
+  transportKop        Int                @default(0)
+  plannedMinutes      Int
+  actualMinutes       Int                @default(0)
+  agreedFeeKop        Int                @default(0)
+  /** Когда завхоз принял предложение фрилансера. До этого ремонт не стартует. */
+  schoolAcceptedAt    DateTime?
+  events              StatusEvent[]
+  snapshot            EconomySnapshot?
+  documents           Document[]
+  walletTxns          WalletTransaction[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
-  @@index([workshopInstitutionId, status])
+  @@index([masterId, status])
   @@index([itemId])
-}
-
-model OrderParticipant {
-  orderId   String
-  studentId String
-  order     RepairOrder @relation(fields: [orderId], references: [id])
-  student   User        @relation(fields: [studentId], references: [id])
-
-  @@id([orderId, studentId])
 }
 
 model StatusEvent {
@@ -286,11 +270,35 @@ model Document {
   createdAt DateTime     @default(now())
 }
 
+model Wallet {
+  id           String              @id @default(cuid())
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id])
+  balanceKop   Int                 @default(0)
+  transactions WalletTransaction[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model WalletTransaction {
+  id        String        @id @default(cuid())
+  walletId  String
+  wallet    Wallet        @relation(fields: [walletId], references: [id])
+  kind      WalletTxnKind
+  amountKop Int
+  orderId   String?
+  order     RepairOrder?  @relation(fields: [orderId], references: [id])
+  note      String        @default("")
+  createdAt DateTime      @default(now())
+
+  @@index([walletId, createdAt])
+}
+
 model AssumptionSet {
-  id                       String         @id @default(cuid())
-  kind                     ScenarioKind   @unique
+  id                       String            @id @default(cuid())
+  kind                     ScenarioKind      @unique
   title                    String
-  shownOnDashboard         Boolean        @default(false)
+  shownOnDashboard         Boolean           @default(false)
   expectedListedPerYear    Int
   avgNewPriceKop           Int
   avgMaterialsKop          Int
@@ -302,6 +310,9 @@ model AssumptionSet {
   hostingKopAnnual         Int
   supportKopAnnual         Int
   illustrativeLaborKopHour Int
+  slesarAnnualSalaryKop    Int               @default(0)
+  zavhozBonusShareMilli    Int               @default(0)
+  freelancerAvgFeeKop      Int               @default(0)
   basisNote                String
   disposalRates            DisposalRate[]
   snapshots                EconomySnapshot[]
@@ -318,32 +329,18 @@ model DisposalRate {
 }
 
 model EconomySnapshot {
-  id                   String         @id @default(cuid())
-  orderId              String         @unique
-  order                RepairOrder    @relation(fields: [orderId], references: [id])
+  id                   String        @id @default(cuid())
+  orderId              String        @unique
+  order                RepairOrder   @relation(fields: [orderId], references: [id])
   assumptionId         String
-  assumption           AssumptionSet  @relation(fields: [assumptionId], references: [id])
+  assumption           AssumptionSet @relation(fields: [assumptionId], references: [id])
   newPriceKop          Int
   materialsKop         Int
   transportKop         Int
+  freelancerFeeKop     Int           @default(0)
   procurementSavingKop Int
   avoidedDisposalKop   Int
   propertyBudgetKop    Int
-  practiceSavingKop    Int
-  computedAt           DateTime       @default(now())
-}
-
-model PortfolioEntry {
-  id            String      @id @default(cuid())
-  studentId     String
-  student       User        @relation(fields: [studentId], references: [id])
-  orderId       String
-  order         RepairOrder @relation(fields: [orderId], references: [id])
-  skills        String
-  grade         Int
-  minutes       Int
-  masterComment String      @default("")
-  createdAt     DateTime    @default(now())
-
-  @@index([studentId])
+  practiceSavingKop    Int           @default(0)
+  computedAt           DateTime      @default(now())
 }

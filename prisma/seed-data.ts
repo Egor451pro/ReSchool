@@ -24,15 +24,12 @@ export type StaffKey =
   | "zavhozSchool"
   | "zavhozGym"
   | "zavhozLyceum"
-  | "masterWood"
-  | "masterPc"
-  | "masterMetal"
-  | "masterElectro"
+  | "freelancerWood"
+  | "freelancerPc"
+  | "freelancerMetal"
   | "analyst"
   | "admin";
-export type StudentKey = "bondar" | "gonchar" | "sherba" | "levchuk" | "savitsky";
-export type UserKey = StaffKey | StudentKey;
-export type GroupKey = "wood" | "pc" | "metal" | "electro";
+export type UserKey = StaffKey;
 
 export const categories: { slug: CategorySlug; name: string }[] = [
   { slug: "furniture", name: "Мебель" },
@@ -136,62 +133,59 @@ export const institutions: {
 export const staff: {
   key: StaffKey;
   fullName: string;
-  role: "DONOR_STAFF" | "WORKSHOP_MASTER" | "DISTRICT_ANALYST" | "PLATFORM_ADMIN";
+  role: "DONOR_STAFF" | "FREELANCER" | "DISTRICT_ANALYST" | "PLATFORM_ADMIN";
   email: string;
   institution: InstitutionKey | null;
+  skills?: SpecialtySlug[];
 }[] = [
   {
     key: "zavhozSchool",
-    fullName: "Галина Шульга",
+    fullName: "Завхоз школы №1",
     role: "DONOR_STAFF",
     email: "zavhoz@school1.demo",
     institution: "school1",
   },
   {
     key: "zavhozGym",
-    fullName: "Пётр Адамович",
+    fullName: "Завхоз гимназии №2",
     role: "DONOR_STAFF",
     email: "zavhoz@gymnasium.demo",
     institution: "gym",
   },
   {
     key: "zavhozLyceum",
-    fullName: "Елена Барташевич",
+    fullName: "Завхоз лицея №1",
     role: "DONOR_STAFF",
     email: "zavhoz@lyceum.demo",
     institution: "lyceum",
   },
   {
-    key: "masterWood",
-    fullName: "Виктор Мельник",
-    role: "WORKSHOP_MASTER",
-    email: "master.wood@college.demo",
-    institution: "college",
+    key: "freelancerWood",
+    fullName: "Фрилансер · столяр",
+    role: "FREELANCER",
+    email: "freelancer.wood@reschool.demo",
+    institution: null,
+    skills: ["wood"],
   },
   {
-    key: "masterPc",
-    fullName: "Ольга Кравченко",
-    role: "WORKSHOP_MASTER",
-    email: "master.pc@college.demo",
-    institution: "college",
+    key: "freelancerPc",
+    fullName: "Фрилансер · ПК",
+    role: "FREELANCER",
+    email: "freelancer.pc@reschool.demo",
+    institution: null,
+    skills: ["pc"],
   },
   {
-    key: "masterMetal",
-    fullName: "Сергей Пашкевич",
-    role: "WORKSHOP_MASTER",
-    email: "master.metal@vocation.demo",
-    institution: "vocational",
-  },
-  {
-    key: "masterElectro",
-    fullName: "Наталья Грицук",
-    role: "WORKSHOP_MASTER",
-    email: "master.electro@vocation.demo",
-    institution: "vocational",
+    key: "freelancerMetal",
+    fullName: "Фрилансер · слесарь",
+    role: "FREELANCER",
+    email: "freelancer.metal@reschool.demo",
+    institution: null,
+    skills: ["metal", "electro"],
   },
   {
     key: "analyst",
-    fullName: "Ирина Савчук",
+    fullName: "Аналитик района",
     role: "DISTRICT_ANALYST",
     email: "analyst@district.demo",
     institution: "department",
@@ -202,69 +196,6 @@ export const staff: {
     role: "PLATFORM_ADMIN",
     email: "admin@reschool.demo",
     institution: null,
-  },
-];
-
-export const groups: {
-  key: GroupKey;
-  name: string;
-  institution: InstitutionKey;
-  specialty: SpecialtySlug;
-  master: StaffKey;
-}[] = [
-  { key: "wood", name: "СТ-21", institution: "college", specialty: "wood", master: "masterWood" },
-  { key: "pc", name: "КТ-22", institution: "college", specialty: "pc", master: "masterPc" },
-  { key: "metal", name: "СЛ-11", institution: "vocational", specialty: "metal", master: "masterMetal" },
-  {
-    key: "electro",
-    name: "ЭМ-12",
-    institution: "vocational",
-    specialty: "electro",
-    master: "masterElectro",
-  },
-];
-
-export const students: {
-  key: StudentKey;
-  fullName: string;
-  email: string;
-  institution: InstitutionKey;
-  group: GroupKey;
-}[] = [
-  {
-    key: "bondar",
-    fullName: "Илья Бондарь",
-    email: "student.bondar@college.demo",
-    institution: "college",
-    group: "wood",
-  },
-  {
-    key: "gonchar",
-    fullName: "Мария Гончар",
-    email: "student.gonchar@college.demo",
-    institution: "college",
-    group: "wood",
-  },
-  {
-    key: "sherba",
-    fullName: "Павел Щерба",
-    email: "student.sherba@college.demo",
-    institution: "college",
-    group: "pc",
-  },
-  {
-    key: "levchuk",
-    fullName: "Екатерина Левчук",
-    email: "student.levchuk@vocation.demo",
-    institution: "vocational",
-    group: "metal",
-  },
-  {
-    key: "savitsky",
-    fullName: "Артём Савицкий",
-    email: "student.savitsky@vocation.demo",
-    institution: "vocational",
-    group: "electro",
   },
 ];
 
@@ -800,420 +731,6 @@ export const items: ItemSeed[] = [
   },
 ];
 
-export type PortfolioSeed = {
-  student: StudentKey;
-  skills: string;
-  grade: number;
-  minutes: number;
-  comment: string;
-};
-
-export type OrderSeed = {
-  item: string;
-  workshop: InstitutionKey;
-  specialty: SpecialtySlug;
-  master: StaffKey;
-  group: GroupKey;
-  status: "ASSIGNED" | "IN_PROGRESS" | "QUALITY_CHECK" | "COMPLETED" | "CANCELLED";
-  dueOffsetDays: number;
-  plannedMaterialsKop: number;
-  actualMaterialsKop: number;
-  transportKop: number;
-  plannedMinutes: number;
-  actualMinutes: number;
-  participants: StudentKey[];
-  portfolio?: PortfolioSeed[];
-  recipient?: InstitutionKey;
-};
-
-export const orders: OrderSeed[] = [
-  {
-    item: "shelf",
-    workshop: "college",
-    specialty: "wood",
-    master: "masterWood",
-    group: "wood",
-    status: "ASSIGNED",
-    dueOffsetDays: 14,
-    plannedMaterialsKop: 2_500,
-    actualMaterialsKop: 0,
-    transportKop: 1_500,
-    plannedMinutes: 360,
-    actualMinutes: 0,
-    participants: [],
-  },
-  {
-    item: "oldPc",
-    workshop: "college",
-    specialty: "pc",
-    master: "masterPc",
-    group: "pc",
-    status: "ASSIGNED",
-    dueOffsetDays: 14,
-    plannedMaterialsKop: 3_000,
-    actualMaterialsKop: 0,
-    transportKop: 1_500,
-    plannedMinutes: 240,
-    actualMinutes: 0,
-    participants: [],
-  },
-  {
-    item: "stools",
-    workshop: "college",
-    specialty: "wood",
-    master: "masterWood",
-    group: "wood",
-    status: "ASSIGNED",
-    dueOffsetDays: 12,
-    plannedMaterialsKop: 2_000,
-    actualMaterialsKop: 0,
-    transportKop: 1_500,
-    plannedMinutes: 300,
-    actualMinutes: 0,
-    participants: [],
-  },
-  {
-    item: "scope",
-    workshop: "vocational",
-    specialty: "electro",
-    master: "masterElectro",
-    group: "electro",
-    status: "ASSIGNED",
-    dueOffsetDays: 16,
-    plannedMaterialsKop: 4_500,
-    actualMaterialsKop: 0,
-    transportKop: 1_500,
-    plannedMinutes: 480,
-    actualMinutes: 0,
-    participants: [],
-  },
-  {
-    item: "desks2",
-    workshop: "college",
-    specialty: "wood",
-    master: "masterWood",
-    group: "wood",
-    status: "IN_PROGRESS",
-    dueOffsetDays: 7,
-    plannedMaterialsKop: 6_000,
-    actualMaterialsKop: 2_200,
-    transportKop: 1_500,
-    plannedMinutes: 480,
-    actualMinutes: 120,
-    participants: ["bondar", "gonchar"],
-  },
-  {
-    item: "printers",
-    workshop: "college",
-    specialty: "pc",
-    master: "masterPc",
-    group: "pc",
-    status: "IN_PROGRESS",
-    dueOffsetDays: 7,
-    plannedMaterialsKop: 3_500,
-    actualMaterialsKop: 1_500,
-    transportKop: 0,
-    plannedMinutes: 300,
-    actualMinutes: 90,
-    participants: ["sherba"],
-  },
-  {
-    item: "vices",
-    workshop: "vocational",
-    specialty: "metal",
-    master: "masterMetal",
-    group: "metal",
-    status: "IN_PROGRESS",
-    dueOffsetDays: 8,
-    plannedMaterialsKop: 2_000,
-    actualMaterialsKop: 800,
-    transportKop: 1_500,
-    plannedMinutes: 360,
-    actualMinutes: 100,
-    participants: ["levchuk"],
-  },
-  {
-    item: "psu",
-    workshop: "vocational",
-    specialty: "electro",
-    master: "masterElectro",
-    group: "electro",
-    status: "IN_PROGRESS",
-    dueOffsetDays: 6,
-    plannedMaterialsKop: 2_500,
-    actualMaterialsKop: 900,
-    transportKop: 1_500,
-    plannedMinutes: 240,
-    actualMinutes: 80,
-    participants: ["savitsky"],
-  },
-  {
-    item: "cabinet",
-    workshop: "college",
-    specialty: "wood",
-    master: "masterWood",
-    group: "wood",
-    status: "QUALITY_CHECK",
-    dueOffsetDays: 2,
-    plannedMaterialsKop: 4_000,
-    actualMaterialsKop: 3_800,
-    transportKop: 1_500,
-    plannedMinutes: 420,
-    actualMinutes: 400,
-    participants: ["bondar", "gonchar"],
-  },
-  {
-    item: "switch",
-    workshop: "college",
-    specialty: "pc",
-    master: "masterPc",
-    group: "pc",
-    status: "QUALITY_CHECK",
-    dueOffsetDays: 2,
-    plannedMaterialsKop: 2_000,
-    actualMaterialsKop: 1_800,
-    transportKop: 0,
-    plannedMinutes: 180,
-    actualMinutes: 160,
-    participants: ["sherba"],
-  },
-  {
-    item: "bars",
-    workshop: "vocational",
-    specialty: "metal",
-    master: "masterMetal",
-    group: "metal",
-    status: "QUALITY_CHECK",
-    dueOffsetDays: 3,
-    plannedMaterialsKop: 5_000,
-    actualMaterialsKop: 4_700,
-    transportKop: 1_500,
-    plannedMinutes: 600,
-    actualMinutes: 540,
-    participants: ["levchuk"],
-  },
-  {
-    item: "bookcase",
-    workshop: "college",
-    specialty: "wood",
-    master: "masterWood",
-    group: "wood",
-    status: "COMPLETED",
-    dueOffsetDays: -2,
-    plannedMaterialsKop: 4_500,
-    actualMaterialsKop: 4_500,
-    transportKop: 1_500,
-    plannedMinutes: 480,
-    actualMinutes: 460,
-    participants: ["bondar", "gonchar"],
-    recipient: "gym",
-  },
-  {
-    item: "tables",
-    workshop: "college",
-    specialty: "wood",
-    master: "masterWood",
-    group: "wood",
-    status: "COMPLETED",
-    dueOffsetDays: -4,
-    plannedMaterialsKop: 5_200,
-    actualMaterialsKop: 5_000,
-    transportKop: 1_500,
-    plannedMinutes: 520,
-    actualMinutes: 500,
-    participants: ["bondar"],
-    recipient: "school1",
-  },
-  {
-    item: "keyboards",
-    workshop: "college",
-    specialty: "pc",
-    master: "masterPc",
-    group: "pc",
-    status: "COMPLETED",
-    dueOffsetDays: -1,
-    plannedMaterialsKop: 2_000,
-    actualMaterialsKop: 2_000,
-    transportKop: 1_500,
-    plannedMinutes: 200,
-    actualMinutes: 200,
-    participants: ["sherba"],
-    recipient: "lyceum",
-  },
-  {
-    item: "labCloset",
-    workshop: "college",
-    specialty: "wood",
-    master: "masterWood",
-    group: "wood",
-    status: "COMPLETED",
-    dueOffsetDays: -8,
-    plannedMaterialsKop: 3_800,
-    actualMaterialsKop: 3_500,
-    transportKop: 1_500,
-    plannedMinutes: 360,
-    actualMinutes: 360,
-    participants: ["bondar", "gonchar"],
-    recipient: "school1",
-    portfolio: [
-      {
-        student: "bondar",
-        skills: "Замена петель, выравнивание дверец, покрытие лаком",
-        grade: 9,
-        minutes: 180,
-        comment: "Работа аккуратная, дверцы садятся без перекоса.",
-      },
-      {
-        student: "gonchar",
-        skills: "Подготовка каркаса, шлифовка, установка полки",
-        grade: 8,
-        minutes: 180,
-        comment: "Полка выставлена по уровню, шлифовка равномерная.",
-      },
-    ],
-  },
-  {
-    item: "pc2",
-    workshop: "college",
-    specialty: "pc",
-    master: "masterPc",
-    group: "pc",
-    status: "COMPLETED",
-    dueOffsetDays: -6,
-    plannedMaterialsKop: 4_000,
-    actualMaterialsKop: 3_500,
-    transportKop: 1_500,
-    plannedMinutes: 240,
-    actualMinutes: 240,
-    participants: ["sherba"],
-    recipient: "gym",
-    portfolio: [
-      {
-        student: "sherba",
-        skills: "Чистка, замена термопасты, установка блока питания, проверка диска",
-        grade: 9,
-        minutes: 240,
-        comment: "Блок включается стабильно, температуры в норме.",
-      },
-    ],
-  },
-  {
-    item: "workbench",
-    workshop: "vocational",
-    specialty: "metal",
-    master: "masterMetal",
-    group: "metal",
-    status: "COMPLETED",
-    dueOffsetDays: -10,
-    plannedMaterialsKop: 8_500,
-    actualMaterialsKop: 8_000,
-    transportKop: 1_500,
-    plannedMinutes: 600,
-    actualMinutes: 600,
-    participants: ["levchuk"],
-    recipient: "lyceum",
-    portfolio: [
-      {
-        student: "levchuk",
-        skills: "Восстановление тисков, замена столешницы, протяжка крепежа",
-        grade: 10,
-        minutes: 600,
-        comment: "Тиски ходят без люфта, столешница закреплена.",
-      },
-    ],
-  },
-  {
-    item: "lamps",
-    workshop: "vocational",
-    specialty: "electro",
-    master: "masterElectro",
-    group: "electro",
-    status: "COMPLETED",
-    dueOffsetDays: -5,
-    plannedMaterialsKop: 4_200,
-    actualMaterialsKop: 4_000,
-    transportKop: 1_500,
-    plannedMinutes: 300,
-    actualMinutes: 300,
-    participants: ["savitsky"],
-    recipient: "school1",
-    portfolio: [
-      {
-        student: "savitsky",
-        skills: "Замена патронов, проверка проводки, крепление плафонов",
-        grade: 8,
-        minutes: 300,
-        comment: "Цепи проверены, крепление плафонов надёжное.",
-      },
-    ],
-  },
-  {
-    item: "pouf",
-    workshop: "college",
-    specialty: "wood",
-    master: "masterWood",
-    group: "wood",
-    status: "COMPLETED",
-    dueOffsetDays: -3,
-    plannedMaterialsKop: 2_800,
-    actualMaterialsKop: 2_800,
-    transportKop: 1_500,
-    plannedMinutes: 180,
-    actualMinutes: 180,
-    participants: ["bondar"],
-    recipient: "gym",
-    portfolio: [
-      {
-        student: "bondar",
-        skills: "Перетяжка сиденья, ремонт каркаса",
-        grade: 7,
-        minutes: 180,
-        comment: "Изделие собрано. Ремонт вышел дороже новой закупки и оставлен как учебная работа.",
-      },
-    ],
-  },
-  {
-    item: "hockey",
-    workshop: "vocational",
-    specialty: "metal",
-    master: "masterMetal",
-    group: "metal",
-    status: "COMPLETED",
-    dueOffsetDays: -7,
-    plannedMaterialsKop: 4_800,
-    actualMaterialsKop: 4_500,
-    transportKop: 1_500,
-    plannedMinutes: 420,
-    actualMinutes: 420,
-    participants: ["levchuk"],
-    recipient: "gym",
-    portfolio: [
-      {
-        student: "levchuk",
-        skills: "Правка рамы, замена сетки, покраска",
-        grade: 8,
-        minutes: 420,
-        comment: "Рама без видимого перекоса, сетка натянута.",
-      },
-    ],
-  },
-  {
-    item: "lathe",
-    workshop: "vocational",
-    specialty: "metal",
-    master: "masterMetal",
-    group: "metal",
-    status: "CANCELLED",
-    dueOffsetDays: -3,
-    plannedMaterialsKop: 15_000,
-    actualMaterialsKop: 2_000,
-    transportKop: 1_500,
-    plannedMinutes: 480,
-    actualMinutes: 60,
-    participants: ["levchuk"],
-  },
-];
-
 export const requests: {
   owner: InstitutionKey;
   category: CategorySlug;
@@ -1255,6 +772,9 @@ export const assumptionSets = [
     hostingKopAnnual: 30_000,
     supportKopAnnual: 120_000,
     illustrativeLaborKopHour: 800,
+    slesarAnnualSalaryKop: 1_800_000,
+    zavhozBonusShareMilli: 50,
+    freelancerAvgFeeKop: 1_700,
     basisNote: `${assumptionNote} Нижняя оценка: до выдачи доходит четверть карточек, материалы и транспорт дороже.`,
   },
   {
@@ -1271,7 +791,10 @@ export const assumptionSets = [
     hostingKopAnnual: 20_000,
     supportKopAnnual: 80_000,
     illustrativeLaborKopHour: 1_000,
-    basisNote: `${assumptionNote} Около 180 карточек в год на район, до выдачи доходит 45%.`,
+    slesarAnnualSalaryKop: 2_400_000,
+    zavhozBonusShareMilli: 80,
+    freelancerAvgFeeKop: 1_700,
+    basisNote: `${assumptionNote} Около 180 карточек в год на район, до выдачи доходит 45%. Стул 47→17 BYN: гонорар фрилансера 17 BYN.`,
   },
   {
     kind: "OPTIMISTIC" as const,
@@ -1287,6 +810,9 @@ export const assumptionSets = [
     hostingKopAnnual: 15_000,
     supportKopAnnual: 60_000,
     illustrativeLaborKopHour: 1_200,
+    slesarAnnualSalaryKop: 2_880_000,
+    zavhozBonusShareMilli: 100,
+    freelancerAvgFeeKop: 1_500,
     basisNote: `${assumptionNote} Верхняя оценка при широком участии учреждений. Это не прогноз отдела образования.`,
   },
 ];

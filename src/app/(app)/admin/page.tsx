@@ -39,7 +39,7 @@ export default async function AdminPage() {
       <PageHeader
         title="Сводка района"
         description="Подтверждённые ремонты и экономия бюджета имущества."
-        banner="Стоимость новых вещей — сколько ушло бы на покупку без ремонта. Экономия = эта сумма минус затраты на материалы и транспорт."
+        banner="Стоимость новых вещей — сколько ушло бы на покупку без ремонта. Экономия = эта сумма минус материалы, транспорт и гонорар фрилансера."
         actions={
           <Link href="/catalog" className="btn-ghost btn-sm">
             Открыть каталог
@@ -56,12 +56,12 @@ export default async function AdminPage() {
         <MetricCard
           value={formatByn(overview.savingTotalKop)}
           label="Потенциальная экономия"
-          hint="новые − материалы и транспорт"
+          hint="новые − ремонт (материалы, транспорт, гонорар)"
         />
         <MetricCard
           value={formatByn(overview.costsTotalKop)}
           label="Общие затраты"
-          hint="материалы и транспорт по всем ремонтам"
+          hint="материалы, транспорт и гонорары фрилансеров"
         />
         <MetricCard
           value={formatByn(overview.newPriceTotalKop)}

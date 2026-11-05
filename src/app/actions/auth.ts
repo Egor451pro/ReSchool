@@ -2,22 +2,28 @@
 
 import { redirect } from "next/navigation";
 import { safeNextPath } from "@/domain/access/roles";
-import { loginSchema, registerSchema } from "@/lib/validators/auth";
+import {
+  loginSchema,
+  registerDonorSchema,
+  registerFreelancerSchema,
+} from "@/lib/validators/auth";
 import { clearSession, writeSession } from "@/server/auth/cookies";
-import { loginWithPassword, registerStaff } from "@/server/services/auth-service";
+import {
+  loginWithPassword,
+  registerDonorWithInstitution,
+  registerFreelancer,
+} from "@/server/services/auth-service";
 
 export type AuthFormState = {
   error?: string;
-  fields?: Partial<Record<"fullName" | "email" | "password" | "institutionId", string>>;
+  fields?: Partial<Record<string, string>>;
 };
 
 function fieldMessages(error: { issues: { path: PropertyKey[]; message: string }[] }) {
   const fields: AuthFormState["fields"] = {};
   for (const issue of error.issues) {
     const key = String(issue.path[0] ?? "");
-    if (key === "fullName" || key === "email" || key === "password" || key === "institutionId") {
-      if (!fields[key]) fields[key] = issue.message;
-    }
+    if (!fields[key]) fields[key] = issue.message;
   }
   return fields;
 }
@@ -43,25 +49,63 @@ export async function loginAction(_state: AuthFormState, formData: FormData): Pr
   redirect(safeNextPath(readNext(formData), result.role));
 }
 
-export async function registerAction(
+export async function registerDonorAction(
   _state: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const parsed = registerSchema.safeParse({
+  const parsed = registerDonorSchema.safeParse({
     fullName: formData.get("fullName"),
     email: formData.get("email"),
     password: formData.get("password"),
-    institutionId: formData.get("institutionId"),
+    institutionName: formData.get("institutionName"),
+    institutionType: formData.get("institutionType"),
+    district: formData.get("district"),
+    address: formData.get("address"),
+    phone: formData.get("phone"),
+    institutionEmail: formData.get("institutionEmail"),
   });
   if (!parsed.success) {
     return { error: "Проверьте поля формы", fields: fieldMessages(parsed.error) };
   }
 
-  const result = await registerStaff(parsed.data);
+  const result = await registerDonorWithInstitution(parsed.data);
   if (!result.ok) return { error: result.error };
 
   await writeSession({ userId: result.userId, role: result.role });
   redirect(safeNextPath(null, result.role));
+}
+
+export async function registerFreelancerAction(
+  _state: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const specialtyIds = formData
+    .getAll("specialtyIds")
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
+
+  const parsed = registerFreelancerSchema.safeParse({
+    fullName: formData.get("fullName"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+    specialtyIds,
+  });
+  if (!parsed.success) {
+    return { error: "Проверьте поля формы", fields: fieldMessages(parsed.error) };
+  }
+
+  const result = await registerFreelancer(parsed.data);
+  if (!result.ok) return { error: result.error };
+
+  await writeSession({ userId: result.userId, role: result.role });
+  redirect(safeNextPath(null, result.role));
+}
+
+/** @deprecated используйте registerDonorAction */
+export async function registerAction(
+  _state: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  return registerDonorAction(_state, formData);
 }
 
 export async function demoLoginAction(formData: FormData): Promise<void> {

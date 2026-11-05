@@ -35,31 +35,27 @@ export type DocumentResult =
 
 function canManageOrder(
   actor: DocumentActor,
-  order: { masterId: string; workshopInstitutionId: string },
+  order: { masterId: string },
 ): boolean {
   if (actor.role === "PLATFORM_ADMIN") return true;
-  if (actor.role !== "WORKSHOP_MASTER") return false;
+  if (actor.role !== "FREELANCER") return false;
   return order.masterId === actor.id;
 }
 
 const catalogRoles: readonly UserRole[] = [
   "DONOR_STAFF",
-  "WORKSHOP_MASTER",
+  "FREELANCER",
   "DISTRICT_ANALYST",
   "PLATFORM_ADMIN",
 ];
 
-/** Школа подтверждает получение ремонта: акт + закрытие + снимок экономии. */
+/** Школа подтверждает получение ремонта: акт + закрытие + снимок экономии + выплаты. */
 export async function confirmRepairBySchool(
   actor: DocumentActor,
   itemId: string,
 ): Promise<DocumentResult> {
-  if (
-    actor.role !== "DONOR_STAFF" &&
-    actor.role !== "WORKSHOP_MASTER" &&
-    actor.role !== "PLATFORM_ADMIN"
-  ) {
-    return { ok: false, error: "Подтвердить ремонт может сотрудник учреждения" };
+  if (actor.role !== "DONOR_STAFF" && actor.role !== "PLATFORM_ADMIN") {
+    return { ok: false, error: "Подтвердить ремонт может завхоз учреждения" };
   }
   if (!actor.institutionId) {
     return { ok: false, error: "Нужно учреждение" };
@@ -81,15 +77,21 @@ export async function confirmRepairBySchool(
   const disposalPerUnitKop = rate?.perUnitKop ?? base.avgDisposalKop;
   const materialsKop = order.actualMaterialsKop;
   const transportKop = order.transportKop;
+  const freelancerFeeKop = order.agreedFeeKop;
   const economy = calculateItemEconomy({
     quantity: order.item.quantity,
     newUnitPriceKop: order.item.newUnitPriceKop,
     materialsKop,
     transportKop,
+    freelancerFeeKop,
     disposalPerUnitKop,
     practiceConsumableKop: base.practiceConsumableKop,
     substitutionMilli: base.substitutionMilli,
   });
+
+  const zavhozBonusKop = Math.round(
+    (base.slesarAnnualSalaryKop * base.zavhozBonusShareMilli) / 1000 / 12,
+  );
 
   const ownerId = order.item.institutionId;
   const ownerName = order.item.institution.name;
@@ -107,6 +109,9 @@ export async function confirmRepairBySchool(
       orderId: order.id,
       itemId: order.item.id,
       actorId: actor.id,
+      freelancerId: order.masterId,
+      agreedFeeKop: freelancerFeeKop,
+      zavhozBonusKop: actor.role === "DONOR_STAFF" ? zavhozBonusKop : 0,
       fromInstitutionId: ownerId,
       toInstitutionId: ownerId,
       payloadJson: JSON.stringify(payload),
@@ -118,6 +123,7 @@ export async function confirmRepairBySchool(
       avoidedDisposalKop: economy.avoidedDisposalKop,
       propertyBudgetKop: economy.propertyBudgetKop,
       practiceSavingKop: economy.practiceSavingKop,
+      freelancerFeeKop: economy.freelancerFeeKop,
     });
 
     if (!result.ok) {
@@ -141,13 +147,13 @@ export async function deliverOrderWithAct(
   actor: DocumentActor,
   orderId: string,
 ): Promise<DocumentResult> {
-  if (actor.role !== "WORKSHOP_MASTER" && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Отметить передачу может исполнитель или администратор" };
+  if (actor.role !== "FREELANCER" && actor.role !== "PLATFORM_ADMIN") {
+    return { ok: false, error: "Отметить передачу может фрилансер или администратор" };
   }
 
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
+  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого фрилансера" };
   if (order.status !== "COMPLETED") {
     return { ok: false, error: "Сначала завершите проверку качества" };
   }
@@ -156,7 +162,6 @@ export async function deliverOrderWithAct(
     const plan = planItemDeliver(order.item.status);
     const ownerId = order.item.institutionId;
     const ownerName = order.item.institution.name;
-    // MVP: восстановленное имущество возвращается владельцу карточки.
     const type = isReturnAct(ownerId, ownerId) ? "RETURN_ACT" : "TRANSFER_ACT";
     const payload = buildTransferActPayload({
       title: order.item.title,
@@ -197,13 +202,13 @@ export async function markUnrepairableWithAct(
   actor: DocumentActor,
   orderId: string,
 ): Promise<DocumentResult> {
-  if (actor.role !== "WORKSHOP_MASTER" && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Закрыть заказ может исполнитель или администратор" };
+  if (actor.role !== "FREELANCER" && actor.role !== "PLATFORM_ADMIN") {
+    return { ok: false, error: "Закрыть заказ может фрилансер или администратор" };
   }
 
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
+  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого фрилансера" };
 
   try {
     const plan = planUnrepairable(order.item.status, order.status);

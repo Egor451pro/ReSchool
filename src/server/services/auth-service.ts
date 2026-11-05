@@ -1,9 +1,16 @@
 import "server-only";
 
 import bcrypt from "bcryptjs";
-import { roleForInstitutionType, type InstitutionType, type UserRole } from "@/domain/access/roles";
-import { findInstitutionById } from "@/server/repositories/institution-repository";
-import { createUser, findUserByEmail } from "@/server/repositories/user-repository";
+import {
+  isDonorInstitutionType,
+  type DonorInstitutionType,
+  type UserRole,
+} from "@/domain/access/roles";
+import {
+  createDonorWithInstitution,
+  createFreelancer,
+  findUserByEmail,
+} from "@/server/repositories/user-repository";
 
 export type AuthSuccess = { ok: true; userId: string; role: UserRole };
 export type AuthFailure = { ok: false; error: string };
@@ -20,21 +27,19 @@ export async function loginWithPassword(
   const matches = await bcrypt.compare(password, user.passwordHash);
   if (!matches) return { ok: false, error: INVALID_LOGIN };
 
-  if (user.role === "STUDENT") {
-    return {
-      ok: false,
-      error: "Вход учащегося в MVP отключён. Работают роли завхоза, исполнителя и администратора.",
-    };
-  }
-
   return { ok: true, userId: user.id, role: user.role };
 }
 
-export async function registerStaff(input: {
+export async function registerDonorWithInstitution(input: {
   fullName: string;
   email: string;
   password: string;
-  institutionId: string;
+  institutionName: string;
+  institutionType: string;
+  district: string;
+  address: string;
+  phone: string;
+  institutionEmail: string;
 }): Promise<AuthSuccess | AuthFailure> {
   const email = input.email.toLowerCase();
   const existing = await findUserByEmail(email);
@@ -42,21 +47,46 @@ export async function registerStaff(input: {
     return { ok: false, error: "Учётная запись с этой почтой уже есть" };
   }
 
-  const institution = await findInstitutionById(input.institutionId);
-  if (!institution) return { ok: false, error: "Учреждение не найдено" };
-
-  const role = roleForInstitutionType(institution.type as InstitutionType);
-  if (!role) {
-    return { ok: false, error: "В этот отдел нельзя зарегистрироваться самостоятельно" };
+  if (!isDonorInstitutionType(input.institutionType)) {
+    return { ok: false, error: "Выберите тип учреждения" };
   }
 
   const passwordHash = await bcrypt.hash(input.password, 10);
-  const user = await createUser({
+  const user = await createDonorWithInstitution({
     fullName: input.fullName.trim(),
     email,
     passwordHash,
-    role,
-    institutionId: institution.id,
+    institution: {
+      name: input.institutionName.trim(),
+      type: input.institutionType as DonorInstitutionType,
+      district: input.district.trim(),
+      address: input.address.trim(),
+      phone: input.phone.trim(),
+      email: input.institutionEmail.trim().toLowerCase(),
+    },
+  });
+
+  return { ok: true, userId: user.id, role: user.role };
+}
+
+export async function registerFreelancer(input: {
+  fullName: string;
+  email: string;
+  password: string;
+  specialtyIds: string[];
+}): Promise<AuthSuccess | AuthFailure> {
+  const email = input.email.toLowerCase();
+  const existing = await findUserByEmail(email);
+  if (existing) {
+    return { ok: false, error: "Учётная запись с этой почтой уже есть" };
+  }
+
+  const passwordHash = await bcrypt.hash(input.password, 10);
+  const user = await createFreelancer({
+    fullName: input.fullName.trim(),
+    email,
+    passwordHash,
+    specialtyIds: input.specialtyIds,
   });
 
   return { ok: true, userId: user.id, role: user.role };

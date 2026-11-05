@@ -3,21 +3,19 @@ import type { ItemEconomy, ItemEconomyInput, RepairAdvice } from "./types";
 
 /**
  * Экономия одного заказа.
- * Труд учащихся в итог не входит: для бюджета района практика уже оплачена
- * как учебный процесс. Замещение учебных заготовок считается отдельно
- * и не смешивается с экономией закупки.
+ * Стоимость ремонта = материалы + транспорт + гонорар фрилансера.
+ * practiceSaving оставлен в типе для совместимости со старыми снимками, в MVP = 0.
  */
 export function calculateItemEconomy(input: ItemEconomyInput): ItemEconomy {
   assertEconomyInput(input);
 
   const newPriceKop = input.quantity * input.newUnitPriceKop;
-  const restorationKop = input.materialsKop + input.transportKop;
+  const freelancerFeeKop = input.freelancerFeeKop;
+  const restorationKop = input.materialsKop + input.transportKop + freelancerFeeKop;
   const procurementSavingKop = newPriceKop - restorationKop;
   const avoidedDisposalKop = input.disposalPerUnitKop * input.quantity;
   const propertyBudgetKop = procurementSavingKop + avoidedDisposalKop;
-  const practiceSavingKop = Math.round(
-    (input.practiceConsumableKop * input.substitutionMilli) / 1000,
-  );
+  const practiceSavingKop = 0;
   const advice = adviceFor(procurementSavingKop, propertyBudgetKop);
 
   return {
@@ -27,7 +25,8 @@ export function calculateItemEconomy(input: ItemEconomyInput): ItemEconomy {
     avoidedDisposalKop,
     propertyBudgetKop,
     practiceSavingKop,
-    combinedKop: propertyBudgetKop + practiceSavingKop,
+    freelancerFeeKop,
+    combinedKop: propertyBudgetKop,
     worthRepairing: propertyBudgetKop > 0,
     advice,
   };
@@ -42,7 +41,6 @@ function adviceFor(procurementSavingKop: number, propertyBudgetKop: number): Rep
 /**
  * Срок окупаемости в годах.
  * В знаменателе только экономия бюджета имущества (закупка + утилизация).
- * Замещение учебных заготовок в срок окупаемости не входит.
  */
 export function paybackYears(
   platformCostKop: number,

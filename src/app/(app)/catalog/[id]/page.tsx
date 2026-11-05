@@ -33,7 +33,7 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const user = await requireRoles([
     "DONOR_STAFF",
-    "WORKSHOP_MASTER",
+    "FREELANCER",
     "DISTRICT_ANALYST",
     "PLATFORM_ADMIN",
   ]);
@@ -124,7 +124,7 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
               Править карточку можно, пока она опубликована. Сейчас статус — {statusLabels[item.status]}.
             </p>
           ) : null}
-          {manage === "foreign" && user.role === "WORKSHOP_MASTER" ? (
+          {manage === "foreign" && user.role === "FREELANCER" ? (
             <Link
               href="/workshop"
               className="inline-flex h-11 items-center justify-center rounded-lg border border-ink px-4 text-sm font-medium text-ink hover:bg-mint/30"

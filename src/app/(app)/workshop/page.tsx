@@ -2,30 +2,32 @@ import Link from "next/link";
 import { ClaimItemForm } from "@/components/claim-item-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
+import { formatByn } from "@/domain/economy/money";
 import { itemPhotoSrc } from "@/domain/items/photo";
+import { defaultFreelancerFeeKop } from "@/domain/orders/fee";
 import { requireRoles } from "@/server/auth/current-user";
-import { listExchangeItems, listMasterGroups } from "@/server/repositories/order-repository";
+import {
+  listExchangeItems,
+  listFreelancerSpecialtyIds,
+} from "@/server/repositories/order-repository";
 
 export const instant = false;
 
 export default async function WorkshopPage() {
-  const user = await requireRoles(["WORKSHOP_MASTER"]);
-  const groups = await listMasterGroups(user.id);
-  const items = await listExchangeItems();
+  const user = await requireRoles(["FREELANCER"]);
+  const [items, skillIds] = await Promise.all([
+    listExchangeItems(),
+    listFreelancerSpecialtyIds(user.id),
+  ]);
+  const skillSet = new Set(skillIds);
 
   return (
     <PageShell>
       <PageHeader
         title="Биржа"
-        description="Все свободные объявления района. Возьмите любой подходящий заказ."
-        banner="Нажмите «Взять в работу» — заказ появится в разделе «Заказы»."
+        description="Свободные объявления школ и учреждений. Берёте первым — предлагаете свою цену."
+        banner="Базовая цена — 14% от стоимости нового изделия. Завхоз должен принять заказ, прежде чем вы начнёте ремонт."
       />
-
-      {groups.length === 0 ? (
-        <Surface className="text-sm text-leaf">
-          У этой учётки нет учебной группы — взять заказ пока нельзя.
-        </Surface>
-      ) : null}
 
       {items.length === 0 ? (
         <Surface className="border-dashed text-sm text-leaf">
@@ -35,6 +37,14 @@ export default async function WorkshopPage() {
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => {
             const photo = item.photos[0];
+            const matchesSkill = item.category.specialties.some((link) =>
+              skillSet.has(link.specialtyId),
+            );
+            const newPriceKop = item.newUnitPriceKop * item.quantity;
+            const defaultFeeKop = defaultFreelancerFeeKop(
+              item.newUnitPriceKop,
+              item.quantity,
+            );
             return (
               <Surface key={item.id} as="li" className="flex h-full flex-col gap-3">
                 <div className="aspect-[4/3] overflow-hidden rounded-lg bg-mint/20">
@@ -52,12 +62,18 @@ export default async function WorkshopPage() {
                   </Link>
                   <p className="text-sm text-ink">{item.institution.name}</p>
                   <p className="text-sm text-leaf">
-                    {item.category.name} · {item.quantity} шт.
+                    {item.category.name} · {item.quantity} шт. · новое {formatByn(newPriceKop)}
                   </p>
+                  {matchesSkill ? (
+                    <p className="text-xs font-medium text-leaf">Подходит вашим навыкам</p>
+                  ) : null}
+                  <p className="text-sm text-ink">База 14% ≈ {formatByn(defaultFeeKop)}</p>
                 </div>
-                {groups.length > 0 ? (
-                  <ClaimItemForm itemId={item.id} groupId={groups[0].id} />
-                ) : null}
+                <ClaimItemForm
+                  itemId={item.id}
+                  defaultFeeKop={defaultFeeKop}
+                  newPriceKop={newPriceKop}
+                />
               </Surface>
             );
           })}

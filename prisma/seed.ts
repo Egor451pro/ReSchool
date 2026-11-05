@@ -8,11 +8,9 @@ import {
   categories,
   categorySpecialtyLinks,
   disposalKop,
-  groups,
   institutions,
   specialties,
   staff,
-  students,
 } from "./seed-data";
 
 const prisma = new PrismaClient();
@@ -26,18 +24,17 @@ function must<T>(map: Map<string, T>, key: string): T {
 }
 
 async function clearDatabase(): Promise<void> {
-  await prisma.portfolioEntry.deleteMany();
+  await prisma.walletTransaction.deleteMany();
+  await prisma.wallet.deleteMany();
   await prisma.economySnapshot.deleteMany();
   await prisma.transfer.deleteMany();
   await prisma.document.deleteMany();
-  await prisma.orderParticipant.deleteMany();
   await prisma.statusEvent.deleteMany();
   await prisma.repairOrder.deleteMany();
   await prisma.request.deleteMany();
   await prisma.itemPhoto.deleteMany();
   await prisma.item.deleteMany();
-  await prisma.user.updateMany({ data: { groupId: null } });
-  await prisma.studyGroup.deleteMany();
+  await prisma.freelancerSkill.deleteMany();
   await prisma.disposalRate.deleteMany();
   await prisma.assumptionSet.deleteMany();
   await prisma.categorySpecialty.deleteMany();
@@ -73,20 +70,6 @@ async function main(): Promise<void> {
     institutionId.set(institution.key, created.id);
   }
 
-  const userId = new Map<string, string>();
-  for (const person of staff) {
-    const created = await prisma.user.create({
-      data: {
-        fullName: person.fullName,
-        role: person.role,
-        email: person.email,
-        passwordHash,
-        institutionId: person.institution ? must(institutionId, person.institution) : null,
-      },
-    });
-    userId.set(person.key, created.id);
-  }
-
   const specialtyId = new Map<string, string>();
   for (const specialty of specialties) {
     const created = await prisma.specialty.create({
@@ -112,11 +95,38 @@ async function main(): Promise<void> {
     });
   }
 
-  const assumptionId = new Map<string, string>();
+  const userId = new Map<string, string>();
+  for (const person of staff) {
+    const created = await prisma.user.create({
+      data: {
+        fullName: person.fullName,
+        role: person.role,
+        email: person.email,
+        passwordHash,
+        institutionId: person.institution ? must(institutionId, person.institution) : null,
+      },
+    });
+    userId.set(person.key, created.id);
+
+    if (person.role === "FREELANCER" || person.role === "DONOR_STAFF") {
+      await prisma.wallet.create({
+        data: { userId: created.id, balanceKop: 0 },
+      });
+    }
+
+    if (person.skills?.length) {
+      await prisma.freelancerSkill.createMany({
+        data: person.skills.map((slug) => ({
+          userId: created.id,
+          specialtyId: must(specialtyId, slug),
+        })),
+      });
+    }
+  }
+
   for (const set of assumptionSets) {
     const parsed = assumptionSetSchema.parse({ ...set, avgDisposalKop });
     const created = await prisma.assumptionSet.create({ data: parsed });
-    assumptionId.set(parsed.kind, created.id);
     for (const [slug, perUnitKop] of Object.entries(disposalKop)) {
       await prisma.disposalRate.create({
         data: {
@@ -127,34 +137,6 @@ async function main(): Promise<void> {
       });
     }
   }
-  void assumptionId;
-
-  const groupId = new Map<string, string>();
-  for (const group of groups) {
-    const created = await prisma.studyGroup.create({
-      data: {
-        name: group.name,
-        institutionId: must(institutionId, group.institution),
-        specialtyId: must(specialtyId, group.specialty),
-        masterId: must(userId, group.master),
-      },
-    });
-    groupId.set(group.key, created.id);
-  }
-
-  for (const student of students) {
-    const created = await prisma.user.create({
-      data: {
-        fullName: student.fullName,
-        role: "STUDENT",
-        email: student.email,
-        passwordHash,
-        institutionId: must(institutionId, student.institution),
-        groupId: must(groupId, student.group),
-      },
-    });
-    userId.set(student.key, created.id);
-  }
 
   const itemCount = await prisma.item.count();
   if (itemCount !== 0) {
@@ -162,9 +144,10 @@ async function main(): Promise<void> {
   }
 
   console.log(
-    `Сид готов: ${institutions.length} учреждений, каталог пустой. Демо начинается с публикации.`,
+    `Сид готов: ${institutions.length} учреждений, ${staff.filter((s) => s.role === "FREELANCER").length} фрилансеров, каталог пустой.`,
   );
   console.log(`Демо-пароль всех учёток: ${DEMO_PASSWORD}`);
+  console.log(`Фрилансер: freelancer.wood@reschool.demo / ${DEMO_PASSWORD}`);
 }
 
 main()

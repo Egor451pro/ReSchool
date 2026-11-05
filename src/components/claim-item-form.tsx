@@ -1,23 +1,64 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { claimItemAction, type OrderFormState } from "@/app/actions/orders";
+import { formatBynAmount } from "@/domain/economy/money";
 
-const initialState: OrderFormState = {};
+const initial: OrderFormState = {};
 
-export function ClaimItemForm({ itemId, groupId }: { itemId: string; groupId: string }) {
-  const [state, action, pending] = useActionState(claimItemAction, initialState);
+export function ClaimItemForm({
+  itemId,
+  defaultFeeKop,
+  newPriceKop,
+}: {
+  itemId: string;
+  defaultFeeKop: number;
+  newPriceKop: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [state, action, pending] = useActionState(claimItemAction, initial);
+  const defaultFee = formatBynAmount(defaultFeeKop);
+
+  if (!open) {
+    return (
+      <button type="button" className="btn-primary btn-sm" onClick={() => setOpen(true)}>
+        Взять в работу
+      </button>
+    );
+  }
 
   return (
-    <form action={action} className="mt-auto flex flex-col gap-2">
+    <form action={action} className="flex flex-col gap-3 rounded-lg border border-mint/70 bg-paper p-3">
       <input type="hidden" name="itemId" value={itemId} />
-      <input type="hidden" name="groupId" value={groupId} />
-      {state.error ? (
-        <p className="rounded-lg bg-gold/40 px-3 py-2 text-sm text-ink">{state.error}</p>
-      ) : null}
-      <button type="submit" disabled={pending} className="btn-primary btn-sm w-full">
-        {pending ? "Берём…" : "Взять в работу"}
-      </button>
+      <p className="text-xs leading-5 text-leaf">
+        База — 14% от стоимости новых ({formatBynAmount(newPriceKop)} BYN). Можете изменить свою
+        цену за ремонт.
+      </p>
+      <label className="flex flex-col gap-1 text-sm text-leaf">
+        Ваша цена, BYN
+        <input
+          name="feeByn"
+          type="text"
+          inputMode="decimal"
+          required
+          defaultValue={defaultFee}
+          className="rounded-lg border border-mint px-3 py-2 text-base text-ink"
+        />
+      </label>
+      {state.error ? <p className="text-sm text-ink">{state.error}</p> : null}
+      <div className="flex gap-2">
+        <button type="submit" disabled={pending} className="btn-primary btn-sm flex-1">
+          {pending ? "Отправляем…" : "Предложить заказ"}
+        </button>
+        <button
+          type="button"
+          className="btn-ghost btn-sm"
+          disabled={pending}
+          onClick={() => setOpen(false)}
+        >
+          Отмена
+        </button>
+      </div>
     </form>
   );
 }

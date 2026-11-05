@@ -19,6 +19,9 @@ const assumptionSelect = {
   hostingKopAnnual: true,
   supportKopAnnual: true,
   illustrativeLaborKopHour: true,
+  slesarAnnualSalaryKop: true,
+  zavhozBonusShareMilli: true,
+  freelancerAvgFeeKop: true,
   basisNote: true,
 } as const;
 
@@ -54,6 +57,7 @@ export function listDistrictSnapshots(district: string | null) {
       newPriceKop: true,
       materialsKop: true,
       transportKop: true,
+      freelancerFeeKop: true,
       procurementSavingKop: true,
       avoidedDisposalKop: true,
       propertyBudgetKop: true,
@@ -147,7 +151,7 @@ export function findCloseableOrder(orderId: string) {
       id: true,
       status: true,
       masterId: true,
-      workshopInstitutionId: true,
+      agreedFeeKop: true,
       actualMaterialsKop: true,
       transportKop: true,
       actualMinutes: true,
@@ -171,6 +175,7 @@ export async function closeOrderWithSnapshot(input: {
   assumptionId: string;
   materialsKop: number;
   transportKop: number;
+  freelancerFeeKop: number;
   newPriceKop: number;
   procurementSavingKop: number;
   avoidedDisposalKop: number;
@@ -197,6 +202,7 @@ export async function closeOrderWithSnapshot(input: {
         newPriceKop: input.newPriceKop,
         materialsKop: input.materialsKop,
         transportKop: input.transportKop,
+        freelancerFeeKop: input.freelancerFeeKop,
         procurementSavingKop: input.procurementSavingKop,
         avoidedDisposalKop: input.avoidedDisposalKop,
         propertyBudgetKop: input.propertyBudgetKop,

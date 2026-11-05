@@ -17,6 +17,7 @@ export function assertEconomyInput(input: ItemEconomyInput): void {
   assertIntInRange("newUnitPriceKop", input.newUnitPriceKop, 0);
   assertIntInRange("materialsKop", input.materialsKop, 0);
   assertIntInRange("transportKop", input.transportKop, 0);
+  assertIntInRange("freelancerFeeKop", input.freelancerFeeKop, 0);
   assertIntInRange("disposalPerUnitKop", input.disposalPerUnitKop, 0);
   assertIntInRange("practiceConsumableKop", input.practiceConsumableKop, 0);
   assertIntInRange("substitutionMilli", input.substitutionMilli, 0, 1000);

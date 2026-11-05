@@ -21,7 +21,7 @@ export default async function CatalogPage({
 }) {
   const user = await requireRoles([
     "DONOR_STAFF",
-    "WORKSHOP_MASTER",
+    "FREELANCER",
     "DISTRICT_ANALYST",
     "PLATFORM_ADMIN",
   ]);
@@ -35,7 +35,7 @@ export default async function CatalogPage({
   );
 
   const description =
-    user.role === "WORKSHOP_MASTER"
+    user.role === "FREELANCER"
       ? "Свободные объявления района. Взятые в работу здесь не показываются — они на бирже и в заказах."
       : "Свободные объявления района. Свои карточки публикуйте в кабинете; взятые в работу из каталога пропадают.";
 

@@ -18,6 +18,9 @@ export const assumptionSetSchema = z.object({
   hostingKopAnnual: z.number().int().nonnegative(),
   supportKopAnnual: z.number().int().nonnegative(),
   illustrativeLaborKopHour: z.number().int().nonnegative(),
+  slesarAnnualSalaryKop: z.number().int().nonnegative().default(0),
+  zavhozBonusShareMilli: z.number().int().min(0).max(1000).default(0),
+  freelancerAvgFeeKop: z.number().int().nonnegative().default(0),
   basisNote: z.string().min(10),
 });
 

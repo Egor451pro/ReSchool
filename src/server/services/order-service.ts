@@ -7,11 +7,11 @@ import {
 } from "@/domain/workflow/order-item-sync";
 import { prisma } from "@/server/db";
 import {
+  acceptOrderBySchool,
   applyOrderTransition,
   claimItemOrder,
   findClaimableItem,
   findOrderForMaster,
-  listMasterGroups,
 } from "@/server/repositories/order-repository";
 import {
   deliverOrderWithAct,
@@ -44,51 +44,40 @@ async function planDefaults() {
   };
 }
 
-function canManageOrder(
-  actor: OrderActor,
-  order: { masterId: string; workshopInstitutionId: string },
-): boolean {
+function canManageOrder(actor: OrderActor, order: { masterId: string }): boolean {
   if (actor.role === "PLATFORM_ADMIN") return true;
-  if (actor.role !== "WORKSHOP_MASTER") return false;
+  if (actor.role !== "FREELANCER") return false;
   return order.masterId === actor.id;
 }
 
 export async function claimListedItem(
   actor: OrderActor,
-  input: { itemId: string; groupId?: string },
+  input: { itemId: string; agreedFeeKop: number },
 ): Promise<OrderResult> {
-  if (actor.role !== "WORKSHOP_MASTER" || !actor.institutionId) {
-    return { ok: false, error: "Взять в работу может исполнитель" };
+  if (actor.role !== "FREELANCER") {
+    return { ok: false, error: "Взять в работу может фрилансер" };
   }
-
-  const groups = await listMasterGroups(actor.id);
-  const group =
-    (input.groupId ? groups.find((entry) => entry.id === input.groupId) : null) ?? groups[0];
-  if (!group || group.institutionId !== actor.institutionId) {
-    return { ok: false, error: "У исполнителя нет группы для заказа" };
+  if (!Number.isInteger(input.agreedFeeKop) || input.agreedFeeKop <= 0) {
+    return { ok: false, error: "Укажите цену за ремонт больше нуля" };
   }
 
   const item = await findClaimableItem(input.itemId);
   if (!item) return { ok: false, error: "Предмет не найден" };
   if (item.status !== "LISTED") return { ok: false, error: "Предмет уже не опубликован" };
-  if (item.condition === "SCRAP") return { ok: false, error: "Лом в учебный ремонт не берём" };
+  if (item.condition === "SCRAP") return { ok: false, error: "Лом в ремонт не берём" };
   if (item.orders.length > 0) return { ok: false, error: "У предмета уже есть активный заказ" };
 
-  // MVP: исполнитель берёт любой заказ; специальность группы только для учёта.
-  const specialtyId =
-    item.category.specialties.find((link) => link.specialtyId === group.specialtyId)
-      ?.specialtyId ??
-    item.category.specialties[0]?.specialtyId ??
-    group.specialtyId;
+  const maxFee = item.newUnitPriceKop * item.quantity;
+  if (input.agreedFeeKop > maxFee) {
+    return { ok: false, error: "Цена ремонта не может быть выше стоимости новых вещей" };
+  }
 
   const defaults = await planDefaults();
   const dueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
   const result = await claimItemOrder({
     itemId: item.id,
-    workshopInstitutionId: actor.institutionId,
-    specialtyId,
     masterId: actor.id,
-    groupId: group.id,
+    agreedFeeKop: input.agreedFeeKop,
     plannedMaterialsKop: defaults.materials,
     transportKop: defaults.transport,
     plannedMinutes: Math.max(MINUTES_PER_UNIT, item.quantity * MINUTES_PER_UNIT),
@@ -102,10 +91,42 @@ export async function claimListedItem(
   return { ok: true, orderId: result.orderId };
 }
 
+export async function acceptOrderProposal(
+  actor: OrderActor,
+  orderId: string,
+): Promise<OrderResult> {
+  if (actor.role !== "DONOR_STAFF" && actor.role !== "PLATFORM_ADMIN") {
+    return { ok: false, error: "Принять заказ может завхоз" };
+  }
+  if (!actor.institutionId) return { ok: false, error: "Нужно учреждение" };
+
+  const order = await findOrderForMaster(orderId);
+  if (!order) return { ok: false, error: "Заказ не найден" };
+  if (order.item.institutionId !== actor.institutionId && actor.role !== "PLATFORM_ADMIN") {
+    return { ok: false, error: "Это предмет другого учреждения" };
+  }
+  if (order.status !== "ASSIGNED" || order.schoolAcceptedAt) {
+    return { ok: false, error: "Заказ уже принят или недоступен" };
+  }
+
+  const result = await acceptOrderBySchool({
+    orderId: order.id,
+    itemId: order.item.id,
+    actorId: actor.id,
+    institutionId: order.item.institutionId,
+  });
+  if (!result.ok) return { ok: false, error: "Статус уже изменился" };
+  return { ok: true, orderId: order.id };
+}
+
 export async function advanceOrder(actor: OrderActor, orderId: string): Promise<OrderResult> {
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
+  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого фрилансера" };
+
+  if (order.status === "ASSIGNED" && !order.schoolAcceptedAt) {
+    return { ok: false, error: "Сначала завхоз должен принять ваш заказ" };
+  }
 
   try {
     const plan = planOrderAdvance(order.status, order.item.status);
@@ -132,7 +153,7 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
 export async function cancelOrder(actor: OrderActor, orderId: string): Promise<OrderResult> {
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
+  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого фрилансера" };
 
   try {
     const plan = planOrderCancel(order.status, order.item.status);

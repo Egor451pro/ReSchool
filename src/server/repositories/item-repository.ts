@@ -49,7 +49,20 @@ export function listInstitutionActiveItems(institutionId: string) {
   return prisma.item.findMany({
     where: { institutionId, status: { not: "CLOSED" } },
     orderBy: [{ createdAt: "desc" }, { title: "asc" }],
-    select: tileSelect,
+    select: {
+      ...tileSelect,
+      orders: {
+        where: { status: { not: "CANCELLED" } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          status: true,
+          agreedFeeKop: true,
+          schoolAcceptedAt: true,
+        },
+      },
+    },
   });
 }
 
@@ -89,6 +102,8 @@ export function findConfirmableOrderForItem(itemId: string) {
     select: {
       id: true,
       status: true,
+      masterId: true,
+      agreedFeeKop: true,
       actualMaterialsKop: true,
       transportKop: true,
       item: {

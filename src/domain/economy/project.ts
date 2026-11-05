@@ -20,12 +20,13 @@ export function projectYear(input: YearProjectionInput): YearProjection {
     newUnitPriceKop: input.avgNewPriceKop,
     materialsKop: input.avgMaterialsKop,
     transportKop: input.defaultTransportKop,
+    freelancerFeeKop: input.freelancerAvgFeeKop,
     disposalPerUnitKop: input.avgDisposalKop,
     practiceConsumableKop: input.practiceConsumableKop,
     substitutionMilli: input.substitutionMilli,
   });
   const propertyBudgetKop = perItem.propertyBudgetKop * completedOrders;
-  const practiceSavingKop = perItem.practiceSavingKop * completedOrders;
+  const practiceSavingKop = 0;
   const platformCostKop = input.hostingKopAnnual + input.supportKopAnnual;
 
   return {
@@ -33,7 +34,7 @@ export function projectYear(input: YearProjectionInput): YearProjection {
     perItem,
     propertyBudgetKop,
     practiceSavingKop,
-    combinedKop: propertyBudgetKop + practiceSavingKop,
+    combinedKop: propertyBudgetKop,
     platformCostKop,
     paybackYears: paybackYears(platformCostKop, propertyBudgetKop),
   };

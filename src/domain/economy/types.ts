@@ -6,6 +6,8 @@ export type ItemEconomyInput = {
   newUnitPriceKop: Kopecks;
   materialsKop: Kopecks;
   transportKop: Kopecks;
+  /** Гонорар фрилансера за заказ. */
+  freelancerFeeKop: Kopecks;
   disposalPerUnitKop: Kopecks;
   practiceConsumableKop: Kopecks;
   /** 0..1000, где 1000 = коэффициент замещения 1. */
@@ -21,6 +23,7 @@ export type ItemEconomy = {
   avoidedDisposalKop: Kopecks;
   propertyBudgetKop: Kopecks;
   practiceSavingKop: Kopecks;
+  freelancerFeeKop: Kopecks;
   combinedKop: Kopecks;
   worthRepairing: boolean;
   advice: RepairAdvice;
@@ -32,6 +35,7 @@ export type YearProjectionInput = {
   avgMaterialsKop: Kopecks;
   avgDisposalKop: Kopecks;
   defaultTransportKop: Kopecks;
+  freelancerAvgFeeKop: Kopecks;
   practiceConsumableKop: Kopecks;
   substitutionMilli: number;
   completionMilli: number;
@@ -55,6 +59,7 @@ export type SnapshotRow = {
   avoidedDisposalKop: Kopecks;
   propertyBudgetKop: Kopecks;
   practiceSavingKop: Kopecks;
+  freelancerFeeKop: Kopecks;
   minutes: number;
 };
 
@@ -64,6 +69,7 @@ export type SnapshotTotals = {
   avoidedDisposalKop: Kopecks;
   propertyBudgetKop: Kopecks;
   practiceSavingKop: Kopecks;
+  freelancerFeeKop: Kopecks;
   combinedKop: Kopecks;
   minutes: number;
 };

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { UserRole } from "@/domain/access/roles";
+import type { InstitutionType } from "@prisma/client";
 import { prisma } from "@/server/db";
 
 const userSelect = {
@@ -28,9 +29,98 @@ export function createUser(input: {
   email: string;
   passwordHash: string;
   role: UserRole;
-  institutionId: string;
+  institutionId?: string | null;
 }) {
-  return prisma.user.create({ data: input, select: userSelect });
+  return prisma.user.create({
+    data: {
+      fullName: input.fullName,
+      email: input.email,
+      passwordHash: input.passwordHash,
+      role: input.role,
+      institutionId: input.institutionId ?? null,
+    },
+    select: userSelect,
+  });
+}
+
+export async function createDonorWithInstitution(input: {
+  fullName: string;
+  email: string;
+  passwordHash: string;
+  institution: {
+    name: string;
+    type: InstitutionType;
+    district: string;
+    address: string;
+    phone: string;
+    email: string;
+  };
+}) {
+  return prisma.$transaction(async (tx) => {
+    const institution = await tx.institution.create({
+      data: {
+        name: input.institution.name,
+        type: input.institution.type,
+        district: input.institution.district,
+        address: input.institution.address,
+        phone: input.institution.phone,
+        email: input.institution.email,
+      },
+      select: { id: true },
+    });
+
+    const user = await tx.user.create({
+      data: {
+        fullName: input.fullName,
+        email: input.email,
+        passwordHash: input.passwordHash,
+        role: "DONOR_STAFF",
+        institutionId: institution.id,
+      },
+      select: userSelect,
+    });
+
+    await tx.wallet.create({
+      data: { userId: user.id, balanceKop: 0 },
+    });
+
+    return user;
+  });
+}
+
+export async function createFreelancer(input: {
+  fullName: string;
+  email: string;
+  passwordHash: string;
+  specialtyIds: string[];
+}) {
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        fullName: input.fullName,
+        email: input.email,
+        passwordHash: input.passwordHash,
+        role: "FREELANCER",
+        institutionId: null,
+      },
+      select: userSelect,
+    });
+
+    if (input.specialtyIds.length > 0) {
+      await tx.freelancerSkill.createMany({
+        data: input.specialtyIds.map((specialtyId) => ({
+          userId: user.id,
+          specialtyId,
+        })),
+      });
+    }
+
+    await tx.wallet.create({
+      data: { userId: user.id, balanceKop: 0 },
+    });
+
+    return user;
+  });
 }
 
 export function listUsers() {
@@ -40,67 +130,15 @@ export function listUsers() {
   });
 }
 
-const loginProfileSelect = {
-  email: true,
-  fullName: true,
-  role: true,
-  institution: {
-    select: { id: true, name: true, type: true, address: true },
-  },
-} as const;
-
-/**
- * Один вход на учреждение: школы и колледжи/ПТУ.
- * Если есть сотрудник школы — берём его, иначе мастера колледжа.
- */
-export async function listInstitutionLoginProfiles() {
-  const rows = await prisma.user.findMany({
-    where: {
-      institutionId: { not: null },
-      role: { in: ["DONOR_STAFF", "WORKSHOP_MASTER"] },
-      institution: {
-        type: { in: ["SCHOOL", "GYMNASIUM", "LYCEUM", "COLLEGE", "VOCATIONAL"] },
-      },
-    },
-    orderBy: [{ institution: { name: "asc" } }, { fullName: "asc" }],
-    select: loginProfileSelect,
+export function listSpecialties() {
+  return prisma.specialty.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, slug: true },
   });
-
-  const byInstitution = new Map<string, (typeof rows)[number]>();
-  for (const row of rows) {
-    if (!row.institution) continue;
-    const current = byInstitution.get(row.institution.id);
-    if (!current || (row.role === "DONOR_STAFF" && current.role !== "DONOR_STAFF")) {
-      byInstitution.set(row.institution.id, row);
-    }
-  }
-
-  return [...byInstitution.values()].sort((left, right) =>
-    (left.institution?.name ?? "").localeCompare(right.institution?.name ?? "", "ru"),
-  );
 }
 
 export function countInstitutionItems(institutionId: string) {
   return prisma.item.count({ where: { institutionId } });
-}
-
-export function countWorkshopOrders(institutionId: string) {
-  return prisma.repairOrder.count({
-    where: { workshopInstitutionId: institutionId },
-  });
-}
-
-export function listLedGroups(masterId: string) {
-  return prisma.studyGroup.findMany({
-    where: { masterId },
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      specialty: { select: { name: true } },
-      students: { select: { id: true, fullName: true }, orderBy: { fullName: "asc" } },
-    },
-  });
 }
 
 export function countDistrict(district: string | null) {

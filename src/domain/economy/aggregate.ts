@@ -9,8 +9,8 @@ export function sumSnapshots(rows: SnapshotRow[]): SnapshotTotals {
       avoidedDisposalKop: totals.avoidedDisposalKop + row.avoidedDisposalKop,
       propertyBudgetKop: totals.propertyBudgetKop + row.propertyBudgetKop,
       practiceSavingKop: totals.practiceSavingKop + row.practiceSavingKop,
-      combinedKop:
-        totals.combinedKop + row.propertyBudgetKop + row.practiceSavingKop,
+      freelancerFeeKop: totals.freelancerFeeKop + row.freelancerFeeKop,
+      combinedKop: totals.combinedKop + row.propertyBudgetKop,
       minutes: totals.minutes + row.minutes,
     }),
     {
@@ -19,6 +19,7 @@ export function sumSnapshots(rows: SnapshotRow[]): SnapshotTotals {
       avoidedDisposalKop: 0,
       propertyBudgetKop: 0,
       practiceSavingKop: 0,
+      freelancerFeeKop: 0,
       combinedKop: 0,
       minutes: 0,
     },

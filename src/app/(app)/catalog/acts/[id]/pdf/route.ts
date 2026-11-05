@@ -6,7 +6,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   await connection();
   const user = await requireRoles([
     "DONOR_STAFF",
-    "WORKSHOP_MASTER",
+    "FREELANCER",
     "DISTRICT_ANALYST",
     "PLATFORM_ADMIN",
   ]);

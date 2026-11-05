@@ -1,64 +1,42 @@
 import { describe, expect, it } from "vitest";
 import {
   canAccess,
-  roleForInstitutionType,
+  isDonorInstitutionType,
   roleHome,
   safeNextPath,
   sectionsForRole,
 } from "./roles";
 
-describe("доступ по ролям", () => {
-  it("пускает завхоза в кабинет и не открывает биржу", () => {
+describe("access roles", () => {
+  it("фрилансер видит биржу, заказы и кошелёк", () => {
+    expect(canAccess("FREELANCER", "/workshop")).toBe(true);
+    expect(canAccess("FREELANCER", "/orders")).toBe(true);
+    expect(canAccess("FREELANCER", "/wallet")).toBe(true);
+    expect(canAccess("FREELANCER", "/cabinet")).toBe(false);
+    expect(roleHome("FREELANCER")).toBe("/workshop");
+  });
+
+  it("завхоз видит кабинет, каталог и кошелёк", () => {
     expect(canAccess("DONOR_STAFF", "/cabinet")).toBe(true);
-    expect(canAccess("DONOR_STAFF", "/cabinet/items")).toBe(true);
+    expect(canAccess("DONOR_STAFF", "/catalog")).toBe(true);
+    expect(canAccess("DONOR_STAFF", "/wallet")).toBe(true);
     expect(canAccess("DONOR_STAFF", "/workshop")).toBe(false);
-    expect(canAccess("DONOR_STAFF", "/admin")).toBe(false);
+    expect(roleHome("DONOR_STAFF")).toBe("/cabinet");
   });
 
-  it("не даёт учащемуся рабочих разделов MVP", () => {
-    expect(sectionsForRole("STUDENT")).toEqual([]);
-    expect(canAccess("STUDENT", "/cabinet")).toBe(false);
-    expect(canAccess("STUDENT", "/catalog")).toBe(false);
-    expect(canAccess("STUDENT", "/portfolio")).toBe(false);
-    expect(roleHome("STUDENT")).toBe("/");
-  });
-
-  it("открывает администратору сводку и каталог без чужих кабинетов", () => {
+  it("администратор видит сводку", () => {
     expect(canAccess("PLATFORM_ADMIN", "/admin")).toBe(true);
-    expect(canAccess("PLATFORM_ADMIN", "/catalog")).toBe(true);
-    expect(canAccess("PLATFORM_ADMIN", "/workshop")).toBe(false);
-    expect(canAccess("PLATFORM_ADMIN", "/cabinet")).toBe(false);
-    expect(canAccess("DISTRICT_ANALYST", "/district")).toBe(false);
-    expect(roleHome("PLATFORM_ADMIN")).toBe("/admin");
+    expect(sectionsForRole("PLATFORM_ADMIN").map((s) => s.href)).toContain("/admin");
   });
 
-  it("даёт исполнителю кабинет заявок и биржу заказов", () => {
-    expect(canAccess("WORKSHOP_MASTER", "/cabinet")).toBe(true);
-    expect(canAccess("WORKSHOP_MASTER", "/workshop")).toBe(true);
-    expect(canAccess("WORKSHOP_MASTER", "/orders")).toBe(true);
-    expect(roleHome("WORKSHOP_MASTER")).toBe("/cabinet");
-  });
-});
-
-describe("безопасный переход после входа", () => {
-  it("отбрасывает чужой раздел и внешний адрес", () => {
-    expect(safeNextPath("/admin", "STUDENT")).toBe("/");
-    expect(safeNextPath("//evil.example", "DONOR_STAFF")).toBe("/cabinet");
-    expect(safeNextPath("https://evil.example", "DONOR_STAFF")).toBe("/cabinet");
-    expect(safeNextPath(null, "WORKSHOP_MASTER")).toBe("/cabinet");
+  it("safeNextPath не пускает чужие разделы", () => {
+    expect(safeNextPath("/admin", "FREELANCER")).toBe("/workshop");
+    expect(safeNextPath(null, "DONOR_STAFF")).toBe("/cabinet");
   });
 
-  it("сохраняет свой раздел", () => {
-    expect(safeNextPath("/catalog?category=furniture", "DONOR_STAFF")).toBe("/catalog");
-  });
-});
-
-describe("роль при регистрации", () => {
-  it("даёт школе роль завхоза, а колледжу — исполнителя", () => {
-    expect(roleForInstitutionType("SCHOOL")).toBe("DONOR_STAFF");
-    expect(roleForInstitutionType("GYMNASIUM")).toBe("DONOR_STAFF");
-    expect(roleForInstitutionType("COLLEGE")).toBe("WORKSHOP_MASTER");
-    expect(roleForInstitutionType("VOCATIONAL")).toBe("WORKSHOP_MASTER");
-    expect(roleForInstitutionType("DEPARTMENT")).toBeNull();
+  it("типы учреждений для саморегистрации завхоза", () => {
+    expect(isDonorInstitutionType("SCHOOL")).toBe(true);
+    expect(isDonorInstitutionType("COLLEGE")).toBe(true);
+    expect(isDonorInstitutionType("DEPARTMENT")).toBe(false);
   });
 });

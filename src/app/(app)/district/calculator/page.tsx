@@ -32,6 +32,7 @@ export default async function DistrictCalculatorPage() {
             avgMaterialsKop: set.avgMaterialsKop,
             avgDisposalKop: set.avgDisposalKop,
             defaultTransportKop: set.defaultTransportKop,
+            freelancerAvgFeeKop: set.freelancerAvgFeeKop,
             practiceConsumableKop: set.practiceConsumableKop,
             substitutionMilli: set.substitutionMilli,
             completionMilli: set.completionMilli,

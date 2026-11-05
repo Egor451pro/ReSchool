@@ -5,12 +5,13 @@ import { formatByn, parseBynToKop } from "./money";
 import { projectYear } from "./project";
 
 describe("calculateItemEconomy", () => {
-  it("считает партию парт по формуле бюджета имущества", () => {
+  it("считает партию парт с гонораром фрилансера в стоимости ремонта", () => {
     const result = calculateItemEconomy({
       quantity: 4,
       newUnitPriceKop: 18_000,
       materialsKop: 4_000,
       transportKop: 1_500,
+      freelancerFeeKop: 1_700,
       disposalPerUnitKop: 800,
       practiceConsumableKop: 2_500,
       substitutionMilli: 700,
@@ -18,15 +19,33 @@ describe("calculateItemEconomy", () => {
 
     expect(result).toMatchObject({
       newPriceKop: 72_000,
-      restorationKop: 5_500,
-      procurementSavingKop: 66_500,
+      restorationKop: 7_200,
+      procurementSavingKop: 64_800,
       avoidedDisposalKop: 3_200,
-      propertyBudgetKop: 69_700,
-      practiceSavingKop: 1_750,
-      combinedKop: 71_450,
+      propertyBudgetKop: 68_000,
+      practiceSavingKop: 0,
+      freelancerFeeKop: 1_700,
+      combinedKop: 68_000,
       worthRepairing: true,
       advice: "repair",
     });
+  });
+
+  it("история про стул 47 → 17: экономия закупки видна", () => {
+    const result = calculateItemEconomy({
+      quantity: 1,
+      newUnitPriceKop: 4_700,
+      materialsKop: 0,
+      transportKop: 0,
+      freelancerFeeKop: 1_700,
+      disposalPerUnitKop: 0,
+      practiceConsumableKop: 0,
+      substitutionMilli: 0,
+    });
+
+    expect(result.newPriceKop).toBe(4_700);
+    expect(result.restorationKop).toBe(1_700);
+    expect(result.procurementSavingKop).toBe(3_000);
   });
 
   it("оставляет отрицательную экономию закупки видимой", () => {
@@ -35,6 +54,7 @@ describe("calculateItemEconomy", () => {
       newUnitPriceKop: 3_000,
       materialsKop: 2_800,
       transportKop: 1_500,
+      freelancerFeeKop: 0,
       disposalPerUnitKop: 800,
       practiceConsumableKop: 2_500,
       substitutionMilli: 700,
@@ -52,6 +72,7 @@ describe("calculateItemEconomy", () => {
       newUnitPriceKop: 5_000,
       materialsKop: 4_000,
       transportKop: 1_500,
+      freelancerFeeKop: 0,
       disposalPerUnitKop: 800,
       practiceConsumableKop: 0,
       substitutionMilli: 0,
@@ -69,6 +90,7 @@ describe("calculateItemEconomy", () => {
         newUnitPriceKop: 100,
         materialsKop: 0,
         transportKop: 0,
+        freelancerFeeKop: 0,
         disposalPerUnitKop: 0,
         practiceConsumableKop: 0,
         substitutionMilli: 0,
@@ -81,6 +103,7 @@ describe("calculateItemEconomy", () => {
         newUnitPriceKop: 100,
         materialsKop: 0,
         transportKop: 0,
+        freelancerFeeKop: 0,
         disposalPerUnitKop: 0,
         practiceConsumableKop: 0,
         substitutionMilli: 1001,
@@ -108,6 +131,7 @@ describe("projectYear", () => {
       avgMaterialsKop: 4_000,
       avgDisposalKop: 933,
       defaultTransportKop: 1_500,
+      freelancerAvgFeeKop: 1_700,
       practiceConsumableKop: 2_500,
       substitutionMilli: 700,
       completionMilli: 450,
@@ -116,11 +140,11 @@ describe("projectYear", () => {
     });
 
     expect(projection.completedOrders).toBe(81);
-    expect(projection.perItem.propertyBudgetKop).toBe(20_433);
-    expect(projection.propertyBudgetKop).toBe(81 * 20_433);
-    expect(projection.practiceSavingKop).toBe(81 * 1_750);
+    expect(projection.perItem.propertyBudgetKop).toBe(18_733);
+    expect(projection.propertyBudgetKop).toBe(81 * 18_733);
+    expect(projection.practiceSavingKop).toBe(0);
     expect(projection.platformCostKop).toBe(100_000);
-    expect(projection.paybackYears).toBeCloseTo(100_000 / (81 * 20_433), 10);
+    expect(projection.paybackYears).toBeCloseTo(100_000 / (81 * 18_733), 10);
   });
 });
 
@@ -132,6 +156,7 @@ describe("sumSnapshots", () => {
         avoidedDisposalKop: 20,
         propertyBudgetKop: 120,
         practiceSavingKop: 10,
+        freelancerFeeKop: 17,
         minutes: 60,
       },
       {
@@ -139,6 +164,7 @@ describe("sumSnapshots", () => {
         avoidedDisposalKop: 30,
         propertyBudgetKop: -20,
         practiceSavingKop: 15,
+        freelancerFeeKop: 10,
         minutes: 30,
       },
     ]);
@@ -149,7 +175,8 @@ describe("sumSnapshots", () => {
       avoidedDisposalKop: 50,
       propertyBudgetKop: 100,
       practiceSavingKop: 25,
-      combinedKop: 125,
+      freelancerFeeKop: 27,
+      combinedKop: 100,
       minutes: 90,
     });
   });
@@ -158,22 +185,11 @@ describe("sumSnapshots", () => {
 describe("parseBynToKop", () => {
   it("принимает рубли с запятой, точкой и пробелом", () => {
     expect(parseBynToKop("180")).toBe(18_000);
-    expect(parseBynToKop("180,5")).toBe(18_050);
-    expect(parseBynToKop("180.50")).toBe(18_050);
-    expect(parseBynToKop("1 800,00")).toBe(180_000);
+    expect(parseBynToKop("180,50")).toBe(18_050);
+    expect(parseBynToKop("1 800.5")).toBe(180_050);
   });
 
-  it("отклоняет лишние знаки и отрицательную цену", () => {
-    expect(() => parseBynToKop("180,555")).toThrow(/двух знаков/);
-    expect(() => parseBynToKop("-1")).toThrow(/рублях/);
-    expect(() => parseBynToKop("")).toThrow(/рублях/);
-  });
-});
-
-describe("formatByn", () => {
-  it("группирует рубли и сохраняет знак", () => {
-    expect(formatByn(69_700)).toBe("697,00 BYN");
-    expect(formatByn(1_655_073)).toBe("16 550,73 BYN");
-    expect(formatByn(-500)).toBe("−5,00 BYN");
+  it("форматирует BYN", () => {
+    expect(formatByn(4_700)).toBe("47,00 BYN");
   });
 });

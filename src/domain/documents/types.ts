@@ -1,4 +1,9 @@
-export const documentTypes = ["TRANSFER_ACT", "RETURN_ACT", "WRITE_OFF_DRAFT"] as const;
+export const documentTypes = [
+  "TRANSFER_ACT",
+  "RETURN_ACT",
+  "WRITE_OFF_DRAFT",
+  "PAYOUT_ACT",
+] as const;
 export type DocumentType = (typeof documentTypes)[number];
 
 export const DRAFT_WATERMARK =

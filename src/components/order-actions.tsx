@@ -47,12 +47,15 @@ export function OrderActions({
   orderId,
   orderStatus,
   itemStatus,
+  schoolAccepted,
 }: {
   orderId: string;
   orderStatus: OrderStatus;
   itemStatus: ItemStatus;
+  schoolAccepted: boolean;
 }) {
-  const next = nextOrderStatus(orderStatus);
+  const waitingAccept = orderStatus === "ASSIGNED" && !schoolAccepted;
+  const next = waitingAccept ? null : nextOrderStatus(orderStatus);
   const canCancel = orderStatus === "ASSIGNED" || orderStatus === "IN_PROGRESS";
   const canUnrepair = orderStatus === "IN_PROGRESS" && itemStatus === "IN_REPAIR";
   const waitingSchool = orderStatus === "COMPLETED" && itemStatus === "READY";
@@ -60,6 +63,11 @@ export function OrderActions({
 
   return (
     <div className="flex flex-col gap-2">
+      {waitingAccept ? (
+        <p className="text-xs leading-5 text-leaf">
+          Предложение отправлено. Ждём, пока завхоз примет заказ — потом можно начать ремонт.
+        </p>
+      ) : null}
       {next ? (
         <ActionButton
           action={advanceOrderAction}

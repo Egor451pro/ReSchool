@@ -126,7 +126,7 @@ export async function publishItemAction(
     return { error: "Проверьте поля карточки", fields: fieldMessages(parsed.error), item };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
+  const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await publishItem(actor, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
   revalidateAppViews();
@@ -143,7 +143,7 @@ export async function reviseItemAction(
     return { error: "Проверьте поля карточки", fields: fieldMessages(parsed.error), item };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
+  const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await reviseItem(actor, itemId, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
   revalidateAppViews();
@@ -157,7 +157,7 @@ export async function withdrawItemAction(
   if (formData.get("confirm") !== "on") {
     return { error: "Отметьте, что карточку нужно снять" };
   }
-  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
+  const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await withdrawItem(actor, text(formData, "itemId"));
   if (!result.ok) return { error: result.error };
   revalidateAppViews();
@@ -173,7 +173,7 @@ export async function deleteItemAction(
   if (formData.get("confirm") !== "on") {
     return { error: "Отметьте подтверждение удаления" };
   }
-  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
+  const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await deletePublishedItem(actor, text(formData, "itemId"));
   if (!result.ok) return { error: result.error };
   revalidateAppViews();
@@ -190,7 +190,7 @@ export async function publishRequestAction(
     return { error: "Проверьте поля запроса", fields: fieldMessages(parsed.error), request };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
+  const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await publishRequest(actor, parsed.data);
   if (!result.ok) return { error: result.error, request };
   redirect("/cabinet#needs");
@@ -202,7 +202,7 @@ export async function confirmRepairAction(
   _state: ConfirmRepairState,
   formData: FormData,
 ): Promise<ConfirmRepairState> {
-  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
+  const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await confirmRepairBySchool(actor, text(formData, "itemId"));
   if (!result.ok) return { error: result.error };
   // Без revalidate страница кабинета остаётся со старым RSC-снимком.

@@ -4,7 +4,7 @@ export { orderStatuses };
 export type { OrderStatus };
 
 export const orderStatusLabels: Record<OrderStatus, string> = {
-  ASSIGNED: "Назначен",
+  ASSIGNED: "Ожидает завхоза",
   IN_PROGRESS: "В работе",
   QUALITY_CHECK: "Проверка",
   COMPLETED: "Завершён",
