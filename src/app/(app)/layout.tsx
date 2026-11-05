@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AccountHistorySync } from "@/components/account-history-sync";
 import { AuthHeader } from "@/components/auth-header";
-import { BrandLockup } from "@/components/brand-mark";
 import { SectionNav } from "@/components/section-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { roleHome, sectionsForRole } from "@/domain/access/roles";
@@ -41,10 +40,9 @@ async function AppShell({ children }: { children: ReactNode }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href={roleHome(user.role)}
-              className="inline-flex items-center"
-              aria-label="ReSchool"
+              className="text-sm font-semibold tracking-wide text-ink"
             >
-              <BrandLockup />
+              ReSchool
             </Link>
             <SectionNav links={links} />
           </div>

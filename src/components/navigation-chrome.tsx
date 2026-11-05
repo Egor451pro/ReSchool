@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BrandMark } from "@/components/brand-mark";
+
+const STATUS_WORDS = ["Loading", "Rendering", "Fetching", "Syncing", "Preparing"] as const;
 
 function isInternalNav(anchor: HTMLAnchorElement): boolean {
   if (anchor.target === "_blank" || anchor.hasAttribute("download")) return false;
@@ -26,15 +28,22 @@ export function NavigationChrome() {
   const searchParams = useSearchParams();
   const [pending, setPending] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [statusIndex, setStatusIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const statusRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const routeKey = `${pathname}?${searchParams.toString()}`;
 
   useEffect(() => {
     setPending(false);
     setProgress(0);
+    setStatusIndex(0);
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
+    }
+    if (statusRef.current) {
+      clearInterval(statusRef.current);
+      statusRef.current = null;
     }
   }, [routeKey]);
 
@@ -56,17 +65,16 @@ export function NavigationChrome() {
       if (!isInternalNav(anchor)) return;
       setPending(true);
       setProgress(12);
+      setStatusIndex(0);
     }
 
     function onSubmit(event: SubmitEvent) {
       const form = event.target;
       if (!(form instanceof HTMLFormElement)) return;
       if (form.target === "_blank") return;
-      const method = (form.getAttribute("method") ?? "get").toLowerCase();
-      if (method !== "get" && form.getAttribute("action")?.startsWith("http")) return;
-      // Server actions / навигация после submit — мягкий индикатор
       setPending(true);
       setProgress(18);
+      setStatusIndex(0);
     }
 
     document.addEventListener("click", onPointerDown, true);
@@ -86,33 +94,46 @@ export function NavigationChrome() {
         return Math.min(88, value + step);
       });
     }, 180);
+    statusRef.current = setInterval(() => {
+      setStatusIndex((index) => (index + 1) % STATUS_WORDS.length);
+    }, 900);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (statusRef.current) clearInterval(statusRef.current);
     };
   }, [pending]);
 
+  const status = STATUS_WORDS[statusIndex] ?? "Loading";
+
   return (
     <>
-      <div
-        className={`nav-progress ${pending ? "nav-progress-active" : ""}`}
-        aria-hidden
-      >
+      <div className={`nav-progress ${pending ? "nav-progress-active" : ""}`} aria-hidden>
         <div className="nav-progress-bar" style={{ width: `${pending ? progress : 0}%` }} />
       </div>
 
-      <div
-        className={`nav-veil ${pending ? "nav-veil-active" : ""}`}
-        aria-hidden
-      />
+      <div className={`nav-veil ${pending ? "nav-veil-active" : ""}`} aria-hidden />
 
       <Link
         href="/"
-        className={`nav-dock ${pending ? "nav-dock-busy" : ""}`}
-        aria-label={pending ? "Загрузка страницы" : "На главную ReSchool"}
-        title={pending ? "Загрузка…" : "ReSchool"}
+        className={`nav-island ${pending ? "nav-island-busy" : ""}`}
+        aria-label={pending ? status : "На главную ReSchool"}
+        title={pending ? status : "ReSchool"}
       >
-        <BrandMark className="nav-dock-mark" size={48} />
-        <span className="nav-dock-ring" aria-hidden />
+        <span className="nav-island-core">
+          <Image
+            src="/brand/rs-mark.png"
+            alt=""
+            width={40}
+            height={40}
+            className="nav-island-mark"
+            priority
+          />
+          <span className={`nav-island-label ${pending ? "nav-island-label-on" : ""}`}>
+            <span key={status} className="nav-island-word">
+              {status}
+            </span>
+          </span>
+        </span>
       </Link>
     </>
   );

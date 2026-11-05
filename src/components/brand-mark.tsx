@@ -1,10 +1,10 @@
 import Image from "next/image";
 
-const MARK = "/brand/reschool-mark.png";
+const MARK = "/brand/rs-mark.png";
 const LOCKUP_LIGHT = "/brand/reschool-light.png";
 const LOCKUP_DARK = "/brand/reschool-dark.png";
 
-/** Круглый знак (парта + цикл) — для дока и фавикона. */
+/** Монограмма RS — для дока и фавикона. */
 export function BrandMark({
   className = "",
   title = "ReSchool",
