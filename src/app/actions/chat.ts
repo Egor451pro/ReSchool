@@ -16,7 +16,11 @@ export async function sendChatMessageAction(
   const result = await sendOrderChatMessage(actor, orderId, body);
   if (!result.ok) return { error: result.error };
   revalidatePath("/orders");
+  revalidatePath(`/orders/${orderId}`);
   revalidatePath("/cabinet");
-  revalidatePath(`/orders`);
+  if (result.itemId) {
+    revalidatePath(`/catalog/${result.itemId}`);
+    revalidatePath(`/cabinet/items/${result.itemId}`);
+  }
   return {};
 }

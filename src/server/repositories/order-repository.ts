@@ -76,12 +76,109 @@ export function listMasterOrders(masterId: string) {
   });
 }
 
+/** Активные заказы фрилансера (ещё не ушли в историю). */
+export function listMasterActiveOrders(masterId: string) {
+  return prisma.repairOrder.findMany({
+    where: {
+      masterId,
+      status: { not: "CANCELLED" },
+      OR: [
+        { status: { in: ["ASSIGNED", "IN_PROGRESS", "QUALITY_CHECK"] } },
+        { status: "COMPLETED", item: { status: "READY" } },
+      ],
+    },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    select: orderCardSelect,
+  });
+}
+
+/** История выполненных заказов фрилансера — как у завхоза. */
+export function listFreelancerRepairHistory(masterId: string) {
+  return prisma.repairOrder.findMany({
+    where: {
+      masterId,
+      item: {
+        status: "CLOSED",
+        closeReason: { in: ["COMPLETED", "UNREPAIRABLE"] },
+      },
+    },
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      agreedFeeKop: true,
+      updatedAt: true,
+      item: {
+        select: {
+          id: true,
+          title: true,
+          condition: true,
+          status: true,
+          closeReason: true,
+          quantity: true,
+          newUnitPriceKop: true,
+          category: { select: { name: true, slug: true } },
+          institution: { select: { name: true, district: true } },
+          photos: {
+            orderBy: { sort: "asc" as const },
+            take: 1,
+            select: { id: true, path: true },
+          },
+        },
+      },
+    },
+  });
+}
+
 export function findOrderForMaster(orderId: string) {
   return prisma.repairOrder.findUnique({
     where: { id: orderId },
     select: {
       ...orderCardSelect,
       itemId: true,
+    },
+  });
+}
+
+export function findOrderDetail(orderId: string) {
+  return prisma.repairOrder.findUnique({
+    where: { id: orderId },
+    select: {
+      id: true,
+      status: true,
+      plannedMaterialsKop: true,
+      actualMaterialsKop: true,
+      transportKop: true,
+      plannedMinutes: true,
+      actualMinutes: true,
+      agreedFeeKop: true,
+      schoolAcceptedAt: true,
+      dueDate: true,
+      createdAt: true,
+      masterId: true,
+      itemId: true,
+      master: { select: { id: true, fullName: true, role: true } },
+      item: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          condition: true,
+          quantity: true,
+          institutionId: true,
+          institution: { select: { id: true, name: true, district: true } },
+          category: { select: { name: true } },
+          photos: {
+            orderBy: { sort: "asc" as const },
+            take: 1,
+            select: { id: true, path: true },
+          },
+        },
+      },
+      documents: {
+        orderBy: { createdAt: "asc" as const },
+        select: { id: true, type: true, number: true, createdAt: true },
+      },
     },
   });
 }

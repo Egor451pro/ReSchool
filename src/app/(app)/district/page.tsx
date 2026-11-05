@@ -28,7 +28,7 @@ export default async function DistrictPage() {
         </div>
         <Link
           href="/district/calculator"
-          className="inline-flex h-10 items-center justify-center rounded-2xl bg-deep px-4 text-sm font-medium text-cream shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90"
+          className="panel-accent inline-flex h-10 items-center justify-center rounded-2xl px-4 text-sm font-medium shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90"
         >
           Калькулятор сценариев
         </Link>
@@ -156,9 +156,9 @@ export default async function DistrictPage() {
 
 function Metric({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-3xl bg-deep px-4 py-3 text-cream shadow-[0_12px_28px_rgba(47,36,28,0.14)] transition-colors duration-300">
-      <p className="text-2xl font-semibold tabular-nums text-cream">{value}</p>
-      <p className="text-sm text-cream/65">{label}</p>
+    <div className="panel-accent rounded-3xl px-4 py-3 shadow-[0_12px_28px_rgba(47,36,28,0.14)] transition-colors duration-300">
+      <p className="text-2xl font-semibold tabular-nums">{value}</p>
+      <p className="panel-accent-muted text-sm">{label}</p>
     </div>
   );
 }

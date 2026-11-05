@@ -42,7 +42,7 @@ export async function claimItemAction(
   });
   if (!result.ok) return { error: result.error };
   revalidateAppViews();
-  redirect("/orders");
+  redirect(result.orderId ? `/orders/${result.orderId}` : "/orders");
 }
 
 export async function acceptOrderAction(
@@ -53,7 +53,7 @@ export async function acceptOrderAction(
   const result = await acceptOrderProposal(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
   revalidateAppViews();
-  redirect("/cabinet");
+  redirect(result.itemId ? `/cabinet/items/${result.itemId}` : "/cabinet");
 }
 
 export async function advanceOrderAction(
@@ -61,10 +61,11 @@ export async function advanceOrderAction(
   formData: FormData,
 ): Promise<OrderFormState> {
   const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
-  const result = await advanceOrder(actor, text(formData, "orderId"));
+  const orderId = text(formData, "orderId");
+  const result = await advanceOrder(actor, orderId);
   if (!result.ok) return { error: result.error };
   revalidateAppViews();
-  redirect("/orders");
+  redirect(`/orders/${orderId}`);
 }
 
 export async function cancelOrderAction(
@@ -83,10 +84,11 @@ export async function deliverOrderAction(
   formData: FormData,
 ): Promise<OrderFormState> {
   const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
-  const result = await markOrderDelivered(actor, text(formData, "orderId"));
+  const orderId = text(formData, "orderId");
+  const result = await markOrderDelivered(actor, orderId);
   if (!result.ok) return { error: result.error };
   revalidateAppViews();
-  redirect("/orders");
+  redirect(`/orders/${orderId}`);
 }
 
 export async function unrepairableOrderAction(

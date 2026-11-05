@@ -10,7 +10,7 @@ const statusTone: Record<ItemStatus, string> = {
   LISTED: "bg-mint/20 text-ink ring-1 ring-mint/35",
   REQUESTED: "bg-gold/15 text-leaf ring-1 ring-gold/30",
   IN_REPAIR: "bg-gold/20 text-leaf ring-1 ring-gold/35",
-  READY: "bg-deep text-cream ring-1 ring-deep/25",
+  READY: "bg-mint/25 text-ink ring-1 ring-mint/40",
   DELIVERED: "bg-muted text-ink ring-1 ring-line-strong",
   CLOSED: "bg-transparent text-leaf ring-1 ring-line-strong",
 };
@@ -18,7 +18,7 @@ const statusTone: Record<ItemStatus, string> = {
 const conditionTone: Record<ItemCondition, string> = {
   WORKING: "bg-mint/20 text-ink ring-1 ring-mint/35",
   REPAIRABLE: "bg-gold/15 text-leaf ring-1 ring-gold/30",
-  SCRAP: "bg-deep/90 text-cream ring-1 ring-deep/25",
+  SCRAP: "bg-muted text-leaf ring-1 ring-line-strong",
 };
 
 function BadgeShell({ className, children }: { className: string; children: string }) {

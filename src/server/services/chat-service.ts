@@ -39,7 +39,7 @@ export async function sendOrderChatMessage(
   actor: ChatActor,
   orderId: string,
   body: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; itemId: string } | { ok: false; error: string }> {
   const trimmed = body.trim();
   if (trimmed.length < 1) return { ok: false, error: "Напишите сообщение" };
   if (trimmed.length > 2000) return { ok: false, error: "Сообщение слишком длинное" };
@@ -57,5 +57,5 @@ export async function sendOrderChatMessage(
     authorId: actor.id,
     body: trimmed,
   });
-  return { ok: true };
+  return { ok: true, itemId: order.item.id };
 }

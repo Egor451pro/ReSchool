@@ -1,13 +1,21 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { safeNextPath } from "@/domain/access/roles";
+import { roleHome, safeNextPath } from "@/domain/access/roles";
 import {
   loginSchema,
   registerDonorSchema,
   registerFreelancerSchema,
 } from "@/lib/validators/auth";
-import { clearSession, writeSession } from "@/server/auth/cookies";
+import { isSeedDemoEmail } from "@/domain/access/saved-accounts";
+import {
+  clearRememberedProfile,
+  clearSession,
+  readRememberedProfile,
+  writeRememberedProfile,
+  writeSession,
+} from "@/server/auth/cookies";
+import { findUserById } from "@/server/repositories/user-repository";
 import {
   loginWithPassword,
   registerDonorWithInstitution,
@@ -33,6 +41,24 @@ function readNext(formData: FormData): string | null {
   return typeof value === "string" ? value : null;
 }
 
+async function establishSession(result: {
+  userId: string;
+  role: import("@/domain/access/roles").UserRole;
+  fullName: string;
+  email: string;
+}) {
+  await writeSession({ userId: result.userId, role: result.role });
+  // Сидовые .demo не запоминаем для быстрого входа — только сами регистрации пользователей.
+  if (!isSeedDemoEmail(result.email)) {
+    await writeRememberedProfile({
+      userId: result.userId,
+      role: result.role,
+      fullName: result.fullName,
+      email: result.email,
+    });
+  }
+}
+
 export async function loginAction(_state: AuthFormState, formData: FormData): Promise<AuthFormState> {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
@@ -45,7 +71,7 @@ export async function loginAction(_state: AuthFormState, formData: FormData): Pr
   const result = await loginWithPassword(parsed.data.email, parsed.data.password);
   if (!result.ok) return { error: result.error };
 
-  await writeSession({ userId: result.userId, role: result.role });
+  await establishSession(result);
   redirect(safeNextPath(readNext(formData), result.role));
 }
 
@@ -71,7 +97,7 @@ export async function registerDonorAction(
   const result = await registerDonorWithInstitution(parsed.data);
   if (!result.ok) return { error: result.error };
 
-  await writeSession({ userId: result.userId, role: result.role });
+  await establishSession(result);
   redirect(safeNextPath(null, result.role));
 }
 
@@ -96,7 +122,7 @@ export async function registerFreelancerAction(
   const result = await registerFreelancer(parsed.data);
   if (!result.ok) return { error: result.error };
 
-  await writeSession({ userId: result.userId, role: result.role });
+  await establishSession(result);
   redirect(safeNextPath(null, result.role));
 }
 
@@ -112,7 +138,40 @@ export async function demoLoginAction(formData: FormData): Promise<void> {
   await loginAction({}, formData);
 }
 
+/** Выход из сессии, но профиль для быстрого входа сохраняется. */
 export async function logoutAction(): Promise<void> {
   await clearSession();
   redirect("/");
+}
+
+/** Смена аккаунта: очищает сессию и запомненный профиль. */
+export async function switchAccountAction(): Promise<void> {
+  await clearSession();
+  await clearRememberedProfile();
+  redirect("/login");
+}
+
+/** Восстановление сессии по запомненному профилю (один клик). */
+export async function quickLoginAction(formData: FormData): Promise<void> {
+  const remembered = await readRememberedProfile();
+  if (!remembered || isSeedDemoEmail(remembered.email)) {
+    if (remembered) await clearRememberedProfile();
+    redirect("/login");
+  }
+
+  const user = await findUserById(remembered.userId);
+  if (!user) {
+    await clearRememberedProfile();
+    redirect("/login");
+  }
+
+  await establishSession({
+    userId: user.id,
+    role: user.role,
+    fullName: user.fullName,
+    email: user.email,
+  });
+
+  const next = readNext(formData);
+  redirect(safeNextPath(next, user.role));
 }

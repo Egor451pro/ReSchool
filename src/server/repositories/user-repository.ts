@@ -130,6 +130,21 @@ export function listUsers() {
   });
 }
 
+/** Учётки, зарегистрированные пользователями (без сидовых *.demo). */
+export function listRegisteredAccounts() {
+  return prisma.user.findMany({
+    where: { NOT: { email: { endsWith: ".demo" } } },
+    orderBy: [{ role: "asc" }, { fullName: "asc" }],
+    select: {
+      id: true,
+      fullName: true,
+      role: true,
+      email: true,
+      institution: { select: { name: true } },
+    },
+  });
+}
+
 export function listSpecialties() {
   return prisma.specialty.findMany({
     orderBy: { name: "asc" },

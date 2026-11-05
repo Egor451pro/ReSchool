@@ -16,7 +16,7 @@ export function ConfirmRepairButton({ itemId }: { itemId: string }) {
       <input type="hidden" name="itemId" value={itemId} />
       {state.error ? <p className="text-xs text-ink">{state.error}</p> : null}
       <button type="submit" disabled={pending} className="btn-primary btn-sm w-full">
-        {pending ? "Подтверждаем…" : "Подтвердить выполнение"}
+        {pending ? "Подтверждаем…" : "Подтвердить закрытие"}
       </button>
     </form>
   );

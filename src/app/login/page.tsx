@@ -1,8 +1,11 @@
-import { DemoLogins } from "@/components/demo-logins";
 import { LoginForm } from "@/components/login-form";
+import { RoleLoginPicker } from "@/components/role-login-picker";
 import { SiteHeader } from "@/components/site-header";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
+import { isSeedDemoEmail } from "@/domain/access/saved-accounts";
+import { loadPickerAccounts } from "@/lib/registered-accounts";
+import { readRememberedProfile } from "@/server/auth/cookies";
 import Link from "next/link";
 
 export const instant = false;
@@ -10,9 +13,16 @@ export const instant = false;
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; role?: string }>;
 }) {
-  const next = (await searchParams).next;
+  const params = await searchParams;
+  const next = params.next;
+  const [remembered, accounts] = await Promise.all([
+    readRememberedProfile(),
+    loadPickerAccounts(),
+  ]);
+  const rememberedUserId =
+    remembered && !isSeedDemoEmail(remembered.email) ? remembered.userId : null;
 
   return (
     <>
@@ -20,8 +30,19 @@ export default async function LoginPage({
       <PageShell>
         <PageHeader
           title="Вход"
-          description="Войдите по почте и паролю или выберите демо-роль ниже."
+          description="Выберите роль — покажем зарегистрированные аккаунты. Или войдите по почте и паролю."
         />
+
+        <Surface className="max-w-3xl">
+          <RoleLoginPicker
+            next={next}
+            title="Войти по роли"
+            initialRole={params.role}
+            rememberedUserId={rememberedUserId}
+            accounts={accounts}
+          />
+        </Surface>
+
         <Surface className="max-w-md">
           <h2 className="mb-4 text-base font-semibold text-ink">Почта и пароль</h2>
           <LoginForm next={next} />
@@ -40,7 +61,6 @@ export default async function LoginPage({
             .
           </p>
         </Surface>
-        <DemoLogins next={next} />
       </PageShell>
     </>
   );

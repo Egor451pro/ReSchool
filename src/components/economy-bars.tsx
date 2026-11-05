@@ -25,7 +25,7 @@ export function EconomyBars({ rows }: { rows: EconomyBarRow[] }) {
             <div className="h-2.5 overflow-hidden rounded-full bg-placeholder">
               <div
                 className={
-                  row.highlight ? "h-full rounded-full bg-deep" : "h-full rounded-full bg-gold"
+                  row.highlight ? "h-full rounded-full bg-mint" : "h-full rounded-full bg-gold"
                 }
                 style={{ width: `${width}%` }}
               />

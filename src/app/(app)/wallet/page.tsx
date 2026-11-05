@@ -27,11 +27,9 @@ export default async function WalletPage() {
         }
       />
 
-      <Surface className="flex flex-col gap-2 border-transparent bg-deep text-cream shadow-[0_16px_40px_rgba(47,36,28,0.16)]">
-        <p className="text-sm text-cream/65">Баланс</p>
-        <p className="text-3xl font-semibold text-cream">
-          {formatByn(wallet?.balanceKop ?? 0)}
-        </p>
+      <Surface tone="accent" className="flex flex-col gap-2 shadow-[0_16px_40px_rgba(47,36,28,0.16)]">
+        <p className="panel-accent-muted text-sm">Баланс</p>
+        <p className="text-3xl font-semibold">{formatByn(wallet?.balanceKop ?? 0)}</p>
       </Surface>
 
       <section className="flex flex-col gap-3">

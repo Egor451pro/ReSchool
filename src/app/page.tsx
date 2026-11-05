@@ -1,4 +1,5 @@
-﻿import { HomeStart } from "@/components/home-start";
+﻿import { Suspense } from "react";
+import { HomeStart } from "@/components/home-start";
 import { SiteHeader } from "@/components/site-header";
 
 const steps = [
@@ -39,7 +40,9 @@ export default function Home() {
           </ol>
         </section>
 
-        <HomeStart />
+        <Suspense fallback={<p className="text-sm text-leaf">Загружаем вход…</p>}>
+          <HomeStart />
+        </Suspense>
       </main>
     </>
   );

@@ -90,7 +90,7 @@ export function AssumptionForm({
       <button
         type="submit"
         disabled={pending}
-        className="h-10 self-start rounded-2xl bg-deep px-4 text-sm font-medium text-cream shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90 disabled:opacity-60"
+        className="panel-accent h-10 self-start rounded-2xl px-4 text-sm font-medium shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90 disabled:opacity-60"
       >
         {pending ? "Сохраняем…" : "Сохранить сценарий"}
       </button>

@@ -60,6 +60,7 @@ export function listInstitutionActiveItems(institutionId: string) {
           status: true,
           agreedFeeKop: true,
           schoolAcceptedAt: true,
+          master: { select: { fullName: true } },
         },
       },
     },
@@ -139,8 +140,25 @@ export function findItemCard(id: string) {
       createdAt: true,
       category: { select: { id: true, slug: true, name: true } },
       institution: { select: { name: true, district: true, address: true } },
-      listedBy: { select: { role: true } },
+      listedBy: { select: { id: true, fullName: true, role: true } },
       photos: { orderBy: { sort: "asc" }, select: { id: true, path: true, sort: true } },
+      orders: {
+        where: { status: { not: "CANCELLED" } },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          status: true,
+          agreedFeeKop: true,
+          schoolAcceptedAt: true,
+          masterId: true,
+          master: { select: { id: true, fullName: true, role: true } },
+          documents: {
+            orderBy: { createdAt: "asc" },
+            select: { id: true, type: true, number: true, createdAt: true },
+          },
+        },
+      },
       events: {
         orderBy: { createdAt: "asc" },
         select: {

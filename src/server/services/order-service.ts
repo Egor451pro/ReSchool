@@ -24,7 +24,9 @@ export type OrderActor = {
   institutionId: string | null;
 };
 
-export type OrderResult = { ok: true; orderId: string } | { ok: false; error: string };
+export type OrderResult =
+  | { ok: true; orderId: string; itemId?: string }
+  | { ok: false; error: string };
 
 const DEFAULT_MATERIALS_KOP = 4_000;
 const DEFAULT_TRANSPORT_KOP = 1_500;
@@ -116,7 +118,7 @@ export async function acceptOrderProposal(
     institutionId: order.item.institutionId,
   });
   if (!result.ok) return { ok: false, error: "Статус уже изменился" };
-  return { ok: true, orderId: order.id };
+  return { ok: true, orderId: order.id, itemId: order.item.id };
 }
 
 export async function advanceOrder(actor: OrderActor, orderId: string): Promise<OrderResult> {

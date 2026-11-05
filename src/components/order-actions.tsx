@@ -83,17 +83,17 @@ export function OrderActions({
         <ActionButton
           action={advanceOrderAction}
           orderId={orderId}
-          label="Завершить заказ"
-          pendingLabel="Завершаем…"
+          label="Закрыть заказ"
+          pendingLabel="Закрываем…"
         />
       ) : null}
       {waitingSchool ? (
-        <p className="text-xs text-leaf">
-          Ремонт завершён. Завхоз подтвердит выполнение в кабинете.
+        <p className="rounded-2xl border border-line bg-muted/60 px-3 py-2 text-xs leading-5 text-leaf">
+          Вы закрыли заказ. Ждём подтверждения завхоза — после этого придёт выплата.
         </p>
       ) : null}
       {closed ? (
-        <p className="text-xs text-leaf">Завхоз подтвердил выполнение. Выплата в кошельке.</p>
+        <p className="text-xs text-leaf">Завхоз подтвердил закрытие. Выплата в кошельке.</p>
       ) : null}
       {canCancel ? (
         <ActionButton

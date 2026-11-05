@@ -12,7 +12,13 @@ import {
   findUserByEmail,
 } from "@/server/repositories/user-repository";
 
-export type AuthSuccess = { ok: true; userId: string; role: UserRole };
+export type AuthSuccess = {
+  ok: true;
+  userId: string;
+  role: UserRole;
+  fullName: string;
+  email: string;
+};
 export type AuthFailure = { ok: false; error: string };
 
 const INVALID_LOGIN = "Неверная почта или пароль";
@@ -27,7 +33,13 @@ export async function loginWithPassword(
   const matches = await bcrypt.compare(password, user.passwordHash);
   if (!matches) return { ok: false, error: INVALID_LOGIN };
 
-  return { ok: true, userId: user.id, role: user.role };
+  return {
+    ok: true,
+    userId: user.id,
+    role: user.role,
+    fullName: user.fullName,
+    email: user.email,
+  };
 }
 
 export async function registerDonorWithInstitution(input: {
@@ -66,7 +78,13 @@ export async function registerDonorWithInstitution(input: {
     },
   });
 
-  return { ok: true, userId: user.id, role: user.role };
+  return {
+    ok: true,
+    userId: user.id,
+    role: user.role,
+    fullName: user.fullName,
+    email: user.email,
+  };
 }
 
 export async function registerFreelancer(input: {
@@ -89,5 +107,11 @@ export async function registerFreelancer(input: {
     specialtyIds: input.specialtyIds,
   });
 
-  return { ok: true, userId: user.id, role: user.role };
+  return {
+    ok: true,
+    userId: user.id,
+    role: user.role,
+    fullName: user.fullName,
+    email: user.email,
+  };
 }

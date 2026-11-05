@@ -34,14 +34,14 @@
 .dark {
   color-scheme: dark;
 
-  --paper: #12100e;
-  --surface: #231f1b;
+  --paper: #13110f;
+  --surface: #221e1a;
   --muted: #2a2420;
   --placeholder: #2a2420;
-  --line: color-mix(in srgb, #7a8899 22%, transparent);
-  --line-strong: color-mix(in srgb, #7a8899 32%, transparent);
+  --line: color-mix(in srgb, #c9b8a4 18%, transparent);
+  --line-strong: color-mix(in srgb, #c9b8a4 28%, transparent);
 
-  --ink: #f5f2eb;
+  --ink: #f4f1ea;
   --leaf: #a3b0bf;
 
   --mint: #c9b8a4;
@@ -51,9 +51,28 @@
   --deep: #c9b8a4;
   --cream: #2f241c;
 
-  --header: color-mix(in srgb, #12100e 78%, transparent);
+  --header: color-mix(in srgb, #13110f 78%, transparent);
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25), 0 12px 32px rgba(0, 0, 0, 0.28);
   --shadow-header: 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+/* Карточка объекта всегда в тёмной премиальной гамме */
+.item-card-theme {
+  --paper: #13110f;
+  --surface: #221e1a;
+  --muted: #2a2420;
+  --placeholder: #2a2420;
+  --line: color-mix(in srgb, #c9b8a4 18%, transparent);
+  --line-strong: color-mix(in srgb, #c9b8a4 28%, transparent);
+  --ink: #f4f1ea;
+  --leaf: #a3b0bf;
+  --mint: #c9b8a4;
+  --gold: #8b97a8;
+  --deep: #c9b8a4;
+  --cream: #2f241c;
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.25), 0 12px 32px rgba(0, 0, 0, 0.28);
+  background: var(--paper);
+  color: var(--ink);
 }
 
 @theme inline {
@@ -175,4 +194,24 @@ body {
     background-color 300ms ease,
     border-color 300ms ease,
     box-shadow 300ms ease;
+}
+
+/**
+ * Акцентная плашка: фон и текст всегда в паре с нормальным контрастом.
+ * Не зависит от порядка Tailwind-утилит (bg-surface vs bg-deep).
+ */
+.panel-accent {
+  background: #2f241c;
+  color: #f4f1ea;
+  border-color: transparent;
+}
+
+.dark .panel-accent,
+.item-card-theme .panel-accent {
+  background: #c9b8a4;
+  color: #2f241c;
+}
+
+.panel-accent-muted {
+  color: color-mix(in srgb, currentColor 68%, transparent);
 }

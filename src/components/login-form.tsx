@@ -5,7 +5,13 @@ import { loginAction, type AuthFormState } from "@/app/actions/auth";
 
 const initialState: AuthFormState = {};
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({
+  next,
+  defaultEmail,
+}: {
+  next?: string;
+  defaultEmail?: string;
+}) {
   const [state, action, pending] = useActionState(loginAction, initialState);
 
   return (
@@ -13,7 +19,14 @@ export function LoginForm({ next }: { next?: string }) {
       {next ? <input type="hidden" name="next" value={next} /> : null}
       <label className="flex flex-col gap-1 text-sm text-leaf">
         Почта
-        <input name="email" type="email" autoComplete="username" required className="field" />
+        <input
+          name="email"
+          type="email"
+          autoComplete="username"
+          required
+          defaultValue={defaultEmail}
+          className="field"
+        />
         {state.fields?.email ? <span className="font-medium text-ink">{state.fields.email}</span> : null}
       </label>
       <label className="flex flex-col gap-1 text-sm text-leaf">
