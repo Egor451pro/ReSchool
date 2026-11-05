@@ -138,7 +138,7 @@ export function ItemForm({
       </div>
       <Field
         label="Цена новой такой же вещи, BYN"
-        hint="Оценка учреждения. Это допущение, не нормативная стоимость."
+        hint="Оценка завхоза. Это допущение, не нормативная стоимость."
         error={state.fields?.newUnitPriceKop}
       >
         <input

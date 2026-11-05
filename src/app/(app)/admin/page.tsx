@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
-import { institutionTypeLabels, mvpRoleLabel, type InstitutionType } from "@/domain/access/roles";
 import { formatByn } from "@/domain/economy/money";
 import { requireRoles } from "@/server/auth/current-user";
 import { loadAdminEconomyOverview } from "@/server/services/economy-service";
-import { listUsers } from "@/server/repositories/user-repository";
 
 export const instant = false;
 
@@ -34,14 +32,19 @@ function MetricCard({
 
 export default async function AdminPage() {
   await requireRoles(["PLATFORM_ADMIN"]);
-  const [overview, users] = await Promise.all([loadAdminEconomyOverview(), listUsers()]);
+  const overview = await loadAdminEconomyOverview();
 
   return (
     <PageShell>
       <PageHeader
-        title="Кабинет администратора"
-        description="Факт по подтверждённым школой ремонтам: что починили и сколько это сэкономило району."
-        banner="Стоимость новых вещей — сколько пришлось бы заплатить, если бы вместо ремонта покупали новое. Экономия = эта сумма минус затраты на ремонт."
+        title="Сводка района"
+        description="Подтверждённые ремонты и экономия бюджета имущества."
+        banner="Стоимость новых вещей — сколько ушло бы на покупку без ремонта. Экономия = эта сумма минус затраты на материалы и транспорт."
+        actions={
+          <Link href="/catalog" className="btn-ghost btn-sm">
+            Открыть каталог
+          </Link>
+        }
       />
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -71,8 +74,8 @@ export default async function AdminPage() {
         <h2 className="text-lg font-semibold text-ink">Отремонтированные вещи</h2>
         {overview.items.length === 0 ? (
           <Surface className="border-dashed text-sm text-leaf">
-            Пока нет подтверждённых ремонтов. Когда школа подтвердит получение, строка появится
-            здесь вместе со снимком экономии.
+            Пока нет подтверждённых ремонтов. Когда учреждение подтвердит получение, строка
+            появится здесь.
           </Surface>
         ) : (
           <Surface className="overflow-x-auto p-0">
@@ -80,7 +83,7 @@ export default async function AdminPage() {
               <thead className="border-b border-mint/60 text-leaf">
                 <tr>
                   <th className="px-4 py-3 font-medium">Предмет</th>
-                  <th className="px-4 py-3 font-medium">Школа</th>
+                  <th className="px-4 py-3 font-medium">Учреждение</th>
                   <th className="px-4 py-3 font-medium">Новые</th>
                   <th className="px-4 py-3 font-medium">Затраты</th>
                   <th className="px-4 py-3 font-medium">Экономия</th>
@@ -117,31 +120,6 @@ export default async function AdminPage() {
             </table>
           </Surface>
         )}
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-ink">Участники</h2>
-        <Surface className="p-0">
-          <ul className="flex flex-col divide-y divide-mint/60">
-            {users.map((person) => (
-              <li
-                key={person.id}
-                className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <span>
-                  <span className="block font-medium text-ink">{person.fullName}</span>
-                  <span className="block text-sm text-leaf">
-                    {mvpRoleLabel(person.role)}
-                    {person.institution
-                      ? ` · ${institutionTypeLabels[person.institution.type as InstitutionType]}`
-                      : ""}
-                  </span>
-                </span>
-                <span className="font-mono text-sm text-leaf">{person.email}</span>
-              </li>
-            ))}
-          </ul>
-        </Surface>
       </section>
     </PageShell>
   );

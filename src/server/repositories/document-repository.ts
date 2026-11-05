@@ -193,7 +193,7 @@ export async function confirmSchoolRepair(input: {
         fromStatus: "READY",
         toStatus: "DELIVERED",
         actorId: input.actorId,
-        comment: "Школа подтвердила получение отремонтированного предмета.",
+        comment: "Завхоз подтвердил получение отремонтированного предмета.",
       },
     });
 
@@ -226,7 +226,7 @@ export async function confirmSchoolRepair(input: {
         fromStatus: "DELIVERED",
         toStatus: "CLOSED",
         actorId: input.actorId,
-        comment: "Ремонт подтверждён школой, экономия зафиксирована.",
+        comment: "Ремонт подтверждён завхозом, экономия зафиксирована.",
       },
     });
 

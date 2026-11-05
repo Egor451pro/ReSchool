@@ -7,7 +7,6 @@ import { institutionTypeLabels, type InstitutionType } from "@/domain/access/rol
 
 export type DemoProfile = {
   email: string;
-  fullName: string;
   institution: {
     id: string;
     name: string;
@@ -16,51 +15,38 @@ export type DemoProfile = {
   };
 };
 
-type Step = "choose" | "schools" | "workshops";
+const MASTER_EMAIL = "master.wood@college.demo";
+
+type Step = "choose" | "institutions";
 
 export function HomeStartClient({
-  schools,
-  workshops,
+  institutions,
   next,
   title = "С чего начать",
 }: {
-  schools: DemoProfile[];
-  workshops: DemoProfile[];
+  institutions: DemoProfile[];
   next?: string;
   title?: string;
 }) {
   const [step, setStep] = useState<Step>("choose");
 
-  if (step === "schools") {
+  if (step === "institutions") {
     return (
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold">Выберите школу</h2>
-            <p className="text-sm text-leaf">Войдёте как сотрудник выбранного учреждения.</p>
+            <h2 className="text-lg font-semibold">Выберите учреждение</h2>
+            <p className="text-sm text-leaf">Войдёте как завхоз — можно публиковать заявки на ремонт.</p>
           </div>
           <button type="button" className="btn-ghost btn-sm" onClick={() => setStep("choose")}>
             Назад
           </button>
         </div>
-        <ProfileList profiles={schools} empty="В базе пока нет школ." next={next} />
-      </section>
-    );
-  }
-
-  if (step === "workshops") {
-    return (
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold">Выберите мастерскую</h2>
-            <p className="text-sm text-leaf">Войдёте как мастер учебной группы.</p>
-          </div>
-          <button type="button" className="btn-ghost btn-sm" onClick={() => setStep("choose")}>
-            Назад
-          </button>
-        </div>
-        <ProfileList profiles={workshops} empty="В базе пока нет мастерских." next={next} />
+        <ProfileList
+          profiles={institutions}
+          empty="В базе пока нет учреждений."
+          next={next}
+        />
       </section>
     );
   }
@@ -71,30 +57,30 @@ export function HomeStartClient({
       <div className="grid gap-3 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => setStep("schools")}
+          onClick={() => setStep("institutions")}
           className="flex w-full flex-col gap-2 rounded-xl bg-ink px-5 py-5 text-left text-white hover:bg-leaf"
         >
-          <span className="text-lg font-semibold">Я из школы</span>
-          <span className="text-sm text-mint">
-            Выберите учреждение и опубликуйте вещи для ремонта
-          </span>
+          <span className="text-lg font-semibold">Я завхоз</span>
+          <span className="text-sm text-mint">Опубликовать вещи своей школы или учреждения</span>
         </button>
-        <button
-          type="button"
-          onClick={() => setStep("workshops")}
-          className="flex w-full flex-col gap-2 rounded-xl border border-ink px-5 py-5 text-left text-ink hover:bg-mint/30"
-        >
-          <span className="text-lg font-semibold">Я из мастерской</span>
-          <span className="text-sm text-leaf">
-            Выберите профиль мастера и возьмите учебное задание
-          </span>
-        </button>
+        <form action={demoLoginAction} className="h-full">
+          {next ? <input type="hidden" name="next" value={next} /> : null}
+          <input type="hidden" name="email" value={MASTER_EMAIL} />
+          <input type="hidden" name="password" value={DEMO_PASSWORD} />
+          <button
+            type="submit"
+            className="flex h-full w-full flex-col gap-2 rounded-xl border border-ink px-5 py-5 text-left text-ink hover:bg-mint/30"
+          >
+            <span className="text-lg font-semibold">Я исполнитель</span>
+            <span className="text-sm text-leaf">Взять ремонт в работу на бирже заказов</span>
+          </button>
+        </form>
       </div>
       <form action={demoLoginAction} className="text-sm text-leaf">
         {next ? <input type="hidden" name="next" value={next} /> : null}
         <input type="hidden" name="email" value="admin@reschool.demo" />
         <input type="hidden" name="password" value={DEMO_PASSWORD} />
-        Нужен обзор всего?{" "}
+        Нужна сводка по району?{" "}
         <button type="submit" className="font-medium text-leaf underline hover:text-ink">
           Войти как администратор
         </button>
@@ -134,7 +120,7 @@ function ProfileList({
             >
               <span className="font-semibold text-ink">{profile.institution.name}</span>
               <span className="text-xs text-leaf">
-                {institutionTypeLabels[profile.institution.type]} · {profile.fullName}
+                Завхоз · {institutionTypeLabels[profile.institution.type]}
               </span>
               <span className="text-xs text-leaf">{profile.institution.address}</span>
             </button>

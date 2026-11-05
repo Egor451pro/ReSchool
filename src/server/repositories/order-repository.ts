@@ -68,13 +68,13 @@ export function listMasterGroups(masterId: string) {
   });
 }
 
-export function listExchangeItems(specialtyIds: string[]) {
-  if (specialtyIds.length === 0) return Promise.resolve([]);
+/** Все свободные объявления биржи. Фильтр по специальности в MVP не режем. */
+export function listExchangeItems(_specialtyIds?: string[]) {
+  void _specialtyIds;
   return prisma.item.findMany({
     where: {
       status: "LISTED",
       condition: { in: ["WORKING", "REPAIRABLE"] },
-      category: { specialties: { some: { specialtyId: { in: specialtyIds } } } },
       orders: { none: { status: { not: "CANCELLED" } } },
     },
     orderBy: { createdAt: "desc" },
@@ -186,7 +186,7 @@ export async function claimItemOrder(input: {
         fromStatus: "LISTED",
         toStatus: "REQUESTED",
         actorId: input.masterId,
-        comment: "Мастерская взяла предмет в работу.",
+        comment: "Исполнитель взял предмет в работу.",
       },
     });
 

@@ -5,35 +5,13 @@ import { claimItemAction, type OrderFormState } from "@/app/actions/orders";
 
 const initialState: OrderFormState = {};
 
-export function ClaimItemForm({
-  itemId,
-  groups,
-}: {
-  itemId: string;
-  groups: { id: string; name: string; specialtyName: string }[];
-}) {
+export function ClaimItemForm({ itemId, groupId }: { itemId: string; groupId: string }) {
   const [state, action, pending] = useActionState(claimItemAction, initialState);
-  if (groups.length === 0) {
-    return <p className="text-sm text-leaf">Нет группы с подходящей специальностью.</p>;
-  }
 
   return (
     <form action={action} className="mt-auto flex flex-col gap-2">
       <input type="hidden" name="itemId" value={itemId} />
-      {groups.length === 1 ? (
-        <input type="hidden" name="groupId" value={groups[0].id} />
-      ) : (
-        <label className="flex flex-col gap-1 text-sm text-leaf">
-          Группа
-          <select name="groupId" required defaultValue={groups[0].id} className="field">
-            {groups.map((group) => (
-              <option key={group.id} value={group.id}>
-                {group.name} · {group.specialtyName}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
+      <input type="hidden" name="groupId" value={groupId} />
       {state.error ? (
         <p className="rounded-lg bg-gold/40 px-3 py-2 text-sm text-ink">{state.error}</p>
       ) : null}

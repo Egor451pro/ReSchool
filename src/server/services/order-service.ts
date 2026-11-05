@@ -55,16 +55,17 @@ function canManageOrder(
 
 export async function claimListedItem(
   actor: OrderActor,
-  input: { itemId: string; groupId: string },
+  input: { itemId: string; groupId?: string },
 ): Promise<OrderResult> {
   if (actor.role !== "WORKSHOP_MASTER" || !actor.institutionId) {
-    return { ok: false, error: "Взять в работу может мастер своей мастерской" };
+    return { ok: false, error: "Взять в работу может исполнитель" };
   }
 
   const groups = await listMasterGroups(actor.id);
-  const group = groups.find((entry) => entry.id === input.groupId);
+  const group =
+    (input.groupId ? groups.find((entry) => entry.id === input.groupId) : null) ?? groups[0];
   if (!group || group.institutionId !== actor.institutionId) {
-    return { ok: false, error: "Выберите свою учебную группу" };
+    return { ok: false, error: "У исполнителя нет группы для заказа" };
   }
 
   const item = await findClaimableItem(input.itemId);
@@ -73,19 +74,19 @@ export async function claimListedItem(
   if (item.condition === "SCRAP") return { ok: false, error: "Лом в учебный ремонт не берём" };
   if (item.orders.length > 0) return { ok: false, error: "У предмета уже есть активный заказ" };
 
-  const specialtyOk = item.category.specialties.some(
-    (link) => link.specialtyId === group.specialtyId,
-  );
-  if (!specialtyOk) {
-    return { ok: false, error: "Категория не подходит специальности этой группы" };
-  }
+  // MVP: исполнитель берёт любой заказ; специальность группы только для учёта.
+  const specialtyId =
+    item.category.specialties.find((link) => link.specialtyId === group.specialtyId)
+      ?.specialtyId ??
+    item.category.specialties[0]?.specialtyId ??
+    group.specialtyId;
 
   const defaults = await planDefaults();
   const dueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
   const result = await claimItemOrder({
     itemId: item.id,
     workshopInstitutionId: actor.institutionId,
-    specialtyId: group.specialtyId,
+    specialtyId,
     masterId: actor.id,
     groupId: group.id,
     plannedMaterialsKop: defaults.materials,
@@ -104,7 +105,7 @@ export async function claimListedItem(
 export async function advanceOrder(actor: OrderActor, orderId: string): Promise<OrderResult> {
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другой мастерской" };
+  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
 
   try {
     const plan = planOrderAdvance(order.status, order.item.status);
@@ -131,7 +132,7 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
 export async function cancelOrder(actor: OrderActor, orderId: string): Promise<OrderResult> {
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другой мастерской" };
+  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
 
   try {
     const plan = planOrderCancel(order.status, order.item.status);

@@ -26,18 +26,15 @@ export function isUserRole(value: unknown): value is UserRole {
 }
 
 export const roleLabels: Record<UserRole, string> = {
-  DONOR_STAFF: "Школа",
-  WORKSHOP_MASTER: "Мастерская",
+  DONOR_STAFF: "Завхоз",
+  WORKSHOP_MASTER: "Исполнитель",
   STUDENT: "Учащийся",
   DISTRICT_ANALYST: "Аналитик отдела образования",
   PLATFORM_ADMIN: "Администратор",
 };
 
-/** Короткие подписи MVP для шапки и демо-входа. */
+/** Подписи ролей в шапке и на входе — без ФИО и без привязки к типу учреждения. */
 export function mvpRoleLabel(role: UserRole): string {
-  if (role === "DONOR_STAFF") return "Школа";
-  if (role === "WORKSHOP_MASTER") return "Мастерская";
-  if (role === "PLATFORM_ADMIN") return "Администратор";
   return roleLabels[role];
 }
 
@@ -68,38 +65,43 @@ export type AppSection = {
   roles: readonly UserRole[];
 };
 
-/** MVP: школа публикует, мастерская чинит. Дашборд района скрыт из навигации. */
+/**
+ * Меню по ролям:
+ * - завхоз — кабинет заявок и каталог;
+ * - исполнитель — заявки, биржа и заказы;
+ * - администратор — сводка и каталог.
+ */
 export const appSections: readonly AppSection[] = [
+  { href: "/admin", label: "Сводка", hint: "экономия района", roles: ["PLATFORM_ADMIN"] },
   {
     href: "/cabinet",
     label: "Кабинет",
-    hint: "мои вещи",
-    roles: ["DONOR_STAFF", "PLATFORM_ADMIN"],
+    hint: "мои заявки",
+    roles: ["DONOR_STAFF", "WORKSHOP_MASTER"],
   },
   {
     href: "/catalog",
     label: "Каталог",
-    hint: "все предметы",
+    hint: "объявления",
     roles: ["DONOR_STAFF", "WORKSHOP_MASTER", "PLATFORM_ADMIN"],
   },
   {
     href: "/workshop",
     label: "Биржа",
     hint: "взять в работу",
-    roles: ["WORKSHOP_MASTER", "PLATFORM_ADMIN"],
+    roles: ["WORKSHOP_MASTER"],
   },
   {
     href: "/orders",
     label: "Заказы",
     hint: "ход ремонта",
-    roles: ["WORKSHOP_MASTER", "PLATFORM_ADMIN"],
+    roles: ["WORKSHOP_MASTER"],
   },
-  { href: "/admin", label: "Сводка", hint: "экономия", roles: ["PLATFORM_ADMIN"] },
 ];
 
 const homes: Record<UserRole, string> = {
   DONOR_STAFF: "/cabinet",
-  WORKSHOP_MASTER: "/workshop",
+  WORKSHOP_MASTER: "/cabinet",
   STUDENT: "/",
   DISTRICT_ANALYST: "/district",
   PLATFORM_ADMIN: "/admin",

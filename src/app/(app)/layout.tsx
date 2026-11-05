@@ -38,8 +38,10 @@ async function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-ink">
-              {user.fullName}
-              <span className="text-leaf"> · {mvpRoleLabel(user.role)}</span>
+              {mvpRoleLabel(user.role)}
+              {user.institutionName ? (
+                <span className="text-leaf"> · {user.institutionName}</span>
+              ) : null}
             </span>
             <form action={logoutAction}>
               <button type="submit" className="btn-ghost btn-sm">

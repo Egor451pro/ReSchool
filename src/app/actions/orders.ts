@@ -26,7 +26,7 @@ export async function claimItemAction(
   const actor = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
   const result = await claimListedItem(actor, {
     itemId: text(formData, "itemId"),
-    groupId: text(formData, "groupId"),
+    groupId: text(formData, "groupId") || undefined,
   });
   if (!result.ok) return { error: result.error };
   revalidateAppViews();

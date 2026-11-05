@@ -232,12 +232,12 @@ export async function closeDeliveredOrder(
   orderId: string,
 ): Promise<CloseEconomyResult> {
   if (actor.role !== "WORKSHOP_MASTER" && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Закрыть заказ может мастер или администратор" };
+    return { ok: false, error: "Закрыть заказ может исполнитель или администратор" };
   }
 
   const order = await findCloseableOrder(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canCloseOrder(actor, order)) return { ok: false, error: "Это заказ другой мастерской" };
+  if (!canCloseOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
   if (order.status !== "COMPLETED") {
     return { ok: false, error: "Сначала завершите проверку качества" };
   }

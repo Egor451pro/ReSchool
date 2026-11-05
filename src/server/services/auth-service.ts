@@ -23,7 +23,7 @@ export async function loginWithPassword(
   if (user.role === "STUDENT") {
     return {
       ok: false,
-      error: "Вход учащегося в MVP отключён. Работают учётки учреждений и мастерских.",
+      error: "Вход учащегося в MVP отключён. Работают роли завхоза, исполнителя и администратора.",
     };
   }
 

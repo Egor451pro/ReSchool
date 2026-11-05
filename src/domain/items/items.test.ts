@@ -6,6 +6,7 @@ import { itemsCountLabel } from "./labels";
 import { itemPhotoSrc } from "./photo";
 
 const donor = { id: "u1", role: "DONOR_STAFF" as const, institutionId: "school" };
+const college = { id: "u3", role: "WORKSHOP_MASTER" as const, institutionId: "college" };
 const admin = { id: "u2", role: "PLATFORM_ADMIN" as const, institutionId: null };
 
 describe("карточка предмета", () => {
@@ -19,8 +20,10 @@ describe("карточка предмета", () => {
 
   it("пускает править только свою опубликованную карточку", () => {
     expect(canPublishItems(donor)).toBe(true);
+    expect(canPublishItems(college)).toBe(true);
     expect(canPublishItems(admin)).toBe(false);
     expect(itemManageState(donor, { institutionId: "school", status: "LISTED" })).toBe("edit");
+    expect(itemManageState(college, { institutionId: "college", status: "LISTED" })).toBe("edit");
     expect(itemManageState(donor, { institutionId: "gym", status: "LISTED" })).toBe("foreign");
     expect(itemManageState(donor, { institutionId: "school", status: "IN_REPAIR" })).toBe("locked");
     expect(itemManageState(admin, { institutionId: "gym", status: "LISTED" })).toBe("edit");

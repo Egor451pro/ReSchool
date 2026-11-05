@@ -2,9 +2,9 @@ import { HomeStart } from "@/components/home-start";
 import { SiteHeader } from "@/components/site-header";
 
 const steps = [
-  { title: "Школа", text: "Публикует вещь, которую жалко выбросить" },
-  { title: "Каталог", text: "Предмет видят мастерские района" },
-  { title: "Мастерская", text: "Группа берёт ремонт как учебную практику" },
+  { title: "Заявка", text: "Завхоз публикует вещь, которую можно починить" },
+  { title: "Каталог", text: "Объявление видят исполнители района" },
+  { title: "Ремонт", text: "Исполнитель берёт заказ и проводит ремонт" },
   { title: "Возврат", text: "Починенное имущество возвращается в школу" },
 ];
 
@@ -15,10 +15,10 @@ export default function Home() {
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-6 py-12 text-ink">
         <div className="flex max-w-3xl flex-col gap-4">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Школьное имущество становится учебной практикой
+            Школьное имущество снова в деле
           </h1>
           <p className="text-lg leading-8 text-leaf">
-            Школа отдаёт то, что можно починить. Мастерская чинит это на занятиях. Вещь
+            Завхоз отдаёт то, что можно починить. Исполнитель берёт ремонт в работу. Вещь
             возвращается — бюджет экономит на закупках.
           </p>
         </div>

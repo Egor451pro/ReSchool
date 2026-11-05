@@ -7,6 +7,7 @@ import type { ItemFormInput } from "@/lib/validators/item";
 import { findCategoryById } from "@/server/repositories/item-repository";
 import {
   createListedItem,
+  deleteListedItem,
   findItemForEdit,
   updateListedItem,
   withdrawListedItem,
@@ -117,5 +118,40 @@ export async function withdrawItem(actor: ItemActor, itemId: string): Promise<Se
     return { ok: false, error: "У предмета есть заказ, снять публикацию нельзя" };
   }
   if (outcome === "locked") return { ok: false, error: "Карточку уже взяли в работу" };
+  return { ok: true, itemId: item.id };
+}
+
+/** Удаляет опубликованную карточку без заказа — из каталога и кабинета. */
+export async function deletePublishedItem(
+  actor: ItemActor,
+  itemId: string,
+): Promise<ServiceResult> {
+  if (!canPublishItems(actor) || !actor.institutionId) {
+    return { ok: false, error: "Удалить карточку может завхоз своего учреждения" };
+  }
+
+  const item = await findItemForEdit(itemId);
+  if (!item) return { ok: false, error: "Карточка не найдена" };
+  if (itemManageState(actor, item) !== "edit") {
+    return { ok: false, error: "Удалить можно только свою опубликованную карточку" };
+  }
+
+  const outcome = await deleteListedItem({
+    id: item.id,
+    institutionId: actor.institutionId,
+  });
+  if (!outcome.ok) {
+    if (outcome.reason === "has-order") {
+      return { ok: false, error: "У предмета есть заказ — удалить нельзя" };
+    }
+    return { ok: false, error: "Карточку уже взяли в работу или удалили" };
+  }
+
+  for (const photoPath of outcome.photoPaths) {
+    if (!photoPath.startsWith("/placeholders/")) {
+      await removeUploadedPhoto(photoPath);
+    }
+  }
+
   return { ok: true, itemId: item.id };
 }

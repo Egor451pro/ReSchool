@@ -76,11 +76,11 @@ export function OrderActions({
       ) : null}
       {waitingSchool ? (
         <p className="text-xs text-leaf">
-          Качество подтверждено. Школа подтвердит получение в кабинете.
+          Качество подтверждено. Завхоз подтвердит получение в кабинете.
         </p>
       ) : null}
       {closed ? (
-        <p className="text-xs text-leaf">Школа подтвердила ремонт. Экономия зафиксирована.</p>
+        <p className="text-xs text-leaf">Завхоз подтвердил ремонт. Экономия зафиксирована.</p>
       ) : null}
       {canCancel ? (
         <ActionButton

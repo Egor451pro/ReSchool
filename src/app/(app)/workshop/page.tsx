@@ -9,34 +9,21 @@ import { listExchangeItems, listMasterGroups } from "@/server/repositories/order
 export const instant = false;
 
 export default async function WorkshopPage() {
-  const user = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
-  const groups = user.role === "WORKSHOP_MASTER" ? await listMasterGroups(user.id) : [];
-  const specialtyIds = [...new Set(groups.map((group) => group.specialtyId))];
-  const rawItems =
-    user.role === "PLATFORM_ADMIN" && specialtyIds.length === 0
-      ? []
-      : await listExchangeItems(specialtyIds);
-
-  const items = rawItems.map((item) => {
-    const matchingGroups = groups.filter((group) =>
-      item.category.specialties.some((link) => link.specialtyId === group.specialtyId),
-    );
-    return { item, matchingGroups };
-  });
+  const user = await requireRoles(["WORKSHOP_MASTER"]);
+  const groups = await listMasterGroups(user.id);
+  const items = await listExchangeItems();
 
   return (
     <PageShell>
       <PageHeader
         title="Биржа"
-        description={`${user.institutionName ?? "Платформа"}. Здесь предметы школ, подходящие вашим группам.`}
-        banner="Выберите предмет и нажмите «Взять в работу» — заказ появится в разделе «Заказы»."
+        description="Все свободные объявления района. Возьмите любой подходящий заказ."
+        banner="Нажмите «Взять в работу» — заказ появится в разделе «Заказы»."
       />
 
       {groups.length === 0 ? (
         <Surface className="text-sm text-leaf">
-          {user.role === "PLATFORM_ADMIN"
-            ? "Администратор смотрит разделы без своей группы. Войдите профилем «Мастерская», чтобы брать заказы."
-            : "У этой учётки нет учебных групп."}
+          У этой учётки нет учебной группы — взять заказ пока нельзя.
         </Surface>
       ) : null}
 
@@ -46,7 +33,7 @@ export default async function WorkshopPage() {
         </Surface>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map(({ item, matchingGroups }) => {
+          {items.map((item) => {
             const photo = item.photos[0];
             return (
               <Surface key={item.id} as="li" className="flex h-full flex-col gap-3">
@@ -63,19 +50,14 @@ export default async function WorkshopPage() {
                   >
                     {item.title}
                   </Link>
-                  <p className="text-sm text-leaf">{item.institution.name}</p>
+                  <p className="text-sm text-ink">{item.institution.name}</p>
                   <p className="text-sm text-leaf">
                     {item.category.name} · {item.quantity} шт.
                   </p>
                 </div>
-                <ClaimItemForm
-                  itemId={item.id}
-                  groups={matchingGroups.map((group) => ({
-                    id: group.id,
-                    name: group.name,
-                    specialtyName: group.specialty.name,
-                  }))}
-                />
+                {groups.length > 0 ? (
+                  <ClaimItemForm itemId={item.id} groupId={groups[0].id} />
+                ) : null}
               </Surface>
             );
           })}

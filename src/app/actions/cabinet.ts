@@ -3,7 +3,12 @@
 import { redirect } from "next/navigation";
 import { requireRoles } from "@/server/auth/current-user";
 import { confirmRepairBySchool } from "@/server/services/document-service";
-import { publishItem, reviseItem, withdrawItem } from "@/server/services/item-service";
+import {
+  deletePublishedItem,
+  publishItem,
+  reviseItem,
+  withdrawItem,
+} from "@/server/services/item-service";
 import { publishRequest } from "@/server/services/request-service";
 import { revalidateAppViews } from "@/server/revalidate";
 import { itemFormSchema, requestFormSchema } from "@/lib/validators/item";
@@ -121,7 +126,7 @@ export async function publishItemAction(
     return { error: "Проверьте поля карточки", fields: fieldMessages(parsed.error), item };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
   const result = await publishItem(actor, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
   revalidateAppViews();
@@ -138,7 +143,7 @@ export async function reviseItemAction(
     return { error: "Проверьте поля карточки", fields: fieldMessages(parsed.error), item };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
   const result = await reviseItem(actor, itemId, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
   revalidateAppViews();
@@ -152,8 +157,24 @@ export async function withdrawItemAction(
   if (formData.get("confirm") !== "on") {
     return { error: "Отметьте, что карточку нужно снять" };
   }
-  const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
   const result = await withdrawItem(actor, text(formData, "itemId"));
+  if (!result.ok) return { error: result.error };
+  revalidateAppViews();
+  redirect("/cabinet");
+}
+
+export type DeleteItemState = { error?: string };
+
+export async function deleteItemAction(
+  _state: DeleteItemState,
+  formData: FormData,
+): Promise<DeleteItemState> {
+  if (formData.get("confirm") !== "on") {
+    return { error: "Отметьте подтверждение удаления" };
+  }
+  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
+  const result = await deletePublishedItem(actor, text(formData, "itemId"));
   if (!result.ok) return { error: result.error };
   revalidateAppViews();
   redirect("/cabinet");
@@ -169,7 +190,7 @@ export async function publishRequestAction(
     return { error: "Проверьте поля запроса", fields: fieldMessages(parsed.error), request };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
   const result = await publishRequest(actor, parsed.data);
   if (!result.ok) return { error: result.error, request };
   redirect("/cabinet#needs");
@@ -181,7 +202,7 @@ export async function confirmRepairAction(
   _state: ConfirmRepairState,
   formData: FormData,
 ): Promise<ConfirmRepairState> {
-  const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const actor = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
   const result = await confirmRepairBySchool(actor, text(formData, "itemId"));
   if (!result.ok) return { error: result.error };
   // Без revalidate страница кабинета остаётся со старым RSC-снимком.

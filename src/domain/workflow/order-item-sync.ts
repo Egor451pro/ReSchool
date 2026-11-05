@@ -28,7 +28,7 @@ export function planOrderAdvance(from: OrderStatus, itemStatus: ItemStatus): Syn
     return {
       orderTo,
       itemTo: "IN_REPAIR",
-      comment: "Группа приступила к ремонту.",
+      comment: "Исполнитель приступил к ремонту.",
     };
   }
 
@@ -48,7 +48,7 @@ export function planOrderAdvance(from: OrderStatus, itemStatus: ItemStatus): Syn
     return {
       orderTo,
       itemTo: "READY",
-      comment: "Мастер подтвердил качество.",
+      comment: "Исполнитель подтвердил качество.",
     };
   }
 
@@ -61,7 +61,7 @@ export function planOrderCancel(from: OrderStatus, itemStatus: ItemStatus): Sync
   return {
     orderTo: "CANCELLED",
     itemTo: "LISTED",
-    comment: "Мастерская отказалась до выдачи. Карточка снова опубликована.",
+    comment: "Исполнитель вернул карточку до выдачи. Объявление снова в каталоге.",
   };
 }
 
@@ -72,7 +72,7 @@ export function planItemDeliver(itemStatus: ItemStatus): {
   assertItemTransition(itemStatus, "DELIVERED");
   return {
     itemTo: "DELIVERED",
-    comment: "Учреждение подтвердило получение. Акт — черновик.",
+    comment: "Завхоз подтвердил получение. Акт — черновик.",
   };
 }
 

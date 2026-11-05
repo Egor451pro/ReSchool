@@ -53,10 +53,14 @@ export function listInstitutionActiveItems(institutionId: string) {
   });
 }
 
-/** История завершённых ремонтов и снятых карточек. */
+/** История подтверждённых ремонтов (снятые вручную сюда не попадают). */
 export function listInstitutionRepairHistory(institutionId: string) {
   return prisma.item.findMany({
-    where: { institutionId, status: "CLOSED" },
+    where: {
+      institutionId,
+      status: "CLOSED",
+      closeReason: { in: ["COMPLETED", "UNREPAIRABLE"] },
+    },
     orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
     select: {
       ...tileSelect,
@@ -120,7 +124,7 @@ export function findItemCard(id: string) {
       createdAt: true,
       category: { select: { id: true, slug: true, name: true } },
       institution: { select: { name: true, district: true, address: true } },
-      listedBy: { select: { fullName: true } },
+      listedBy: { select: { role: true } },
       photos: { orderBy: { sort: "asc" }, select: { id: true, path: true, sort: true } },
       events: {
         orderBy: { createdAt: "asc" },
@@ -130,7 +134,7 @@ export function findItemCard(id: string) {
           toStatus: true,
           comment: true,
           createdAt: true,
-          actor: { select: { fullName: true } },
+          actor: { select: { role: true } },
         },
       },
     },
@@ -273,9 +277,48 @@ export async function withdrawListedItem(input: { id: string; actorId: string })
         fromStatus: "LISTED",
         toStatus: "CLOSED",
         actorId: input.actorId,
-        comment: "Учреждение сняло предмет с публикации.",
+        comment: "Завхоз снял предмет с публикации.",
       },
     });
     return "ok" as const;
+  });
+}
+
+/** Полное удаление опубликованной карточки без активного заказа. */
+export async function deleteListedItem(input: { id: string; institutionId: string }) {
+  return prisma.$transaction(async (tx) => {
+    const item = await tx.item.findFirst({
+      where: { id: input.id, institutionId: input.institutionId, status: "LISTED" },
+      select: {
+        id: true,
+        photos: { select: { path: true } },
+      },
+    });
+    if (!item) return { ok: false as const, reason: "locked" as const };
+
+    const orders = await tx.repairOrder.count({
+      where: { itemId: item.id, status: { not: "CANCELLED" } },
+    });
+    if (orders > 0) return { ok: false as const, reason: "has-order" as const };
+
+    await tx.request.updateMany({
+      where: { matchedItemId: item.id },
+      data: { matchedItemId: null },
+    });
+    await tx.statusEvent.deleteMany({ where: { itemId: item.id } });
+    await tx.itemPhoto.deleteMany({ where: { itemId: item.id } });
+
+    const cancelled = await tx.repairOrder.findMany({
+      where: { itemId: item.id, status: "CANCELLED" },
+      select: { id: true },
+    });
+    if (cancelled.length > 0) {
+      const orderIds = cancelled.map((row) => row.id);
+      await tx.document.deleteMany({ where: { orderId: { in: orderIds } } });
+      await tx.repairOrder.deleteMany({ where: { id: { in: orderIds } } });
+    }
+
+    await tx.item.delete({ where: { id: item.id } });
+    return { ok: true as const, photoPaths: item.photos.map((photo) => photo.path) };
   });
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DeleteItemButton } from "@/components/delete-item-button";
 import { ItemForm } from "@/components/item-form";
-import { WithdrawItemForm } from "@/components/withdraw-item-form";
 import { formatBynAmount } from "@/domain/economy/money";
 import { itemManageState } from "@/domain/items/access";
 import { compareCategorySlug, statusLabels } from "@/domain/items/labels";
@@ -13,7 +13,7 @@ export const instant = false;
 
 export default async function EditItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const user = await requireRoles(["DONOR_STAFF", "WORKSHOP_MASTER"]);
   const item = await findItemForEdit(id);
   if (!item) notFound();
 
@@ -59,7 +59,10 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
               }}
             />
           </section>
-          <WithdrawItemForm itemId={item.id} />
+          <div>
+            <h2 className="mb-2 text-sm font-medium text-ink">Удалить карточку</h2>
+            <DeleteItemButton itemId={item.id} />
+          </div>
         </div>
       ) : null}
     </main>

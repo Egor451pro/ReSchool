@@ -4,6 +4,7 @@ import { DocumentLinks } from "@/components/document-links";
 import { StatusBadge } from "@/components/status-badge";
 import { formatByn } from "@/domain/economy/money";
 import { itemManageState } from "@/domain/items/access";
+import { mvpRoleLabel, type UserRole } from "@/domain/access/roles";
 import {
   closeReasonLabels,
   conditionLabels,
@@ -100,12 +101,12 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
               <dd className="text-ink">{formatByn(lineTotal)}</dd>
             </div>
             <div>
-              <dt className="text-leaf">Опубликовал</dt>
-              <dd className="text-ink">{item.listedBy.fullName}</dd>
+              <dt className="text-leaf">Кто опубликовал</dt>
+              <dd className="text-ink">{mvpRoleLabel(item.listedBy.role as UserRole)}</dd>
             </div>
           </dl>
           <p className="text-sm text-leaf">
-            Цена — оценка учреждения, допущение, а не нормативная стоимость.
+            Цена — оценка завхоза, допущение, а не нормативная стоимость.
           </p>
           {item.condition === "SCRAP" ? (
             <p className="text-sm text-leaf">Лом в учебный ремонт не передаём, карточка нужна для учёта.</p>
@@ -152,7 +153,7 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
           {item.events.map((event) => (
             <li key={event.id} className="rounded-xl border border-mint/70 px-4 py-3">
               <p className="text-sm text-leaf">
-                {when.format(event.createdAt)} · {event.actor.fullName}
+                {when.format(event.createdAt)} · {mvpRoleLabel(event.actor.role as UserRole)}
               </p>
               <p className="font-medium text-ink">
                 {event.fromStatus === "NONE"

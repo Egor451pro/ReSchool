@@ -40,41 +40,44 @@ export function listUsers() {
   });
 }
 
-/** Демо-профили сотрудников школ для выбора при входе. */
-export function listSchoolStaffProfiles() {
-  return prisma.user.findMany({
-    where: {
-      role: "DONOR_STAFF",
-      institutionId: { not: null },
-      institution: { type: { in: ["SCHOOL", "GYMNASIUM", "LYCEUM"] } },
-    },
-    orderBy: [{ institution: { name: "asc" } }],
-    select: {
-      email: true,
-      fullName: true,
-      institution: {
-        select: { id: true, name: true, type: true, address: true },
-      },
-    },
-  });
-}
+const loginProfileSelect = {
+  email: true,
+  fullName: true,
+  role: true,
+  institution: {
+    select: { id: true, name: true, type: true, address: true },
+  },
+} as const;
 
-/** Демо-профили мастеров для выбора мастерской. */
-export function listWorkshopStaffProfiles() {
-  return prisma.user.findMany({
+/**
+ * Один вход на учреждение: школы и колледжи/ПТУ.
+ * Если есть сотрудник школы — берём его, иначе мастера колледжа.
+ */
+export async function listInstitutionLoginProfiles() {
+  const rows = await prisma.user.findMany({
     where: {
-      role: "WORKSHOP_MASTER",
       institutionId: { not: null },
+      role: { in: ["DONOR_STAFF", "WORKSHOP_MASTER"] },
+      institution: {
+        type: { in: ["SCHOOL", "GYMNASIUM", "LYCEUM", "COLLEGE", "VOCATIONAL"] },
+      },
     },
     orderBy: [{ institution: { name: "asc" } }, { fullName: "asc" }],
-    select: {
-      email: true,
-      fullName: true,
-      institution: {
-        select: { id: true, name: true, type: true, address: true },
-      },
-    },
+    select: loginProfileSelect,
   });
+
+  const byInstitution = new Map<string, (typeof rows)[number]>();
+  for (const row of rows) {
+    if (!row.institution) continue;
+    const current = byInstitution.get(row.institution.id);
+    if (!current || (row.role === "DONOR_STAFF" && current.role !== "DONOR_STAFF")) {
+      byInstitution.set(row.institution.id, row);
+    }
+  }
+
+  return [...byInstitution.values()].sort((left, right) =>
+    (left.institution?.name ?? "").localeCompare(right.institution?.name ?? "", "ru"),
+  );
 }
 
 export function countInstitutionItems(institutionId: string) {

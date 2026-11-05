@@ -5,20 +5,15 @@ import { StatusBadge } from "@/components/status-badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { requireRoles } from "@/server/auth/current-user";
-import { listMasterOrders, listWorkshopOrders } from "@/server/repositories/order-repository";
+import { listMasterOrders } from "@/server/repositories/order-repository";
 
 export const instant = false;
 
 const activeStatuses = new Set(["ASSIGNED", "IN_PROGRESS", "QUALITY_CHECK"]);
 
 export default async function OrdersPage() {
-  const user = await requireRoles(["WORKSHOP_MASTER", "PLATFORM_ADMIN"]);
-  const orders =
-    user.role === "WORKSHOP_MASTER"
-      ? await listMasterOrders(user.id)
-      : user.institutionId
-        ? await listWorkshopOrders(user.institutionId)
-        : await listMasterOrders(user.id);
+  const user = await requireRoles(["WORKSHOP_MASTER"]);
+  const orders = await listMasterOrders(user.id);
 
   const active = orders.filter((order) => activeStatuses.has(order.status));
   const done = orders.filter((order) => order.status === "COMPLETED");
@@ -27,7 +22,7 @@ export default async function OrdersPage() {
     <PageShell>
       <PageHeader
         title="Заказы"
-        description="Ведите ремонт шаг за шагом. Когда вещь передана школе — закройте заказ со снимком экономии."
+        description="Ведите ремонт шаг за шагом. Когда завхоз подтвердит получение, заказ уйдёт в историю."
       />
 
       {orders.length === 0 ? (

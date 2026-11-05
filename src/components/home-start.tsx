@@ -1,31 +1,14 @@
 import { Suspense } from "react";
 import { HomeStartClient } from "@/components/home-start-client";
-import {
-  listSchoolStaffProfiles,
-  listWorkshopStaffProfiles,
-} from "@/server/repositories/user-repository";
+import { listInstitutionLoginProfiles } from "@/server/repositories/user-repository";
 
 async function HomeStartProfiles() {
-  const [schools, workshops] = await Promise.all([
-    listSchoolStaffProfiles(),
-    listWorkshopStaffProfiles(),
-  ]);
+  const institutions = await listInstitutionLoginProfiles();
 
   return (
     <HomeStartClient
-      schools={schools.map((row) => ({
+      institutions={institutions.map((row) => ({
         email: row.email,
-        fullName: row.fullName,
-        institution: {
-          id: row.institution!.id,
-          name: row.institution!.name,
-          type: row.institution!.type,
-          address: row.institution!.address,
-        },
-      }))}
-      workshops={workshops.map((row) => ({
-        email: row.email,
-        fullName: row.fullName,
         institution: {
           id: row.institution!.id,
           name: row.institution!.name,

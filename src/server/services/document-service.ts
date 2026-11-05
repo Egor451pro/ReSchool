@@ -54,8 +54,12 @@ export async function confirmRepairBySchool(
   actor: DocumentActor,
   itemId: string,
 ): Promise<DocumentResult> {
-  if (actor.role !== "DONOR_STAFF" && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Подтвердить ремонт может сотрудник школы" };
+  if (
+    actor.role !== "DONOR_STAFF" &&
+    actor.role !== "WORKSHOP_MASTER" &&
+    actor.role !== "PLATFORM_ADMIN"
+  ) {
+    return { ok: false, error: "Подтвердить ремонт может сотрудник учреждения" };
   }
   if (!actor.institutionId) {
     return { ok: false, error: "Нужно учреждение" };
@@ -66,7 +70,7 @@ export async function confirmRepairBySchool(
     return { ok: false, error: "Нет готового ремонта для подтверждения" };
   }
   if (order.item.institutionId !== actor.institutionId && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Это предмет другой школы" };
+    return { ok: false, error: "Это предмет другого учреждения" };
   }
 
   const base =
@@ -138,12 +142,12 @@ export async function deliverOrderWithAct(
   orderId: string,
 ): Promise<DocumentResult> {
   if (actor.role !== "WORKSHOP_MASTER" && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Отметить передачу может мастер или администратор" };
+    return { ok: false, error: "Отметить передачу может исполнитель или администратор" };
   }
 
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другой мастерской" };
+  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
   if (order.status !== "COMPLETED") {
     return { ok: false, error: "Сначала завершите проверку качества" };
   }
@@ -194,12 +198,12 @@ export async function markUnrepairableWithAct(
   orderId: string,
 ): Promise<DocumentResult> {
   if (actor.role !== "WORKSHOP_MASTER" && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Закрыть заказ может мастер или администратор" };
+    return { ok: false, error: "Закрыть заказ может исполнитель или администратор" };
   }
 
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другой мастерской" };
+  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
 
   try {
     const plan = planUnrepairable(order.item.status, order.status);
