@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/back-link";
 import { SimpleCalculator } from "@/components/simple-calculator";
 import { formatBynAmount } from "@/domain/economy/money";
 import { requireRoles } from "@/server/auth/current-user";
@@ -13,9 +13,7 @@ export default async function DistrictCalculatorPage() {
   return (
     <main className="page-shell max-w-5xl gap-6">
       <div className="flex flex-col gap-2">
-        <Link href="/district" className="text-sm font-medium text-leaf hover:text-ink">
-          ← К дашборду района
-        </Link>
+        <BackLink href="/district">К дашборду района</BackLink>
         <h1 className="text-2xl font-semibold text-ink">Калькулятор</h1>
         <p className="max-w-2xl text-leaf">
           Выберите сценарий, подставьте несколько чисел — справа сразу виден прогноз экономии и

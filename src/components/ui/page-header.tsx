@@ -5,14 +5,17 @@ export function PageHeader({
   description,
   banner,
   actions,
+  back,
 }: {
   title: string;
   description?: string;
   banner?: ReactNode;
   actions?: ReactNode;
+  back?: ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-4">
+      {back ? <div>{back}</div> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex max-w-3xl min-w-0 flex-col gap-2">
           <h1 className="text-[1.5rem] font-semibold tracking-tight text-ink sm:text-3xl">{title}</h1>

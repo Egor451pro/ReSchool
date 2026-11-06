@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { demoAnalystLoginAction, quickLoginAction } from "@/app/actions/auth";
+import { BackButton } from "@/components/back-link";
 import { LoginForm } from "@/components/login-form";
 import type { LoginRoleChoice } from "@/domain/access/demo-accounts";
 import { isSeedDemoEmail } from "@/domain/access/saved-accounts";
@@ -95,20 +96,32 @@ export function RoleLoginPicker({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <h2 className="text-lg font-semibold text-ink">{title}</h2>
-        {role ? (
-          <button
-            type="button"
+      <div className="flex flex-col gap-2">
+        {picked ? (
+          <BackButton
+            onClick={() => {
+              setPicked(null);
+            }}
+          >
+            К списку аккаунтов
+          </BackButton>
+        ) : role ? (
+          <BackButton
             onClick={() => {
               setRole(null);
               setPicked(null);
             }}
-            className="text-sm text-leaf underline-offset-2 hover:text-ink hover:underline"
           >
-            ← Другая роль
-          </button>
+            К выбору роли
+          </BackButton>
         ) : null}
+        <h2 className="text-lg font-semibold text-ink">
+          {picked
+            ? "Введите пароль"
+            : role
+              ? activeCard?.title ?? title
+              : title}
+        </h2>
       </div>
 
       {!role ? (
@@ -157,13 +170,31 @@ export function RoleLoginPicker({
             </div>
           ) : (
             <>
-              <p className="text-sm text-leaf">
-                {role === "DISTRICT_ANALYST"
-                  ? "Выберите профиль аналитика"
-                  : `Выберите свой аккаунт и введите пароль${
-                      rememberedUserId ? " (или «Это я» для последнего входа)" : ""
-                    }.`}
-              </p>
+              {!picked ? (
+                <p className="text-sm text-leaf">
+                  {role === "DISTRICT_ANALYST"
+                    ? "Выберите профиль аналитика"
+                    : `Выберите свой аккаунт и введите пароль${
+                        rememberedUserId ? " (или «Это я» для последнего входа)" : ""
+                      }.`}
+                </p>
+              ) : null}
+              {picked ? (
+                <div className="max-w-md rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-soft)]">
+                  <div className="mb-3 flex items-center gap-3">
+                    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint/35 text-xs font-semibold text-ink ring-1 ring-line-strong">
+                      {initials(picked.fullName)}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium text-ink">{picked.fullName}</span>
+                      <span className="block truncate text-xs text-leaf">
+                        {picked.hint || mvpRoleLabel(picked.role)} · {picked.email}
+                      </span>
+                    </span>
+                  </div>
+                  <LoginForm next={next} defaultEmail={picked.email} />
+                </div>
+              ) : (
               <ul className="grid gap-2 sm:grid-cols-2">
                 {accounts.map((account) => {
                   const seedAnalyst =
@@ -172,7 +203,6 @@ export function RoleLoginPicker({
                     !seedAnalyst &&
                     Boolean(rememberedUserId) &&
                     rememberedUserId === account.userId;
-                  const selected = picked?.email === account.email;
                   return (
                     <li key={account.email} className="flex flex-col gap-2">
                       {seedAnalyst ? (
@@ -221,12 +251,8 @@ export function RoleLoginPicker({
                       ) : (
                         <button
                           type="button"
-                          onClick={() => setPicked(selected ? null : account)}
-                          className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left shadow-[var(--shadow-soft)] transition ${
-                            selected
-                              ? "border-mint bg-mint/15"
-                              : "border-line bg-surface hover:border-mint hover:bg-muted/50"
-                          }`}
+                          onClick={() => setPicked(account)}
+                          className="flex w-full items-center gap-3 rounded-2xl border border-line bg-surface px-3 py-3 text-left shadow-[var(--shadow-soft)] transition hover:border-mint hover:bg-muted/50"
                         >
                           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint/35 text-xs font-semibold text-ink ring-1 ring-line-strong">
                             {initials(account.fullName)}
@@ -239,23 +265,14 @@ export function RoleLoginPicker({
                               {account.hint || mvpRoleLabel(account.role)} · {account.email}
                             </span>
                           </span>
-                          <span className="shrink-0 text-sm font-medium text-gold">
-                            {selected ? "Пароль" : "Войти"}
-                          </span>
+                          <span className="shrink-0 text-sm font-medium text-gold">Войти</span>
                         </button>
                       )}
-                      {selected && !canQuick && !seedAnalyst ? (
-                        <div className="rounded-2xl border border-line bg-surface p-3">
-                          <p className="mb-3 text-xs text-leaf">
-                            Пароль для {account.fullName}
-                          </p>
-                          <LoginForm next={next} defaultEmail={account.email} />
-                        </div>
-                      ) : null}
                     </li>
                   );
                 })}
               </ul>
+              )}
             </>
           )}
 

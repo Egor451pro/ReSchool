@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/back-link";
 import { RegisterForm } from "@/components/register-form";
 import { RegisterFreelancerForm } from "@/components/register-freelancer-form";
 import { SiteHeader } from "@/components/site-header";
@@ -19,6 +20,7 @@ export default async function RegisterPage({
     <>
       <SiteHeader />
       <main className="page-shell page-shell-narrow gap-6">
+        <BackLink href="/">На главную</BackLink>
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold text-ink">
             {asFreelancer ? "Регистрация фрилансера" : "Регистрация завхоза"}

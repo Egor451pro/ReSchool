@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackLink } from "@/components/back-link";
 import { DeleteItemButton } from "@/components/delete-item-button";
 import { ItemForm } from "@/components/item-form";
 import { formatBynAmount } from "@/domain/economy/money";
@@ -23,9 +23,7 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
   return (
     <main className="page-shell gap-6">
       <div className="flex max-w-xl flex-col gap-2">
-        <Link href={`/catalog/${item.id}`} className="text-sm font-medium text-leaf hover:text-ink">
-          К карточке
-        </Link>
+        <BackLink href={`/cabinet/items/${item.id}`}>К карточке</BackLink>
         <h1 className="text-2xl font-semibold text-ink">{item.title}</h1>
       </div>
 

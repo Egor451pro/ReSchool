@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/back-link";
 import { LoginForm } from "@/components/login-form";
 import { RoleLoginPicker } from "@/components/role-login-picker";
 import { SiteHeader } from "@/components/site-header";
@@ -29,6 +30,7 @@ export default async function LoginPage({
       <SiteHeader />
       <PageShell>
         <PageHeader
+          back={<BackLink href="/">На главную</BackLink>}
           title="Вход"
           description="Выберите роль — покажем зарегистрированные аккаунты. Или войдите по почте и паролю."
         />

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackLink } from "@/components/back-link";
 import { ConfirmRepairButton } from "@/components/confirm-repair-button";
 import { DocumentLinks } from "@/components/document-links";
 import { OrderActions } from "@/components/order-actions";
@@ -121,13 +122,21 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
   return (
     <div className="item-card-theme flex flex-1 flex-col">
       <main className="page-shell page-shell-wide gap-6">
-        <Link
-          href="/catalog"
-          className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-leaf transition hover:text-ink"
+        <BackLink
+          href={
+            user.role === "FREELANCER"
+              ? "/workshop"
+              : user.role === "DONOR_STAFF"
+                ? "/cabinet"
+                : "/catalog"
+          }
         >
-          <span aria-hidden>←</span>
-          К каталогу
-        </Link>
+          {user.role === "FREELANCER"
+            ? "К бирже"
+            : user.role === "DONOR_STAFF"
+              ? "К кабинету"
+              : "К каталогу"}
+        </BackLink>
 
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)_minmax(0,22rem)]">
           <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
