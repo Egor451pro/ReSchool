@@ -218,7 +218,8 @@ npm run dev
 | --- | --- |
 | `Environment variable not found: DATABASE_URL` | В корне проекта создать `.env`: в **cmd** — `copy .env.example .env`, в PowerShell — `Copy-Item .env.example .env`. Потом `npx prisma db push`, `npm run db:seed`, перезапустить `npm run dev` |
 | Ошибка Prisma / нет таблиц | `npx prisma generate`, затем снова `npx prisma db push` и `npm run db:seed` |
-| Порт 3000 занят | Остановить другой `node`/`next` или открыть порт, который напишет Next в терминале |
+| Порт 3000 занят / старый Next без `.env` | В **cmd**: `taskkill /PID <номер> /F` (номер пишет Next), потом снова `npm run dev`. Не смотреть старую вкладку со старым сервером |
+| `EPERM ... query_engine-windows.dll.node` | Сначала убить все `next`/`node` по проекту (`taskkill`), затем `npx prisma generate` и `npm run dev` |
 | `SESSION_SECRET` слишком короткий | Поправить `.env`, перезапустить `npm run dev` |
 | Старая база после `git pull` | `npx prisma db push` и при необходимости `npm run db:seed` |
 
