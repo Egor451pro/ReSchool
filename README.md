@@ -152,7 +152,10 @@ npm install
 Без файла `.env` в корне проекта Prisma падает с `Environment variable not found: DATABASE_URL` — и seed, и сайт не заработают. Файл `.env` в git не лежит, его нужно создать локально.
 
 ```bash
-# Windows (PowerShell) — из папки проекта
+# Windows (cmd) — из папки проекта
+copy .env.example .env
+
+# Windows (PowerShell)
 Copy-Item .env.example .env
 
 # macOS / Linux
@@ -213,7 +216,7 @@ npm run dev
 
 | Симптом | Что сделать |
 | --- | --- |
-| `Environment variable not found: DATABASE_URL` | В корне проекта: `Copy-Item .env.example .env`, потом `npx prisma db push` и `npm run db:seed`, затем перезапустить `npm run dev` |
+| `Environment variable not found: DATABASE_URL` | В корне проекта создать `.env`: в **cmd** — `copy .env.example .env`, в PowerShell — `Copy-Item .env.example .env`. Потом `npx prisma db push`, `npm run db:seed`, перезапустить `npm run dev` |
 | Ошибка Prisma / нет таблиц | `npx prisma generate`, затем снова `npx prisma db push` и `npm run db:seed` |
 | Порт 3000 занят | Остановить другой `node`/`next` или открыть порт, который напишет Next в терминале |
 | `SESSION_SECRET` слишком короткий | Поправить `.env`, перезапустить `npm run dev` |
