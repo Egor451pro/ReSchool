@@ -24,7 +24,7 @@ export default async function OrdersPage() {
     <PageShell>
       <PageHeader
         title="Заказы"
-        description="Откройте заказ из списка — там чат и действия. После подтверждения завхозом заказ попадёт в историю."
+        description="Шаги: предложили цену → ждёте подтверждения завхоза → ремонт → закрыли заказ → ждёте выплаты."
       />
 
       {active.length === 0 && history.length === 0 ? (
@@ -49,9 +49,9 @@ export default async function OrdersPage() {
                   const waitingSchool =
                     order.status === "COMPLETED" && order.item.status === "READY";
                   const orderHint = waitingSchool
-                    ? "Ждёт подтверждения завхоза"
+                    ? "Ждёт подтверждения закрытия завхозом"
                     : !order.schoolAcceptedAt && order.status === "ASSIGNED"
-                      ? "Ждёт принятия завхозом"
+                      ? "Ждёт подтверждения цены завхозом"
                       : orderStatusLabels[order.status as OrderStatus];
                   return (
                     <OrderListItem

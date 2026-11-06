@@ -13,3 +13,15 @@ export function defaultFreelancerFeeKop(
   }
   return Math.round((newUnitPriceKop * quantity * FREELANCER_FEE_MILLI) / 1000);
 }
+
+/** Стартовая цена для заявки: бюджет школы, иначе 14% от новых. */
+export function suggestedClaimFeeKop(input: {
+  repairBudgetKop: number;
+  newUnitPriceKop: number;
+  quantity: number;
+}): number {
+  if (Number.isInteger(input.repairBudgetKop) && input.repairBudgetKop > 0) {
+    return input.repairBudgetKop;
+  }
+  return defaultFreelancerFeeKop(input.newUnitPriceKop, input.quantity);
+}

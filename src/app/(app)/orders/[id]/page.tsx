@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { DocumentLinks } from "@/components/document-links";
 import { OrderActions } from "@/components/order-actions";
+import { FreelancerOrderSteps } from "@/components/order-flow-steps";
 import { OrderChat } from "@/components/order-chat";
 import { StatusBadge } from "@/components/status-badge";
 import { PageShell, Surface } from "@/components/ui/surface";
@@ -72,13 +73,22 @@ export default async function FreelancerOrderPage({
             </Surface>
           ) : null}
 
-          <Surface className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold text-ink">Действия</h2>
+          <Surface className="flex flex-col gap-4">
+            <div>
+              <h2 className="mb-3 text-sm font-semibold text-ink">Шаги заказа</h2>
+              <FreelancerOrderSteps
+                itemStatus={order.item.status}
+                orderStatus={order.status as OrderStatus}
+                schoolAccepted={Boolean(order.schoolAcceptedAt)}
+                agreedFeeKop={order.agreedFeeKop}
+              />
+            </div>
             <OrderActions
               orderId={order.id}
               orderStatus={order.status}
               itemStatus={order.item.status}
               schoolAccepted={Boolean(order.schoolAcceptedAt)}
+              agreedFeeKop={order.agreedFeeKop}
             />
           </Surface>
 

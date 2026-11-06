@@ -6,9 +6,12 @@ import { ConfirmRepairButton } from "@/components/confirm-repair-button";
 import { DeleteItemButton } from "@/components/delete-item-button";
 import { DocumentLinks } from "@/components/document-links";
 import { OrderChat } from "@/components/order-chat";
+import { SchoolOrderSteps } from "@/components/order-flow-steps";
+import { RepairBudgetForm } from "@/components/repair-budget-form";
 import { StatusBadge } from "@/components/status-badge";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
+import { canUpdateRepairBudget } from "@/domain/items/access";
 import { statusLabels } from "@/domain/items/labels";
 import { orderStatusLabels, type OrderStatus } from "@/domain/orders/labels";
 import { requireRoles } from "@/server/auth/current-user";
@@ -39,6 +42,8 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
   const waitingConfirm = item.status === "READY" && Boolean(order);
   const showChat = Boolean(order) && item.status !== "LISTED";
   const messages = order && showChat ? await listOrderMessages(order.id) : [];
+  const canEditBudget = canUpdateRepairBudget(user, item);
+  const maxBudgetKop = item.newUnitPriceKop * item.quantity;
 
   return (
     <PageShell>
@@ -61,8 +66,8 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
               {item.title}
             </h1>
             <p className="text-sm text-leaf">
-              {item.category.name} · {item.quantity} шт. · {formatByn(item.newUnitPriceKop)} за
-              штуку
+              {item.category.name} · {item.quantity} шт. · новое {formatByn(item.newUnitPriceKop)} ·
+              ремонт {formatByn(item.repairBudgetKop)}
             </p>
             {order?.master ? (
               <p className="text-sm text-leaf">Фрилансер: {order.master.fullName}</p>
@@ -97,22 +102,47 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
             </Surface>
           ) : null}
 
+          <Surface>
+            <h2 className="mb-3 text-sm font-semibold text-ink">Шаги заказа</h2>
+            <SchoolOrderSteps
+              itemStatus={item.status}
+              orderStatus={order ? (order.status as OrderStatus) : null}
+              schoolAccepted={Boolean(order?.schoolAcceptedAt)}
+              agreedFeeKop={order?.agreedFeeKop}
+            />
+          </Surface>
+
+          {canEditBudget ? (
+            <Surface>
+              <RepairBudgetForm
+                itemId={item.id}
+                repairBudgetKop={item.repairBudgetKop}
+                maxKop={maxBudgetKop}
+                agreedFeeKop={order?.agreedFeeKop}
+              />
+            </Surface>
+          ) : null}
+
           {awaitingAccept && order ? (
             <Surface tone="accent" className="p-4">
               <p className="text-sm leading-6">
-                Фрилансер предложил ремонт за{" "}
-                <span className="font-semibold">{formatByn(order.agreedFeeKop)}</span>. Примите
-                заказ — у него появится «Начать ремонт».
+                Фрилансер предложил цену{" "}
+                <span className="font-semibold">{formatByn(order.agreedFeeKop)}</span>
+                {order.agreedFeeKop !== item.repairBudgetKop
+                  ? ` (ваш бюджет был ${formatByn(item.repairBudgetKop)})`
+                  : ""}
+                . Обсудите в чате при необходимости, затем подтвердите именно эту сумму — заказ
+                сразу перейдёт в работу.
               </p>
-              <AcceptOrderButton orderId={order.id} />
+              <AcceptOrderButton orderId={order.id} agreedFeeKop={order.agreedFeeKop} />
             </Surface>
           ) : null}
 
           {waitingConfirm && order ? (
             <Surface tone="accent" className="p-4">
               <p className="text-sm leading-6">
-                Фрилансер закрыл заказ. Подтвердите закрытие — карточка уйдёт в историю, выплата
-                начислится.
+                Фрилансер закрыл заказ за {formatByn(order.agreedFeeKop)}. Подтвердите закрытие —
+                карточка уйдёт в историю, выплата начислится.
               </p>
               <ConfirmRepairButton itemId={item.id} />
             </Surface>

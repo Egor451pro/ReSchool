@@ -11,6 +11,7 @@ export type ItemTileData = {
   status: ItemStatus;
   quantity: number;
   newUnitPriceKop: number;
+  repairBudgetKop?: number;
   category: { name: string };
   institution: { name: string; district: string };
   photos: { id: string; path: string }[];
@@ -57,7 +58,10 @@ export function ItemTile({ item, showPlace }: { item: ItemTileData; showPlace?: 
           <p className="text-sm text-leaf">{item.category.name}</p>
         )}
         <p className="mt-auto text-sm text-ink">
-          {item.quantity} шт. · {formatByn(item.newUnitPriceKop)} за штуку
+          {item.quantity} шт. ·{" "}
+          {typeof item.repairBudgetKop === "number"
+            ? `ремонт ${formatByn(item.repairBudgetKop)}`
+            : `${formatByn(item.newUnitPriceKop)} за штуку`}
         </p>
       </div>
     </Link>

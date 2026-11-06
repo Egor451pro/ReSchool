@@ -10,10 +10,12 @@ export function ClaimItemForm({
   itemId,
   defaultFeeKop,
   newPriceKop,
+  schoolBudgetKop,
 }: {
   itemId: string;
   defaultFeeKop: number;
   newPriceKop: number;
+  schoolBudgetKop: number;
 }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(claimItemAction, initial);
@@ -31,8 +33,8 @@ export function ClaimItemForm({
     <form action={action} className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgba(47,36,28,0.03)]">
       <input type="hidden" name="itemId" value={itemId} />
       <p className="text-xs leading-5 text-leaf">
-        База — 14% от стоимости новых ({formatBynAmount(newPriceKop)} BYN). Можете изменить свою
-        цену за ремонт.
+        Бюджет школы — {formatBynAmount(schoolBudgetKop)} BYN (новые ≈ {formatBynAmount(newPriceKop)}{" "}
+        BYN). Можете предложить свою цену — потом обсудите в чате.
       </p>
       <label className="flex flex-col gap-1 text-sm text-leaf">
         Ваша цена, BYN

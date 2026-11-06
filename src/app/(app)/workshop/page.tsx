@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
 import { itemPhotoSrc } from "@/domain/items/photo";
-import { defaultFreelancerFeeKop } from "@/domain/orders/fee";
+import { suggestedClaimFeeKop } from "@/domain/orders/fee";
 import { requireRoles } from "@/server/auth/current-user";
 import {
   listExchangeItems,
@@ -26,7 +26,7 @@ export default async function WorkshopPage() {
       <PageHeader
         title="Биржа"
         description="Свободные объявления школ и учреждений. Берёте первым — предлагаете свою цену."
-        banner="Базовая цена — 14% от стоимости нового изделия. Завхоз должен принять заказ, прежде чем вы начнёте ремонт."
+        banner="Предложите цену → обсудите в чате → завхоз нажимает «Подтвердить цену» → заказ сразу «В работе»."
       />
 
       {items.length === 0 ? (
@@ -41,10 +41,11 @@ export default async function WorkshopPage() {
               skillSet.has(link.specialtyId),
             );
             const newPriceKop = item.newUnitPriceKop * item.quantity;
-            const defaultFeeKop = defaultFreelancerFeeKop(
-              item.newUnitPriceKop,
-              item.quantity,
-            );
+            const defaultFeeKop = suggestedClaimFeeKop({
+              repairBudgetKop: item.repairBudgetKop,
+              newUnitPriceKop: item.newUnitPriceKop,
+              quantity: item.quantity,
+            });
             return (
               <Surface key={item.id} as="li" className="flex h-full flex-col gap-3">
                 <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-placeholder">
@@ -77,12 +78,15 @@ export default async function WorkshopPage() {
                   {matchesSkill ? (
                     <p className="text-xs font-medium text-leaf">Подходит вашим навыкам</p>
                   ) : null}
-                  <p className="text-sm text-ink">База 14% ≈ {formatByn(defaultFeeKop)}</p>
+                  <p className="text-sm text-ink">
+                    Бюджет школы {formatByn(item.repairBudgetKop)}
+                  </p>
                 </div>
                 <ClaimItemForm
                   itemId={item.id}
                   defaultFeeKop={defaultFeeKop}
                   newPriceKop={newPriceKop}
+                  schoolBudgetKop={item.repairBudgetKop}
                 />
               </Surface>
             );

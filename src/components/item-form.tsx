@@ -6,6 +6,7 @@ import {
   reviseItemAction,
   type CabinetFormState,
 } from "@/app/actions/cabinet";
+import { PhotoField } from "@/components/photo-field";
 import { conditionLabels, itemConditions } from "@/domain/items/labels";
 
 const initialState: CabinetFormState = {};
@@ -20,6 +21,7 @@ export type ItemFormDefaults = {
   quantity: string;
   year: string;
   price: string;
+  repairBudget: string;
 };
 
 function Field({
@@ -65,6 +67,7 @@ export function ItemForm({
       quantity: "1",
       year: "",
       price: "",
+      repairBudget: "",
     };
 
   return (
@@ -138,7 +141,7 @@ export function ItemForm({
       </div>
       <Field
         label="Цена новой такой же вещи, BYN"
-        hint="Оценка завхоза. Это допущение, не нормативная стоимость."
+        hint="Оценка для расчёта экономии района, не оплата ремонта."
         error={state.fields?.newUnitPriceKop}
       >
         <input
@@ -151,15 +154,23 @@ export function ItemForm({
         />
       </Field>
       <Field
-        label="Фото"
-        hint="JPG, PNG или WebP, до 5 МБ. Без файла останется картинка категории."
+        label="Готовы заплатить за весь ремонт, BYN"
+        hint="Эту сумму увидит фрилансер. Потом можно изменить после обсуждения в чате."
+        error={state.fields?.repairBudgetKop}
       >
-        {currentPhotoSrc ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={currentPhotoSrc} alt="" className="mb-2 aspect-[4/3] w-full rounded-lg object-cover" />
-        ) : null}
-        <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="text-sm text-ink" />
+        <input
+          name="repairBudget"
+          required
+          inputMode="decimal"
+          placeholder="25,00"
+          defaultValue={values.repairBudget}
+          className="field"
+        />
       </Field>
+      <div className="flex flex-col gap-1 text-sm text-leaf">
+        <span>Фото</span>
+        <PhotoField currentPhotoSrc={currentPhotoSrc} />
+      </div>
       {state.error ? <p className="rounded-2xl border border-line-strong bg-muted px-3 py-2 text-sm text-ink">{state.error}</p> : null}
       <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Сохраняем…" : itemId ? "Сохранить" : "Опубликовать"}

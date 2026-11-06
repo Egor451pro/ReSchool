@@ -69,7 +69,7 @@ export async function claimListedItem(
   if (item.condition === "SCRAP") return { ok: false, error: "Лом в ремонт не берём" };
   if (item.orders.length > 0) return { ok: false, error: "У предмета уже есть активный заказ" };
 
-  const maxFee = item.newUnitPriceKop * item.quantity;
+  const maxFee = Math.max(item.repairBudgetKop, item.newUnitPriceKop * item.quantity);
   if (input.agreedFeeKop > maxFee) {
     return { ok: false, error: "Цена ремонта не может быть выше стоимости новых вещей" };
   }
@@ -108,7 +108,10 @@ export async function acceptOrderProposal(
     return { ok: false, error: "Это предмет другого учреждения" };
   }
   if (order.status !== "ASSIGNED" || order.schoolAcceptedAt) {
-    return { ok: false, error: "Заказ уже принят или недоступен" };
+    return { ok: false, error: "Цена уже подтверждена или заказ недоступен" };
+  }
+  if (!Number.isInteger(order.agreedFeeKop) || order.agreedFeeKop <= 0) {
+    return { ok: false, error: "В заказе нет цены для подтверждения" };
   }
 
   const result = await acceptOrderBySchool({
@@ -116,6 +119,7 @@ export async function acceptOrderProposal(
     itemId: order.item.id,
     actorId: actor.id,
     institutionId: order.item.institutionId,
+    agreedFeeKop: order.agreedFeeKop,
   });
   if (!result.ok) return { ok: false, error: "Статус уже изменился" };
   return { ok: true, orderId: order.id, itemId: order.item.id };
@@ -127,10 +131,45 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
   if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого фрилансера" };
 
   if (order.status === "ASSIGNED" && !order.schoolAcceptedAt) {
-    return { ok: false, error: "Сначала завхоз должен принять ваш заказ" };
+    return {
+      ok: false,
+      error: "Ремонт начнётся, когда завхоз подтвердит вашу цену",
+    };
   }
 
   try {
+    // Старые заказы: цена уже подтверждена, но статус ещё ASSIGNED — сначала в работу.
+    if (order.status === "ASSIGNED" && order.schoolAcceptedAt) {
+      const start = planOrderAdvance("ASSIGNED", order.item.status);
+      const started = await applyOrderTransition({
+        orderId: order.id,
+        itemId: order.item.id,
+        fromOrder: "ASSIGNED",
+        toOrder: start.orderTo,
+        fromItem: order.item.status,
+        toItem: start.itemTo,
+        actorId: actor.id,
+        comment: start.comment,
+      });
+      if (!started) return { ok: false, error: "Статус заказа уже изменился" };
+      // Сразу завершаем ремонт по кнопке «Завершить заказ».
+      const finish = planOrderAdvance("IN_PROGRESS", start.itemTo ?? "IN_REPAIR");
+      const done = await applyOrderTransition({
+        orderId: order.id,
+        itemId: order.item.id,
+        fromOrder: "IN_PROGRESS",
+        toOrder: finish.orderTo,
+        fromItem: start.itemTo ?? "IN_REPAIR",
+        toItem: finish.itemTo,
+        actorId: actor.id,
+        comment: finish.comment,
+        actualMaterialsKop: order.plannedMaterialsKop,
+        actualMinutes: order.plannedMinutes,
+      });
+      if (!done) return { ok: false, error: "Не удалось завершить заказ" };
+      return { ok: true, orderId: order.id };
+    }
+
     const plan = planOrderAdvance(order.status, order.item.status);
     const ok = await applyOrderTransition({
       orderId: order.id,

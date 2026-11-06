@@ -67,7 +67,7 @@ export default async function CabinetPage() {
                     !order.schoolAcceptedAt;
                   const waitingConfirm = item.status === "READY" && Boolean(order);
                   const hint = awaitingAccept
-                    ? `Ждёт принятия · ${feeMeta(order!.agreedFeeKop)}`
+                    ? `Подтвердите цену · ${feeMeta(order!.agreedFeeKop)}`
                     : waitingConfirm
                       ? "Ждёт вашего подтверждения закрытия"
                       : order

@@ -11,6 +11,7 @@ const tileSelect = {
   status: true,
   quantity: true,
   newUnitPriceKop: true,
+  repairBudgetKop: true,
   category: { select: { name: true, slug: true } },
   institution: { select: { name: true, district: true } },
   photos: { orderBy: { sort: "asc" as const }, take: 1, select: { id: true, path: true } },
@@ -136,6 +137,7 @@ export function findItemCard(id: string) {
       quantity: true,
       year: true,
       newUnitPriceKop: true,
+      repairBudgetKop: true,
       institutionId: true,
       createdAt: true,
       category: { select: { id: true, slug: true, name: true } },
@@ -187,6 +189,7 @@ export function findItemForEdit(id: string) {
       quantity: true,
       year: true,
       newUnitPriceKop: true,
+      repairBudgetKop: true,
       categoryId: true,
       photos: { orderBy: { sort: "asc" }, take: 1, select: { id: true, path: true } },
     },
@@ -209,6 +212,7 @@ export function createListedItem(input: {
   quantity: number;
   year?: number;
   newUnitPriceKop: number;
+  repairBudgetKop: number;
   listedById: string;
   photoPath: string;
 }) {
@@ -223,6 +227,7 @@ export function createListedItem(input: {
       quantity: input.quantity,
       year: input.year,
       newUnitPriceKop: input.newUnitPriceKop,
+      repairBudgetKop: input.repairBudgetKop,
       listedById: input.listedById,
       photos: { create: { path: input.photoPath, sort: 0 } },
       events: {
@@ -247,6 +252,7 @@ export async function updateListedItem(input: {
   quantity: number;
   year: number | null;
   newUnitPriceKop: number;
+  repairBudgetKop: number;
   nextPhotoPath?: string;
   placeholderPath?: string;
 }): Promise<{ updated: boolean; removedPhotoPaths: string[] }> {
@@ -269,6 +275,7 @@ export async function updateListedItem(input: {
         quantity: input.quantity,
         year: input.year,
         newUnitPriceKop: input.newUnitPriceKop,
+        repairBudgetKop: input.repairBudgetKop,
       },
     });
 
@@ -353,5 +360,54 @@ export async function deleteListedItem(input: { id: string; institutionId: strin
 
     await tx.item.delete({ where: { id: item.id } });
     return { ok: true as const, photoPaths: item.photos.map((photo) => photo.path) };
+  });
+}
+
+/** Меняет бюджет ремонта и синхронизирует цену активного заказа. */
+export async function updateItemRepairBudget(input: {
+  id: string;
+  institutionId: string;
+  repairBudgetKop: number;
+}): Promise<{ ok: true } | { ok: false; reason: "not-found" | "locked" | "too-high" }> {
+  return prisma.$transaction(async (tx) => {
+    const item = await tx.item.findFirst({
+      where: { id: input.id, institutionId: input.institutionId },
+      select: {
+        status: true,
+        newUnitPriceKop: true,
+        quantity: true,
+        orders: {
+          where: { status: { in: ["ASSIGNED", "IN_PROGRESS", "QUALITY_CHECK"] } },
+          select: { id: true },
+          take: 1,
+        },
+      },
+    });
+    if (!item) return { ok: false, reason: "not-found" };
+    if (
+      item.status !== "LISTED" &&
+      item.status !== "REQUESTED" &&
+      item.status !== "IN_REPAIR"
+    ) {
+      return { ok: false, reason: "locked" };
+    }
+
+    const maxKop = item.newUnitPriceKop * item.quantity;
+    if (input.repairBudgetKop > maxKop) return { ok: false, reason: "too-high" };
+
+    await tx.item.update({
+      where: { id: input.id },
+      data: { repairBudgetKop: input.repairBudgetKop },
+    });
+
+    const order = item.orders[0];
+    if (order) {
+      await tx.repairOrder.update({
+        where: { id: order.id },
+        data: { agreedFeeKop: input.repairBudgetKop },
+      });
+    }
+
+    return { ok: true };
   });
 }

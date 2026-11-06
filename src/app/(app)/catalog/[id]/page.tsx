@@ -216,6 +216,7 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
                     orderStatus={order.status as OrderStatus}
                     itemStatus={item.status}
                     schoolAccepted={Boolean(order.schoolAcceptedAt)}
+                    agreedFeeKop={order.agreedFeeKop}
                   />
                 </div>
               ) : null}
@@ -268,13 +269,21 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
                     {formatByn(lineTotal)}
                   </p>
                 </div>
+                <div className="sm:col-span-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-leaf">
+                    Бюджет ремонта
+                  </p>
+                  <p className="mt-1 text-2xl font-bold tracking-tight text-ink">
+                    {formatByn(item.repairBudgetKop)}
+                  </p>
+                </div>
               </div>
             </section>
 
             <div className="flex flex-col gap-3">
               <InfoAlert>
-                Цена — оценка завхоза, допущение для расчёта экономии, а не нормативная стоимость
-                закупки.
+                Цена новой вещи — для расчёта экономии. Бюджет ремонта — сколько школа готова
+                заплатить фрилансеру; его можно обсудить в чате и изменить.
               </InfoAlert>
               {item.condition === "SCRAP" ? (
                 <InfoAlert>

@@ -1,6 +1,11 @@
 import "server-only";
 
-import { canPublishItems, itemManageState, type ItemActor } from "@/domain/items/access";
+import {
+  canPublishItems,
+  canUpdateRepairBudget,
+  itemManageState,
+  type ItemActor,
+} from "@/domain/items/access";
 import { categoryPlaceholderPath } from "@/domain/items/photo";
 import { assertItemTransition } from "@/domain/workflow/item-lifecycle";
 import type { ItemFormInput } from "@/lib/validators/item";
@@ -9,6 +14,7 @@ import {
   createListedItem,
   deleteListedItem,
   findItemForEdit,
+  updateItemRepairBudget,
   updateListedItem,
   withdrawListedItem,
 } from "@/server/repositories/item-repository";
@@ -50,6 +56,7 @@ export async function publishItem(
       quantity: input.quantity,
       year: input.year,
       newUnitPriceKop: input.newUnitPriceKop,
+      repairBudgetKop: input.repairBudgetKop,
       listedById: actor.id,
       photoPath: photo.path,
     });
@@ -88,6 +95,7 @@ export async function reviseItem(
       quantity: input.quantity,
       year: input.year ?? null,
       newUnitPriceKop: input.newUnitPriceKop,
+      repairBudgetKop: input.repairBudgetKop,
       nextPhotoPath: photo.uploaded ?? undefined,
       placeholderPath: photo.uploaded ? undefined : categoryPlaceholderPath(category.slug),
     });
@@ -118,6 +126,35 @@ export async function withdrawItem(actor: ItemActor, itemId: string): Promise<Se
     return { ok: false, error: "У предмета есть заказ, снять публикацию нельзя" };
   }
   if (outcome === "locked") return { ok: false, error: "Карточку уже взяли в работу" };
+  return { ok: true, itemId: item.id };
+}
+
+export async function setRepairBudget(
+  actor: ItemActor,
+  itemId: string,
+  repairBudgetKop: number,
+): Promise<ServiceResult> {
+  const item = await findItemForEdit(itemId);
+  if (!item) return { ok: false, error: "Карточка не найдена" };
+  if (!canUpdateRepairBudget(actor, item)) {
+    return { ok: false, error: "Сейчас цену ремонта менять нельзя" };
+  }
+  if (!actor.institutionId) return { ok: false, error: "Нужно учреждение" };
+
+  const result = await updateItemRepairBudget({
+    id: item.id,
+    institutionId: actor.institutionId,
+    repairBudgetKop,
+  });
+  if (!result.ok) {
+    if (result.reason === "too-high") {
+      return { ok: false, error: "Бюджет ремонта не выше стоимости новых вещей" };
+    }
+    if (result.reason === "locked") {
+      return { ok: false, error: "Сейчас цену ремонта менять нельзя" };
+    }
+    return { ok: false, error: "Карточка не найдена" };
+  }
   return { ok: true, itemId: item.id };
 }
 

@@ -54,6 +54,7 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
                 quantity: String(item.quantity),
                 year: item.year ? String(item.year) : "",
                 price: formatBynAmount(item.newUnitPriceKop),
+                repairBudget: formatBynAmount(item.repairBudgetKop),
               }}
             />
           </section>

@@ -46,21 +46,64 @@ const priceField = z
   })
   .transform((value) => parseBynToKop(value));
 
-export const itemFormSchema = z.object({
-  categoryId: z.string().trim().min(1, "Выберите категорию"),
-  title: z.string().trim().min(3, "Название — хотя бы 3 символа").max(160, "Название длиннее 160 символов"),
-  description: z
-    .string()
-    .trim()
-    .min(3, "Описание — хотя бы 3 символа")
-    .max(2000, "Описание длиннее 2000 символов"),
-  condition: z.enum(itemConditions, { error: "Выберите состояние" }),
-  quantity: quantityField,
-  year: yearField,
-  newUnitPriceKop: priceField,
-});
+export const itemFormSchema = z
+  .object({
+    categoryId: z.string().trim().min(1, "Выберите категорию"),
+    title: z.string().trim().min(3, "Название — хотя бы 3 символа").max(160, "Название длиннее 160 символов"),
+    description: z
+      .string()
+      .trim()
+      .min(3, "Описание — хотя бы 3 символа")
+      .max(2000, "Описание длиннее 2000 символов"),
+    condition: z.enum(itemConditions, { error: "Выберите состояние" }),
+    quantity: quantityField,
+    year: yearField,
+    newUnitPriceKop: priceField,
+    repairBudgetKop: priceField,
+  })
+  .superRefine((value, ctx) => {
+    if (value.repairBudgetKop <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["repairBudgetKop"],
+        message: "Укажите, сколько готовы заплатить за ремонт",
+      });
+      return;
+    }
+    const maxKop = value.newUnitPriceKop * value.quantity;
+    if (value.repairBudgetKop > maxKop) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["repairBudgetKop"],
+        message: "Бюджет ремонта не выше стоимости новых вещей",
+      });
+    }
+  });
 
 export type ItemFormInput = z.infer<typeof itemFormSchema>;
+
+export const repairBudgetFormSchema = z
+  .object({
+    repairBudgetKop: priceField,
+    maxKop: z.number().int().positive(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.repairBudgetKop <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["repairBudgetKop"],
+        message: "Укажите сумму больше нуля",
+      });
+      return;
+    }
+    if (value.repairBudgetKop > value.maxKop) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["repairBudgetKop"],
+        message: "Не выше стоимости новых вещей",
+      });
+    }
+  });
 
 export const requestFormSchema = z.object({
   categoryId: z.string().trim().min(1, "Выберите категорию"),

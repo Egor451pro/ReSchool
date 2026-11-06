@@ -28,7 +28,7 @@ export function planOrderAdvance(from: OrderStatus, itemStatus: ItemStatus): Syn
     return {
       orderTo,
       itemTo: "IN_REPAIR",
-      comment: "Исполнитель приступил к ремонту.",
+      comment: "Завхоз подтвердил цену — ремонт в работе.",
     };
   }
 

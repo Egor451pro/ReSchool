@@ -7,11 +7,12 @@ import {
   deletePublishedItem,
   publishItem,
   reviseItem,
+  setRepairBudget,
   withdrawItem,
 } from "@/server/services/item-service";
 import { publishRequest } from "@/server/services/request-service";
 import { revalidateAppViews } from "@/server/revalidate";
-import { itemFormSchema, requestFormSchema } from "@/lib/validators/item";
+import { itemFormSchema, repairBudgetFormSchema, requestFormSchema } from "@/lib/validators/item";
 
 export type ItemFormValues = {
   title: string;
@@ -21,6 +22,7 @@ export type ItemFormValues = {
   quantity: string;
   year: string;
   price: string;
+  repairBudget: string;
 };
 
 export type RequestFormValues = {
@@ -40,7 +42,8 @@ export type CabinetFormState = {
       | "condition"
       | "quantity"
       | "year"
-      | "newUnitPriceKop",
+      | "newUnitPriceKop"
+      | "repairBudgetKop",
       string
     >
   >;
@@ -56,6 +59,7 @@ const fieldKeys = [
   "quantity",
   "year",
   "newUnitPriceKop",
+  "repairBudgetKop",
 ] as const;
 
 function fieldMessages(error: { issues: { path: PropertyKey[]; message: string }[] }) {
@@ -89,6 +93,7 @@ function readItemValues(formData: FormData): ItemFormValues {
     quantity: text(formData, "quantity"),
     year: text(formData, "year"),
     price: text(formData, "price"),
+    repairBudget: text(formData, "repairBudget"),
   };
 }
 
@@ -113,8 +118,38 @@ function readItem(formData: FormData) {
       quantity: item.quantity,
       year: item.year,
       newUnitPriceKop: item.price,
+      repairBudgetKop: item.repairBudget,
     }),
   };
+}
+
+export type RepairBudgetFormState = {
+  error?: string;
+  budget?: string;
+};
+
+export async function updateRepairBudgetAction(
+  _state: RepairBudgetFormState,
+  formData: FormData,
+): Promise<RepairBudgetFormState> {
+  const itemId = text(formData, "itemId");
+  const budget = text(formData, "repairBudget");
+  const maxKopRaw = text(formData, "maxKop");
+  const maxKop = Number(maxKopRaw);
+  const parsed = repairBudgetFormSchema.safeParse({
+    repairBudgetKop: budget,
+    maxKop: Number.isFinite(maxKop) && maxKop > 0 ? maxKop : 1,
+  });
+  if (!parsed.success) {
+    const message = parsed.error.issues[0]?.message ?? "Проверьте сумму";
+    return { error: message, budget };
+  }
+
+  const actor = await requireRoles(["DONOR_STAFF"]);
+  const result = await setRepairBudget(actor, itemId, parsed.data.repairBudgetKop);
+  if (!result.ok) return { error: result.error, budget };
+  revalidateAppViews();
+  redirect(`/cabinet/items/${itemId}`);
 }
 
 export async function publishItemAction(

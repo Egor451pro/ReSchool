@@ -9,6 +9,7 @@ const exchangeSelect = {
   condition: true,
   quantity: true,
   newUnitPriceKop: true,
+  repairBudgetKop: true,
   categoryId: true,
   category: {
     select: {
@@ -192,6 +193,7 @@ export function findClaimableItem(itemId: string) {
       condition: true,
       quantity: true,
       newUnitPriceKop: true,
+      repairBudgetKop: true,
       categoryId: true,
       institutionId: true,
       category: {
@@ -267,11 +269,13 @@ export async function claimItemOrder(input: {
   });
 }
 
+/** Завхоз подтверждает цену фрилансера — заказ сразу «В работе». */
 export async function acceptOrderBySchool(input: {
   orderId: string;
   itemId: string;
   actorId: string;
   institutionId: string;
+  agreedFeeKop: number;
 }) {
   return prisma.$transaction(async (tx) => {
     const order = await tx.repairOrder.findFirst({
@@ -282,24 +286,37 @@ export async function acceptOrderBySchool(input: {
         schoolAcceptedAt: null,
         item: { institutionId: input.institutionId, status: "REQUESTED" },
       },
-      select: { id: true },
+      select: { id: true, agreedFeeKop: true },
     });
     if (!order) return { ok: false as const, reason: "locked" as const };
 
     const updated = await tx.repairOrder.updateMany({
       where: { id: order.id, status: "ASSIGNED", schoolAcceptedAt: null },
-      data: { schoolAcceptedAt: new Date() },
+      data: {
+        schoolAcceptedAt: new Date(),
+        status: "IN_PROGRESS",
+        agreedFeeKop: input.agreedFeeKop,
+      },
     });
     if (updated.count !== 1) return { ok: false as const, reason: "locked" as const };
+
+    const itemUpdated = await tx.item.updateMany({
+      where: { id: input.itemId, status: "REQUESTED" },
+      data: {
+        status: "IN_REPAIR",
+        repairBudgetKop: input.agreedFeeKop,
+      },
+    });
+    if (itemUpdated.count !== 1) return { ok: false as const, reason: "locked" as const };
 
     await tx.statusEvent.create({
       data: {
         itemId: input.itemId,
         orderId: order.id,
         fromStatus: "REQUESTED",
-        toStatus: "REQUESTED",
+        toStatus: "IN_REPAIR",
         actorId: input.actorId,
-        comment: "Завхоз принял заказ фрилансера.",
+        comment: "Завхоз подтвердил цену фрилансера — ремонт в работе.",
       },
     });
 

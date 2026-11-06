@@ -162,10 +162,12 @@ model Item {
   condition       ItemCondition
   status          ItemStatus
   closeReason     CloseReason?
-  quantity        Int
-  year            Int?
-  newUnitPriceKop Int
-  listedById      String
+  quantity         Int
+  year             Int?
+  newUnitPriceKop  Int
+  /** Сколько школа готова заплатить за весь ремонт (обсуждается в чате). */
+  repairBudgetKop  Int
+  listedById       String
   listedBy        User          @relation("ListedBy", fields: [listedById], references: [id])
   photos          ItemPhoto[]
   orders          RepairOrder[]
