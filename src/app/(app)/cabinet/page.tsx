@@ -49,8 +49,8 @@ export default async function CabinetPage() {
         description={`${user.institutionName}. Сейчас ${itemsCountLabel(active.length)} в работе. Откройте пункт списка, чтобы принять заказ, подтвердить закрытие или написать в чат.`}
       />
 
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="flex flex-col gap-10">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)] lg:gap-8">
+        <div className="flex min-w-0 flex-col gap-8 lg:gap-10">
           <section className="flex flex-col gap-3">
             <h2 className="text-lg font-semibold text-ink">Мои предметы · {active.length}</h2>
             {active.length === 0 ? (

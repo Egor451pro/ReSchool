@@ -11,8 +11,8 @@ export function CatalogFilters({
 }) {
   return (
     <Surface>
-      <form method="get" className="flex flex-wrap items-end gap-3">
-        <label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-sm text-leaf">
+      <form method="get" className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <label className="flex w-full min-w-0 flex-1 flex-col gap-1 text-sm text-leaf sm:min-w-[12rem]">
           Категория
           <select name="category" defaultValue={query.category ?? ""} className="field">
             <option value="">Все категории</option>
@@ -23,12 +23,14 @@ export function CatalogFilters({
             ))}
           </select>
         </label>
-        <button type="submit" className="btn-primary btn-sm">
-          Показать
-        </button>
-        <Link href={catalogHref({})} className="btn-ghost btn-sm">
-          Сбросить
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <button type="submit" className="btn-primary btn-sm flex-1 sm:flex-none">
+            Показать
+          </button>
+          <Link href={catalogHref({})} className="btn-ghost btn-sm flex-1 sm:flex-none">
+            Сбросить
+          </Link>
+        </div>
       </form>
     </Surface>
   );

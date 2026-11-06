@@ -13,12 +13,12 @@ export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-6 py-12 text-ink">
-        <div className="flex max-w-3xl flex-col gap-4">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+      <main className="page-shell gap-8 text-ink sm:gap-10 sm:pt-12">
+        <div className="flex max-w-3xl flex-col gap-3 sm:gap-4">
+          <h1 className="text-[1.75rem] font-semibold leading-tight tracking-tight sm:text-4xl">
             Школьное имущество снова в деле
           </h1>
-          <p className="text-lg leading-8 text-leaf">
+          <p className="text-base leading-7 text-leaf sm:text-lg sm:leading-8">
             Завхоз публикует то, что можно починить. Фрилансер берёт ремонт на бирже. Вещь
             возвращается — бюджет экономит на закупках.
           </p>

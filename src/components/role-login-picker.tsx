@@ -127,8 +127,8 @@ export function RoleLoginPicker({
                 }}
                 className={
                   card.accent
-                    ? "flex flex-col gap-2 rounded-3xl border border-mint bg-mint px-5 py-5 text-left text-[#2f241c] shadow-[var(--shadow-soft)] transition hover:opacity-95"
-                    : "flex flex-col gap-2 rounded-3xl border border-line bg-surface px-5 py-5 text-left text-ink shadow-[var(--shadow-soft)] transition hover:border-mint hover:bg-muted/60"
+                    ? "flex flex-col gap-2 rounded-2xl border border-mint bg-mint px-4 py-4 text-left text-[#2f241c] shadow-[var(--shadow-soft)] transition hover:opacity-95 sm:rounded-3xl sm:px-5 sm:py-5"
+                    : "flex flex-col gap-2 rounded-2xl border border-line bg-surface px-4 py-4 text-left text-ink shadow-[var(--shadow-soft)] transition hover:border-mint hover:bg-muted/60 sm:rounded-3xl sm:px-5 sm:py-5"
                 }
               >
                 <span className="text-lg font-semibold">{card.title}</span>

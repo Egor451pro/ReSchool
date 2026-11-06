@@ -11,7 +11,7 @@ export const instant = false;
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <Suspense fallback={<p className="px-6 py-8 text-leaf">Открываем раздел…</p>}>
+    <Suspense fallback={<p className="px-4 py-8 text-leaf sm:px-6">Открываем раздел…</p>}>
       <AppShell>{children}</AppShell>
     </Suspense>
   );
@@ -36,22 +36,22 @@ async function AppShell({ children }: { children: ReactNode }) {
         }}
       />
       <div className="site-header sticky top-0 z-50 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2.5 px-4 py-2.5 sm:gap-3 sm:px-6 sm:py-3">
+          <div className="flex items-center justify-between gap-3">
             <Link
               href={roleHome(user.role)}
-              className="text-sm font-semibold tracking-wide text-ink"
+              className="shrink-0 text-sm font-semibold tracking-wide text-ink"
             >
               ReSchool
             </Link>
-            <SectionNav links={links} />
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <ThemeToggle />
+              <AuthHeader
+                user={{ fullName: user.fullName, role: user.role, email: user.email }}
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <AuthHeader
-              user={{ fullName: user.fullName, role: user.role, email: user.email }}
-            />
-          </div>
+          <SectionNav links={links} />
         </div>
       </div>
       {children}

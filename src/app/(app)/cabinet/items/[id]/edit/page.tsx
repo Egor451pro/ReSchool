@@ -21,7 +21,7 @@ export default async function EditItemPage({ params }: { params: Promise<{ id: s
   const photo = item.photos[0];
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-8">
+    <main className="page-shell gap-6">
       <div className="flex max-w-xl flex-col gap-2">
         <Link href={`/catalog/${item.id}`} className="text-sm font-medium text-leaf hover:text-ink">
           К карточке

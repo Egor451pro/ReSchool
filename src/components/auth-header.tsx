@@ -35,8 +35,9 @@ function Avatar({ name, online }: { name: string; online?: boolean }) {
 
 function GuestActions() {
   return (
-    <Link href="/login" className="btn-ghost btn-sm">
-      Войти / Зарегистрироваться
+    <Link href="/login" className="btn-ghost btn-sm whitespace-nowrap">
+      <span className="sm:hidden">Войти</span>
+      <span className="hidden sm:inline">Войти / Зарегистрироваться</span>
     </Link>
   );
 }
@@ -82,7 +83,7 @@ function AuthedMenu({ profile }: { profile: AuthHeaderProfile }) {
       {open ? (
         <div
           id={menuId}
-          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow-soft)]"
+          className="absolute right-0 z-50 mt-2 w-[min(14rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--shadow-soft)]"
         >
           <div className="border-b border-line px-3 py-2.5">
             <p className="truncate text-sm font-medium text-ink">{profile.fullName}</p>

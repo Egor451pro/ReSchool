@@ -61,7 +61,7 @@ export function OrderChat({
         </div>
       </header>
 
-      <div className="flex max-h-[400px] min-h-[12rem] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-line bg-paper/60 p-2.5">
+      <div className="flex max-h-[min(22rem,55dvh)] min-h-[10rem] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-line bg-paper/60 p-2.5 sm:min-h-[12rem]">
         {messages.length === 0 ? (
           <p className="px-1 py-6 text-center text-xs leading-5 text-leaf">
             Пока тихо. Обсудите детали ремонта, сроки и материалы.

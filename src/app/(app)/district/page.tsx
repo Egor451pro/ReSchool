@@ -17,7 +17,7 @@ export default async function DistrictPage() {
   const shown = dashboard.scenarios.find((row) => row.shownOnDashboard) ?? dashboard.scenarios[1];
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-8">
+    <main className="page-shell">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold text-ink">Район</h1>

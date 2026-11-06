@@ -11,7 +11,7 @@ export default async function DistrictCalculatorPage() {
   const assumptions = await listEditableAssumptions();
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-8">
+    <main className="page-shell max-w-5xl gap-6">
       <div className="flex flex-col gap-2">
         <Link href="/district" className="text-sm font-medium text-leaf hover:text-ink">
           ← К дашборду района

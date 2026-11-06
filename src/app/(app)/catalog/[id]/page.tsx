@@ -120,7 +120,7 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="item-card-theme flex flex-1 flex-col">
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 px-6 py-8">
+      <main className="page-shell page-shell-wide gap-6">
         <Link
           href="/catalog"
           className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-leaf transition hover:text-ink"

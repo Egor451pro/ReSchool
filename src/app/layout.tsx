@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { AppShell } from "@/components/app-shell";
@@ -18,6 +18,16 @@ export const metadata: Metadata = {
   title: "ReSchool",
   description: "Повторное использование школьного имущества через ремонт и биржу фрилансеров",
   applicationName: "ReSchool",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fdfbf7" },
+    { media: "(prefers-color-scheme: dark)", color: "#13110f" },
+  ],
 };
 
 const themeBoot = `(function(){try{var t=localStorage.getItem('reschool-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}if(t==='dark')document.documentElement.classList.add('dark')}catch(e){}})();`;

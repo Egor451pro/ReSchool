@@ -14,15 +14,26 @@ export function Surface({
 }) {
   const base =
     tone === "accent"
-      ? "panel-accent rounded-3xl border p-4 shadow-[var(--shadow-soft)] transition-colors duration-300"
-      : "rounded-3xl border border-line/90 bg-surface p-4 text-ink shadow-[var(--shadow-soft)] transition-colors duration-300";
+      ? "panel-accent rounded-2xl border p-3.5 shadow-[var(--shadow-soft)] transition-colors duration-300 sm:rounded-3xl sm:p-4"
+      : "rounded-2xl border border-line/90 bg-surface p-3.5 text-ink shadow-[var(--shadow-soft)] transition-colors duration-300 sm:rounded-3xl sm:p-4";
 
   return <Tag className={`${base} ${className}`.trim()}>{children}</Tag>;
 }
 
-export function PageShell({ children }: { children: ReactNode }) {
+export function PageShell({
+  children,
+  className = "",
+  wide = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** Шире обычного контейнера (карточка объекта и т.п.) */
+  wide?: boolean;
+}) {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-6 py-8">
+    <main
+      className={`page-shell ${wide ? "page-shell-wide" : ""} ${className}`.trim()}
+    >
       {children}
     </main>
   );

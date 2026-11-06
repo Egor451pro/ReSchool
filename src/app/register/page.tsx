@@ -18,7 +18,7 @@ export default async function RegisterPage({
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-6 py-8">
+      <main className="page-shell page-shell-narrow gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold text-ink">
             {asFreelancer ? "Регистрация фрилансера" : "Регистрация завхоза"}

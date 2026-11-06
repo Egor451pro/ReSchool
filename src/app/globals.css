@@ -95,6 +95,7 @@
 }
 
 html {
+  overflow-x: clip;
   transition: background-color 300ms ease, color 300ms ease;
 }
 
@@ -103,7 +104,69 @@ body {
   color: var(--ink);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   min-height: 100%;
+  overflow-x: clip;
   transition: background-color 300ms ease, color 300ms ease;
+}
+
+/* Единый контейнер страниц: узкие экраны + отступ под Dynamic Island */
+.page-shell {
+  margin-inline: auto;
+  display: flex;
+  width: 100%;
+  max-width: 72rem;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding:
+    1.25rem
+    max(1rem, env(safe-area-inset-right))
+    calc(5.75rem + env(safe-area-inset-bottom, 0px))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.page-shell-wide {
+  max-width: 80rem;
+}
+
+.page-shell-narrow {
+  max-width: 28rem;
+}
+
+@media (min-width: 640px) {
+  .page-shell {
+    gap: 2rem;
+    padding:
+      2rem
+      max(1.5rem, env(safe-area-inset-right))
+      calc(6rem + env(safe-area-inset-bottom, 0px))
+      max(1.5rem, env(safe-area-inset-left));
+  }
+}
+
+/* Горизонтальный скролл разделов на телефоне */
+.section-nav {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin-inline: -0.15rem;
+  padding-bottom: 0.15rem;
+}
+
+.section-nav::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .section-nav {
+    flex-wrap: wrap;
+    overflow: visible;
+    scroll-snap-type: none;
+    margin-inline: 0;
+  }
 }
 
 .field {
@@ -186,6 +249,17 @@ body {
   border-radius: 0.75rem;
 }
 
+@media (max-width: 639px) {
+  .btn-primary,
+  .btn-ghost {
+    min-height: 2.75rem;
+  }
+
+  .field {
+    font-size: 16px; /* без автозума iOS */
+  }
+}
+
 .site-header {
   background: var(--header);
   border-bottom: 1px solid var(--line);
@@ -255,14 +329,22 @@ body {
 /* Dynamic Island–style loader */
 .nav-island {
   position: fixed;
-  bottom: 1.15rem;
-  left: 1.15rem;
+  bottom: max(0.85rem, env(safe-area-inset-bottom, 0px));
+  left: max(0.85rem, env(safe-area-inset-left, 0px));
   z-index: 90;
   display: inline-flex;
   align-items: center;
-  max-width: calc(100vw - 2.3rem);
+  max-width: calc(100vw - 1.7rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
   text-decoration: none;
   color: #f5f2eb;
+}
+
+@media (min-width: 640px) {
+  .nav-island {
+    bottom: max(1.15rem, env(safe-area-inset-bottom, 0px));
+    left: max(1.15rem, env(safe-area-inset-left, 0px));
+    max-width: calc(100vw - 2.3rem - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  }
 }
 
 .nav-island-core {
