@@ -11,7 +11,7 @@ export type { CloseReason, ItemStatus };
 
 export const conditionLabels: Record<ItemCondition, string> = {
   WORKING: "Исправно",
-  REPAIRABLE: "Подлежит ремонту",
+  REPAIRABLE: "Нужен ремонт",
   SCRAP: "Лом",
 };
 

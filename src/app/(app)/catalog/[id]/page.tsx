@@ -6,7 +6,7 @@ import { ConfirmRepairButton } from "@/components/confirm-repair-button";
 import { DocumentLinks } from "@/components/document-links";
 import { OrderActions } from "@/components/order-actions";
 import { OrderChat, OrderChatLocked } from "@/components/order-chat";
-import { ConditionBadge, StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/components/status-badge";
 import type { OrderStatus } from "@/domain/orders/labels";
 import { formatByn } from "@/domain/economy/money";
 import { itemManageState } from "@/domain/items/access";
@@ -180,7 +180,6 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
             <header className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={item.status} />
-                <ConditionBadge condition={item.condition} />
                 {item.closeReason ? (
                   <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-ink ring-1 ring-line-strong">
                     {closeReasonLabels[item.closeReason]}
@@ -282,14 +281,9 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
 
             <div className="flex flex-col gap-3">
               <InfoAlert>
-                Цена новой вещи — для расчёта экономии. Бюджет ремонта — сколько школа готова
-                заплатить фрилансеру; его можно обсудить в чате и изменить.
+                Цена новой вещи — для расчёта экономии. Бюджет ремонта — сколько школа платит
+                фрилансеру целиком (материалы и доставка внутри его цены).
               </InfoAlert>
-              {item.condition === "SCRAP" ? (
-                <InfoAlert>
-                  Лом в ремонт не передаём: карточка нужна для учёта списания.
-                </InfoAlert>
-              ) : null}
               {manage === "locked" ? (
                 <InfoAlert>
                   Править карточку можно, пока она опубликована. Сейчас статус —{" "}

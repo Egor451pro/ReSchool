@@ -34,7 +34,7 @@ export function ClaimItemForm({
       <input type="hidden" name="itemId" value={itemId} />
       <p className="text-xs leading-5 text-leaf">
         Бюджет школы — {formatBynAmount(schoolBudgetKop)} BYN (новые ≈ {formatBynAmount(newPriceKop)}{" "}
-        BYN). Можете предложить свою цену — потом обсудите в чате.
+        BYN). В вашей цене уже материалы, доставка и заработок — школа платит только эту сумму.
       </p>
       <label className="flex flex-col gap-1 text-sm text-leaf">
         Ваша цена, BYN

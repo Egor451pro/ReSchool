@@ -18,11 +18,11 @@ export function AcceptOrderButton({
   return (
     <form action={action} className="mt-3 flex flex-col gap-2">
       <input type="hidden" name="orderId" value={orderId} />
-      {state.error ? <p className="text-sm text-ink">{state.error}</p> : null}
-      <button type="submit" disabled={pending} className="btn-primary">
+      {state.error ? <p className="text-sm font-medium">{state.error}</p> : null}
+      <button type="submit" disabled={pending} className="btn-ghost bg-surface text-ink">
         {pending ? "Подтверждаем…" : `Подтвердить цену ${formatByn(agreedFeeKop)}`}
       </button>
-      <p className="text-xs leading-5 text-leaf">
+      <p className="panel-accent-muted text-xs leading-5">
         После подтверждения заказ сразу станет «В работе» — фрилансер сможет чинить.
       </p>
     </form>

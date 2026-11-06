@@ -15,10 +15,8 @@ export type InstitutionExpenseRow = {
   title: string;
   quantity: number;
   masterName: string;
-  materialsKop: number;
-  transportKop: number;
-  freelancerFeeKop: number;
-  totalKop: number;
+  /** Согласованная цена ремонта (всё включено для школы). */
+  repairPriceKop: number;
   newPriceKop: number;
   computedAt: Date;
 };
@@ -31,24 +29,22 @@ export async function loadInstitutionExpenses(actor: ExpenseActor): Promise<{
 
   const snapshots = await listInstitutionExpenseSnapshots(actor.institutionId);
   const rows = snapshots.map((row) => {
-    const totalKop = row.materialsKop + row.transportKop + row.freelancerFeeKop;
+    const repairPriceKop = Math.round(Number(row.freelancerFeeKop) || 0);
+    const newPriceKop = Math.round(Number(row.newPriceKop) || 0);
     return {
       id: row.id,
       itemId: row.order.item.id,
       title: row.order.item.title,
       quantity: row.order.item.quantity,
       masterName: row.order.master.fullName,
-      materialsKop: row.materialsKop,
-      transportKop: row.transportKop,
-      freelancerFeeKop: row.freelancerFeeKop,
-      totalKop,
-      newPriceKop: row.newPriceKop,
+      repairPriceKop,
+      newPriceKop,
       computedAt: row.computedAt,
     };
   });
 
   return {
     rows,
-    totalKop: rows.reduce((sum, row) => sum + row.totalKop, 0),
+    totalKop: rows.reduce((sum, row) => sum + row.repairPriceKop, 0),
   };
 }

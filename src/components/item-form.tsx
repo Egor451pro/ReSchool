@@ -7,7 +7,6 @@ import {
   type CabinetFormState,
 } from "@/app/actions/cabinet";
 import { PhotoField } from "@/components/photo-field";
-import { conditionLabels, itemConditions } from "@/domain/items/labels";
 
 const initialState: CabinetFormState = {};
 
@@ -63,7 +62,7 @@ export function ItemForm({
       title: "",
       description: "",
       categoryId: "",
-      condition: "",
+      condition: "REPAIRABLE",
       quantity: "1",
       year: "",
       price: "",
@@ -104,20 +103,8 @@ export function ItemForm({
           ))}
         </select>
       </Field>
-      <Field
-        label="Состояние"
-        hint="Лом остаётся в каталоге для учёта, в учебный ремонт его не передаём."
-        error={state.fields?.condition}
-      >
-        <select name="condition" required defaultValue={values.condition} className="field">
-          <option value="">Выберите</option>
-          {itemConditions.map((condition) => (
-            <option key={condition} value={condition}>
-              {conditionLabels[condition]}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {/* На платформе публикуют только то, что нужно чинить. */}
+      <input type="hidden" name="condition" value="REPAIRABLE" />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Количество, шт." error={state.fields?.quantity}>
           <input

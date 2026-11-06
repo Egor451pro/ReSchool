@@ -149,7 +149,7 @@ export async function updateRepairBudgetAction(
   const result = await setRepairBudget(actor, itemId, parsed.data.repairBudgetKop);
   if (!result.ok) return { error: result.error, budget };
   revalidateAppViews();
-  redirect(`/cabinet/items/${itemId}`);
+  return { budget };
 }
 
 export async function publishItemAction(

@@ -61,7 +61,7 @@ export function listExchangeItems() {
   return prisma.item.findMany({
     where: {
       status: "LISTED",
-      condition: { in: ["WORKING", "REPAIRABLE"] },
+      condition: "REPAIRABLE",
       orders: { none: { status: { not: "CANCELLED" } } },
     },
     orderBy: { createdAt: "desc" },

@@ -5,7 +5,6 @@ import {
   planOrderAdvance,
   planOrderCancel,
 } from "@/domain/workflow/order-item-sync";
-import { prisma } from "@/server/db";
 import {
   acceptOrderBySchool,
   applyOrderTransition,
@@ -28,23 +27,7 @@ export type OrderResult =
   | { ok: true; orderId: string; itemId?: string }
   | { ok: false; error: string };
 
-const DEFAULT_MATERIALS_KOP = 4_000;
-const DEFAULT_TRANSPORT_KOP = 1_500;
 const MINUTES_PER_UNIT = 120;
-
-async function planDefaults() {
-  const base = await prisma.assumptionSet.findUnique({
-    where: { kind: "BASE" },
-    select: {
-      avgMaterialsKop: true,
-      defaultTransportKop: true,
-    },
-  });
-  return {
-    materials: base?.avgMaterialsKop ?? DEFAULT_MATERIALS_KOP,
-    transport: base?.defaultTransportKop ?? DEFAULT_TRANSPORT_KOP,
-  };
-}
 
 function canManageOrder(actor: OrderActor, order: { masterId: string }): boolean {
   if (actor.role === "PLATFORM_ADMIN") return true;
@@ -74,14 +57,14 @@ export async function claimListedItem(
     return { ok: false, error: "Цена ремонта не может быть выше стоимости новых вещей" };
   }
 
-  const defaults = await planDefaults();
+  // Материалы и доставка — внутри цены фрилансера, школа их отдельно не платит.
   const dueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
   const result = await claimItemOrder({
     itemId: item.id,
     masterId: actor.id,
     agreedFeeKop: input.agreedFeeKop,
-    plannedMaterialsKop: defaults.materials,
-    transportKop: defaults.transport,
+    plannedMaterialsKop: 0,
+    transportKop: 0,
     plannedMinutes: Math.max(MINUTES_PER_UNIT, item.quantity * MINUTES_PER_UNIT),
     dueDate,
   });

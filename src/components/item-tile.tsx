@@ -1,6 +1,6 @@
 ﻿import Link from "next/link";
 import { formatByn } from "@/domain/economy/money";
-import { conditionLabels, type ItemCondition, type ItemStatus } from "@/domain/items/labels";
+import { type ItemCondition, type ItemStatus } from "@/domain/items/labels";
 import { itemPhotoSrc } from "@/domain/items/photo";
 import { StatusBadge } from "@/components/status-badge";
 
@@ -44,7 +44,6 @@ export function ItemTile({ item, showPlace }: { item: ItemTileData; showPlace?: 
       <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={item.status} />
-          <span className="text-xs text-leaf">{conditionLabels[item.condition]}</span>
         </div>
         <h2 className="font-medium leading-6 text-ink">{item.title}</h2>
         {showPlace ? (
