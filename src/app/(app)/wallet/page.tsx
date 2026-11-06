@@ -13,18 +13,14 @@ const kindLabels = {
 } as const;
 
 export default async function WalletPage() {
-  const user = await requireRoles(["DONOR_STAFF", "FREELANCER"]);
+  const user = await requireRoles(["FREELANCER"]);
   const wallet = await loadWalletForActor(user);
 
   return (
     <PageShell>
       <PageHeader
         title="Кошелёк"
-        description={
-          user.role === "FREELANCER"
-            ? "Симуляция выплат за подтверждённые ремонты."
-            : "Симуляция премий завхозу из освобождённого фонда слесарей."
-        }
+        description="Симуляция выплат за подтверждённые ремонты."
       />
 
       <Surface tone="accent" className="flex flex-col gap-2 shadow-[0_16px_40px_rgba(47,36,28,0.16)]">

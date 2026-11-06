@@ -72,7 +72,7 @@ export type AppSection = {
 
 /**
  * Меню по ролям:
- * - завхоз — кабинет, каталог, кошелёк;
+ * - завхоз — кабинет, каталог, расходы;
  * - фрилансер — биржа, заказы, кошелёк (каталог доступен по ссылке с биржи, без пункта меню);
  * - аналитик — район и калькулятор;
  * - администратор — сводка, район, каталог.
@@ -105,6 +105,12 @@ export const appSections: readonly AppSection[] = [
     navRoles: ["DONOR_STAFF", "PLATFORM_ADMIN"],
   },
   {
+    href: "/expenses",
+    label: "Расходы",
+    hint: "оплата ремонтов",
+    roles: ["DONOR_STAFF"],
+  },
+  {
     href: "/workshop",
     label: "Биржа",
     hint: "взять в работу",
@@ -120,7 +126,7 @@ export const appSections: readonly AppSection[] = [
     href: "/wallet",
     label: "Кошелёк",
     hint: "выплаты",
-    roles: ["DONOR_STAFF", "FREELANCER"],
+    roles: ["FREELANCER"],
   },
 ];
 

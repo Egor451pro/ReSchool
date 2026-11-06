@@ -80,6 +80,35 @@ export function listDistrictSnapshots(district: string | null) {
   });
 }
 
+/** Расходы учреждения по подтверждённым ремонтам (снимки экономии). */
+export function listInstitutionExpenseSnapshots(institutionId: string) {
+  return prisma.economySnapshot.findMany({
+    where: { order: { item: { institutionId } } },
+    orderBy: { computedAt: "desc" },
+    select: {
+      id: true,
+      newPriceKop: true,
+      materialsKop: true,
+      transportKop: true,
+      freelancerFeeKop: true,
+      computedAt: true,
+      order: {
+        select: {
+          id: true,
+          master: { select: { fullName: true } },
+          item: {
+            select: {
+              id: true,
+              title: true,
+              quantity: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
 export function districtOverview(district: string | null) {
   const institutionWhere = district ? { district } : {};
   return Promise.all([

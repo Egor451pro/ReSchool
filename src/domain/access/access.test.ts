@@ -20,10 +20,11 @@ describe("access roles", () => {
     expect(sectionsForRole("FREELANCER").map((s) => s.href)).toContain("/workshop");
   });
 
-  it("завхоз видит кабинет, каталог и кошелёк", () => {
+  it("завхоз видит кабинет, каталог и расходы", () => {
     expect(canAccess("DONOR_STAFF", "/cabinet")).toBe(true);
     expect(canAccess("DONOR_STAFF", "/catalog")).toBe(true);
-    expect(canAccess("DONOR_STAFF", "/wallet")).toBe(true);
+    expect(canAccess("DONOR_STAFF", "/expenses")).toBe(true);
+    expect(canAccess("DONOR_STAFF", "/wallet")).toBe(false);
     expect(canAccess("DONOR_STAFF", "/workshop")).toBe(false);
     expect(roleHome("DONOR_STAFF")).toBe("/cabinet");
   });
