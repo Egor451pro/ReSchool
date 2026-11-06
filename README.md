@@ -106,14 +106,38 @@ node -v
 npm -v
 ```
 
-### 1. Склонировать репозиторий
+### 1. Получить код
+
+**Если репозитория ещё нет на этом ПК:**
 
 ```bash
 git clone https://github.com/blablatyu/mts_hack.git
 cd mts_hack
 ```
 
-(Если папка уже есть — `git pull`.)
+**Если папка уже есть и remote уже настроен** (`origin` → GitHub):
+
+```bash
+cd mts_hack
+git status
+git pull origin main
+```
+
+Проверить remote при необходимости:
+
+```bash
+git remote -v
+```
+
+Должно быть что-то вроде `origin  https://github.com/blablatyu/mts_hack.git`.  
+Если `origin` нет — добавить:
+
+```bash
+git remote add origin https://github.com/blablatyu/mts_hack.git
+git pull origin main
+```
+
+Дальше те же шаги: `npm install` → `.env` → база → `npm run dev`.
 
 ### 2. Установить зависимости
 
