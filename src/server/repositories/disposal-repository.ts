@@ -48,7 +48,7 @@ export function listDisposalJobsForFreelancer(freelancerId: string) {
     where: {
       freelancerId,
       mode: "FREELANCER",
-      status: { in: ["PENDING", "DELIVERED"] },
+      status: "PENDING",
     },
     orderBy: { updatedAt: "desc" },
     select: {
@@ -70,6 +70,38 @@ export function countDisposedItems(district?: string) {
     where: {
       status: "DISPOSED",
       ...(district ? { institution: { district } } : {}),
+    },
+  });
+}
+
+/** Подтверждённые сдачи фрилансером — плата школы за утиль. */
+export function listInstitutionDisposalExpenses(
+  institutionId: string,
+  options?: { take?: number },
+) {
+  return prisma.disposalJob.findMany({
+    where: {
+      mode: "FREELANCER",
+      status: "CONFIRMED",
+      feeKop: { gt: 0 },
+      item: { institutionId },
+    },
+    orderBy: [{ confirmedAt: "desc" }, { updatedAt: "desc" }],
+    take: Math.min(Math.max(options?.take ?? 200, 1), 500),
+    select: {
+      id: true,
+      feeKop: true,
+      confirmedAt: true,
+      updatedAt: true,
+      freelancer: { select: { fullName: true } },
+      item: {
+        select: {
+          id: true,
+          title: true,
+          quantity: true,
+          newUnitPriceKop: true,
+        },
+      },
     },
   });
 }
@@ -159,6 +191,51 @@ export async function markDisposalDelivered(input: {
       }
     } else if (job.mode !== "SELF") {
       return { ok: false as const, error: "Сдачу отмечает фрилансер" };
+    }
+
+    // Фрилансер сам сдал — сразу закрываем утиль и начисляем плату, без ожидания завхоза.
+    if (input.asFreelancer) {
+      const now = new Date();
+      const itemUpdate = await tx.item.updateMany({
+        where: { id: input.itemId, status: "DISPOSAL_PENDING" },
+        data: { status: "DISPOSED", closeReason: "UNREPAIRABLE" },
+      });
+      if (itemUpdate.count !== 1) {
+        return { ok: false as const, error: "Статус предмета уже изменился" };
+      }
+
+      await tx.disposalJob.update({
+        where: { id: job.id },
+        data: { status: "CONFIRMED", deliveredAt: now, confirmedAt: now },
+      });
+
+      if (job.freelancerId && job.feeKop > 0) {
+        const wallet = await tx.wallet.upsert({
+          where: { userId: job.freelancerId },
+          create: { userId: job.freelancerId, balanceKop: job.feeKop },
+          update: { balanceKop: { increment: job.feeKop } },
+        });
+        await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            kind: "DISPOSAL_FEE",
+            amountKop: job.feeKop,
+            note: "Плата за сдачу в пункт приёма",
+          },
+        });
+      }
+
+      await tx.statusEvent.create({
+        data: {
+          itemId: input.itemId,
+          fromStatus: "DISPOSAL_PENDING",
+          toStatus: "DISPOSED",
+          actorId: input.actorId,
+          comment: "Фрилансер сдал вещь в пункт приёма — утиль закрыт",
+        },
+      });
+
+      return { ok: true as const };
     }
 
     await tx.disposalJob.update({

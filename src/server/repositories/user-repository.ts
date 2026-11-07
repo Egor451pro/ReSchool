@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import type { UserRole } from "@/domain/access/roles";
 import type { InstitutionType } from "@prisma/client";
 import { prisma } from "@/server/db";
@@ -148,30 +149,45 @@ export function listUsers() {
  * Учётки для быстрого входа по роли:
  * саморегистрации (не *.demo) + сидовый аналитик района.
  */
+const loadRegisteredAccounts = unstable_cache(
+  async () =>
+    prisma.user.findMany({
+      where: {
+        OR: [
+          { NOT: { email: { endsWith: ".demo" } } },
+          { role: "DISTRICT_ANALYST" },
+        ],
+      },
+      orderBy: [{ role: "asc" }, { fullName: "asc" }],
+      take: 100,
+      select: {
+        id: true,
+        fullName: true,
+        role: true,
+        email: true,
+        institution: { select: { name: true } },
+      },
+    }),
+  ["registered-accounts"],
+  { revalidate: 60, tags: ["registered-accounts"] },
+);
+
 export function listRegisteredAccounts() {
-  return prisma.user.findMany({
-    where: {
-      OR: [
-        { NOT: { email: { endsWith: ".demo" } } },
-        { role: "DISTRICT_ANALYST" },
-      ],
-    },
-    orderBy: [{ role: "asc" }, { fullName: "asc" }],
-    select: {
-      id: true,
-      fullName: true,
-      role: true,
-      email: true,
-      institution: { select: { name: true } },
-    },
-  });
+  return loadRegisteredAccounts();
 }
 
+const loadSpecialties = unstable_cache(
+  async () =>
+    prisma.specialty.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, slug: true },
+    }),
+  ["catalog-meta-specialties"],
+  { revalidate: 3600, tags: ["catalog-meta"] },
+);
+
 export function listSpecialties() {
-  return prisma.specialty.findMany({
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, slug: true },
-  });
+  return loadSpecialties();
 }
 
 export function countInstitutionItems(institutionId: string) {

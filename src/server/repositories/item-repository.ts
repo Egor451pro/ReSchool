@@ -1,8 +1,12 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import type { ItemCondition, Prisma } from "@prisma/client";
 import type { CatalogQuery } from "@/domain/items/filters";
 import { prisma } from "@/server/db";
+
+const CATALOG_TAKE = 48;
+const CABINET_TAKE = 50;
 
 const tileSelect = {
   id: true,
@@ -17,10 +21,21 @@ const tileSelect = {
   photos: { orderBy: { sort: "asc" as const }, take: 1, select: { id: true, path: true } },
 } satisfies Prisma.ItemSelect;
 
+function clampTake(value: number | undefined, fallback: number, max: number) {
+  return Math.min(Math.max(value ?? fallback, 1), max);
+}
+
+const loadCategories = unstable_cache(
+  async () =>
+    prisma.category.findMany({
+      select: { id: true, slug: true, name: true },
+    }),
+  ["catalog-meta-categories"],
+  { revalidate: 3600, tags: ["catalog-meta"] },
+);
+
 export function listCategories() {
-  return prisma.category.findMany({
-    select: { id: true, slug: true, name: true },
-  });
+  return loadCategories();
 }
 
 export function findCategoryById(id: string) {
@@ -30,7 +45,10 @@ export function findCategoryById(id: string) {
   });
 }
 
-export function listCatalogItems(query: CatalogQuery) {
+export function listCatalogItems(
+  query: CatalogQuery,
+  options?: { take?: number; skip?: number },
+) {
   const where: Prisma.ItemWhereInput = {};
   if (query.district) where.institution = { district: query.district };
   if (query.category) where.category = { slug: query.category };
@@ -41,15 +59,22 @@ export function listCatalogItems(query: CatalogQuery) {
   return prisma.item.findMany({
     where,
     orderBy: [{ createdAt: "desc" }, { title: "asc" }],
+    take: clampTake(options?.take, CATALOG_TAKE, 100),
+    skip: Math.max(options?.skip ?? 0, 0),
     select: tileSelect,
   });
 }
 
 /** Активные карточки школы: ещё не ушли в историю. */
-export function listInstitutionActiveItems(institutionId: string) {
+export function listInstitutionActiveItems(
+  institutionId: string,
+  options?: { take?: number; skip?: number },
+) {
   return prisma.item.findMany({
     where: { institutionId, status: { notIn: ["CLOSED", "DISPOSED"] } },
     orderBy: [{ createdAt: "desc" }, { title: "asc" }],
+    take: clampTake(options?.take, CABINET_TAKE, 100),
+    skip: Math.max(options?.skip ?? 0, 0),
     select: {
       ...tileSelect,
       orders: {
@@ -70,7 +95,10 @@ export function listInstitutionActiveItems(institutionId: string) {
 }
 
 /** История подтверждённых ремонтов (снятые вручную сюда не попадают). */
-export function listInstitutionRepairHistory(institutionId: string) {
+export function listInstitutionRepairHistory(
+  institutionId: string,
+  options?: { take?: number; skip?: number },
+) {
   return prisma.item.findMany({
     where: {
       institutionId,
@@ -80,6 +108,8 @@ export function listInstitutionRepairHistory(institutionId: string) {
       ],
     },
     orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
+    take: clampTake(options?.take, CABINET_TAKE, 100),
+    skip: Math.max(options?.skip ?? 0, 0),
     select: {
       ...tileSelect,
       closeReason: true,
@@ -127,8 +157,8 @@ export function findConfirmableOrderForItem(itemId: string) {
   });
 }
 
-export function findItemCard(id: string) {
-  return prisma.item.findUnique({
+export async function findItemCard(id: string) {
+  const item = await prisma.item.findUnique({
     where: { id },
     select: {
       id: true,
@@ -148,7 +178,11 @@ export function findItemCard(id: string) {
         select: { name: true, district: true, address: true, lat: true, lng: true },
       },
       listedBy: { select: { id: true, fullName: true, role: true } },
-      photos: { orderBy: { sort: "asc" }, select: { id: true, path: true, sort: true } },
+      photos: {
+        orderBy: { sort: "asc" },
+        take: 8,
+        select: { id: true, path: true, sort: true },
+      },
       orders: {
         where: { status: { not: "CANCELLED" } },
         orderBy: { createdAt: "desc" },
@@ -161,13 +195,23 @@ export function findItemCard(id: string) {
           openOfferSide: true,
           schoolAcceptedAt: true,
           masterId: true,
-          master: { select: { id: true, fullName: true, role: true } },
+          master: {
+            select: {
+              id: true,
+              fullName: true,
+              role: true,
+              address: true,
+              lat: true,
+              lng: true,
+            },
+          },
           documents: {
             orderBy: { createdAt: "asc" },
             select: { id: true, type: true, number: true, createdAt: true },
           },
           priceOffers: {
             orderBy: { createdAt: "asc" },
+            take: 40,
             select: {
               id: true,
               amountKop: true,
@@ -181,7 +225,8 @@ export function findItemCard(id: string) {
         },
       },
       events: {
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
+        take: 30,
         select: {
           id: true,
           fromStatus: true,
@@ -193,6 +238,8 @@ export function findItemCard(id: string) {
       },
     },
   });
+  if (!item) return null;
+  return { ...item, events: [...item.events].reverse() };
 }
 
 export function findItemForEdit(id: string) {

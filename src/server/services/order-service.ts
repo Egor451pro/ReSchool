@@ -89,7 +89,7 @@ export async function claimListedItem(
     if (result.reason === "busy") return { ok: false, error: "У предмета уже есть активный заказ" };
     return { ok: false, error: "Карточку уже взяли или сняли" };
   }
-  return { ok: true, orderId: result.orderId };
+  return { ok: true, orderId: result.orderId, itemId: item.id };
 }
 
 export async function proposeOrderPrice(
@@ -237,7 +237,7 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
         actualMinutes: order.plannedMinutes,
       });
       if (!done) return { ok: false, error: "Не удалось завершить заказ" };
-      return { ok: true, orderId: order.id };
+      return { ok: true, orderId: order.id, itemId: order.item.id };
     }
 
     const plan = planOrderAdvance(order.status, order.item.status);
@@ -255,7 +255,7 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
       actualMinutes: plan.orderTo === "COMPLETED" ? order.plannedMinutes : undefined,
     });
     if (!ok) return { ok: false, error: "Статус заказа уже изменился" };
-    return { ok: true, orderId: order.id };
+    return { ok: true, orderId: order.id, itemId: order.item.id };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Нельзя продвинуть заказ" };
   }
@@ -280,7 +280,7 @@ export async function cancelOrder(actor: OrderActor, orderId: string): Promise<O
       comment: plan.comment,
     });
     if (!ok) return { ok: false, error: "Статус заказа уже изменился" };
-    return { ok: true, orderId: order.id };
+    return { ok: true, orderId: order.id, itemId: order.item.id };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Нельзя отменить заказ" };
   }

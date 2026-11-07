@@ -552,8 +552,3 @@ button:focus-visible {
 .page-shell > *:nth-child(3) {
   animation-delay: 80ms;
 }
-
-.leaflet-container {
-  font: inherit;
-  z-index: 0;
-}

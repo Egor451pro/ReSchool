@@ -20,6 +20,10 @@ export type AuthSuccess = {
   role: UserRole;
   fullName: string;
   email: string;
+  institutionId: string | null;
+  institutionName: string | null;
+  institutionType: string | null;
+  district: string | null;
 };
 export type AuthFailure = { ok: false; error: string };
 
@@ -27,6 +31,27 @@ const INVALID_LOGIN = "Неверная почта или пароль";
 
 async function loginDelay(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 250 + Math.floor(Math.random() * 200)));
+}
+
+function sessionFields(user: {
+  id: string;
+  role: UserRole;
+  fullName: string;
+  email: string;
+  institutionId: string | null;
+  institution: { name: string; type: string; district: string } | null;
+}): AuthSuccess {
+  return {
+    ok: true,
+    userId: user.id,
+    role: user.role,
+    fullName: user.fullName,
+    email: user.email,
+    institutionId: user.institutionId,
+    institutionName: user.institution?.name ?? null,
+    institutionType: user.institution?.type ?? null,
+    district: user.institution?.district ?? null,
+  };
 }
 
 export async function loginWithPassword(
@@ -45,13 +70,7 @@ export async function loginWithPassword(
     return { ok: false, error: INVALID_LOGIN };
   }
 
-  return {
-    ok: true,
-    userId: user.id,
-    role: user.role,
-    fullName: user.fullName,
-    email: user.email,
-  };
+  return sessionFields(user);
 }
 
 export async function registerDonorWithInstitution(input: {
@@ -92,13 +111,7 @@ export async function registerDonorWithInstitution(input: {
     },
   });
 
-  return {
-    ok: true,
-    userId: user.id,
-    role: user.role,
-    fullName: user.fullName,
-    email: user.email,
-  };
+  return sessionFields(user);
 }
 
 export async function registerFreelancer(input: {
@@ -129,11 +142,5 @@ export async function registerFreelancer(input: {
     consentVersion: CONSENT_VERSION,
   });
 
-  return {
-    ok: true,
-    userId: user.id,
-    role: user.role,
-    fullName: user.fullName,
-    email: user.email,
-  };
+  return sessionFields(user);
 }

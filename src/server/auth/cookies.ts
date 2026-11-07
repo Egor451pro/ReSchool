@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import {
   encryptRememberedProfile,
   encryptSession,
@@ -39,6 +40,8 @@ export async function writeRememberedProfile(profile: RememberedProfile): Promis
 }
 
 export async function readRememberedProfile(): Promise<RememberedProfile | null> {
+  // jose jwtVerify использует Date — нельзя на prerender.
+  await connection();
   const jar = await cookies();
   return decryptRememberedProfile(jar.get(PROFILE_COOKIE)?.value);
 }

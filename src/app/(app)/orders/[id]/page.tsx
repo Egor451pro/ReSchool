@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { DocumentLinks } from "@/components/document-links";
-import { LocationMap } from "@/components/location-map";
 import { OrderActions } from "@/components/order-actions";
 import { FreelancerOrderSteps } from "@/components/order-flow-steps";
 import { OrderChat } from "@/components/order-chat";
@@ -42,14 +41,6 @@ export default async function FreelancerOrderPage({
   const messages = await listOrderMessages(order.id);
   const school = order.item.institution;
   const master = order.master;
-  const mapMarkers = [
-    school.lat != null && school.lng != null
-      ? { id: "school", lat: school.lat, lng: school.lng, label: school.name }
-      : null,
-    master.lat != null && master.lng != null
-      ? { id: "freelancer", lat: master.lat, lng: master.lng, label: master.fullName }
-      : null,
-  ].filter((row): row is NonNullable<typeof row> => Boolean(row));
   const distanceLabel =
     school.lat != null &&
     school.lng != null &&
@@ -89,7 +80,10 @@ export default async function FreelancerOrderPage({
                 ? `Согласовано ${formatByn(order.agreedFeeKop)}`
                 : `Открытая цена ${formatByn(order.openOfferKop || order.agreedFeeKop)}`}
             </p>
-            <Link href={`/catalog/${order.item.id}`} className="text-sm text-gold underline-offset-2 hover:underline">
+            <Link
+              href={`/catalog/${order.item.id}`}
+              className="text-sm text-gold underline-offset-2 hover:underline"
+            >
               Карточка объекта в каталоге
             </Link>
           </header>
@@ -124,15 +118,6 @@ export default async function FreelancerOrderPage({
               })}
             />
           ) : null}
-
-          <Surface>
-            <h2 className="mb-3 text-sm font-semibold text-ink">На карте</h2>
-            <p className="mb-3 text-sm text-leaf">
-              Учреждение{school.address ? `: ${school.address}` : ""}
-              {master.address ? ` · вы: ${master.address}` : ""}
-            </p>
-            <LocationMap markers={mapMarkers} />
-          </Surface>
 
           <Surface className="flex flex-col gap-4">
             <div>

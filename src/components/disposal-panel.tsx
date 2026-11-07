@@ -7,7 +7,6 @@ import {
   confirmDisposalAction,
   type DisposalFormState,
 } from "@/app/actions/disposal";
-import { LocationMap } from "@/components/location-map";
 import { formatByn } from "@/domain/economy/money";
 
 type Point = {
@@ -63,8 +62,8 @@ export function DisposalPanel({
   }
 
   const chosen = Boolean(job.point);
-  const canConfirm =
-    job.status === "DELIVERED" || (job.mode === "SELF" && chosen && job.status === "PENDING");
+  // Подтверждает завхоз только если сдаёт сам; фрилансер закрывает утиль сам при отметке сдачи.
+  const canConfirm = job.mode === "SELF" && chosen && job.status === "PENDING";
 
   return (
     <div className="flex flex-col gap-4">
@@ -88,11 +87,15 @@ export function DisposalPanel({
           </p>
           <p>
             Статус:{" "}
-            {job.status === "PENDING"
-              ? "ожидает сдачи"
-              : job.status === "DELIVERED"
-                ? "сдано, ждёт подтверждения"
-                : job.status}
+            {job.mode === "FREELANCER" && job.status === "PENDING"
+              ? "ожидает сдачи фрилансером"
+              : job.status === "PENDING"
+                ? "ожидает вашей сдачи"
+                : job.status === "DELIVERED"
+                  ? "сдано, ждёт подтверждения"
+                  : job.status === "CONFIRMED"
+                    ? "сдано"
+                    : job.status}
           </p>
         </div>
       ) : (
@@ -129,16 +132,6 @@ export function DisposalPanel({
               ))}
             </select>
           </label>
-          <LocationMap
-            markers={points
-              .filter((point) => point.lat != null && point.lng != null)
-              .map((point) => ({
-                id: point.id,
-                lat: point.lat as number,
-                lng: point.lng as number,
-                label: point.name,
-              }))}
-          />
 
           {mode === "SELF" ? (
             <form action={selfAction} className="flex flex-col gap-3">

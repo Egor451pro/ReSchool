@@ -9,6 +9,12 @@ const PROFILE_TTL = "30d";
 export type SessionPayload = {
   userId: string;
   role: UserRole;
+  fullName: string;
+  email: string;
+  institutionId: string | null;
+  institutionName: string | null;
+  institutionType: string | null;
+  district: string | null;
 };
 
 export type RememberedProfile = {
@@ -27,7 +33,16 @@ function secretKey(): Uint8Array {
 }
 
 export async function encryptSession(payload: SessionPayload): Promise<string> {
-  return new SignJWT({ userId: payload.userId, role: payload.role })
+  return new SignJWT({
+    userId: payload.userId,
+    role: payload.role,
+    fullName: payload.fullName,
+    email: payload.email,
+    institutionId: payload.institutionId,
+    institutionName: payload.institutionName,
+    institutionType: payload.institutionType,
+    district: payload.district,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.userId)
     .setIssuedAt()
@@ -35,12 +50,30 @@ export async function encryptSession(payload: SessionPayload): Promise<string> {
     .sign(secretKey());
 }
 
+function asNullableString(value: unknown): string | null {
+  if (value == null) return null;
+  return typeof value === "string" ? value : null;
+}
+
 export async function decryptSession(token: string | undefined): Promise<SessionPayload | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secretKey(), { algorithms: ["HS256"] });
     if (typeof payload.userId !== "string" || !isUserRole(payload.role)) return null;
-    return { userId: payload.userId, role: payload.role };
+    if (typeof payload.fullName !== "string" || typeof payload.email !== "string") {
+      // Старые cookie без claims — считаем недействительными, нужна повторная авторизация.
+      return null;
+    }
+    return {
+      userId: payload.userId,
+      role: payload.role,
+      fullName: payload.fullName,
+      email: payload.email,
+      institutionId: asNullableString(payload.institutionId),
+      institutionName: asNullableString(payload.institutionName),
+      institutionType: asNullableString(payload.institutionType),
+      district: asNullableString(payload.district),
+    };
   } catch {
     return null;
   }

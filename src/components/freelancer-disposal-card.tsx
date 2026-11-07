@@ -51,7 +51,7 @@ export function FreelancerDisposalCard({
           </button>
         </form>
       ) : (
-        <p className="text-sm font-medium text-gold">Сдано, ждём подтверждения завхоза</p>
+        <p className="text-sm font-medium text-gold">Сдано — плата начислена</p>
       )}
     </article>
   );

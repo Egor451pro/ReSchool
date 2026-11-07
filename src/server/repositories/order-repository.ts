@@ -84,7 +84,7 @@ const orderCardSelect = {
   },
 } satisfies Prisma.RepairOrderSelect;
 
-/** Свободные объявления биржи (с пагинацией). */
+/** Свободные объявления биржи (с пагинацией). LISTED = нет активного заказа. */
 export function listExchangeItems(options?: { take?: number; skip?: number }) {
   const take = Math.min(Math.max(options?.take ?? 48, 1), 100);
   const skip = Math.max(options?.skip ?? 0, 0);
@@ -92,7 +92,6 @@ export function listExchangeItems(options?: { take?: number; skip?: number }) {
     where: {
       status: "LISTED",
       condition: "REPAIRABLE",
-      orders: { none: { status: { not: "CANCELLED" } } },
     },
     orderBy: { createdAt: "desc" },
     take,
@@ -109,8 +108,17 @@ export function listMasterOrders(masterId: string) {
   });
 }
 
+const ORDERS_TAKE = 50;
+
+function clampOrdersTake(value: number | undefined) {
+  return Math.min(Math.max(value ?? ORDERS_TAKE, 1), 100);
+}
+
 /** Активные заказы фрилансера (ещё не ушли в историю). */
-export function listMasterActiveOrders(masterId: string) {
+export function listMasterActiveOrders(
+  masterId: string,
+  options?: { take?: number; skip?: number },
+) {
   return prisma.repairOrder.findMany({
     where: {
       masterId,
@@ -121,12 +129,17 @@ export function listMasterActiveOrders(masterId: string) {
       ],
     },
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    take: clampOrdersTake(options?.take),
+    skip: Math.max(options?.skip ?? 0, 0),
     select: orderCardSelect,
   });
 }
 
 /** История выполненных заказов фрилансера — как у завхоза. */
-export function listFreelancerRepairHistory(masterId: string) {
+export function listFreelancerRepairHistory(
+  masterId: string,
+  options?: { take?: number; skip?: number },
+) {
   return prisma.repairOrder.findMany({
     where: {
       masterId,
@@ -138,6 +151,8 @@ export function listFreelancerRepairHistory(masterId: string) {
       },
     },
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    take: clampOrdersTake(options?.take),
+    skip: Math.max(options?.skip ?? 0, 0),
     select: {
       id: true,
       agreedFeeKop: true,

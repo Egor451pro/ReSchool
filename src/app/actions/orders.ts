@@ -13,7 +13,7 @@ import {
   proposeOrderPrice,
 } from "@/server/services/order-service";
 import { closeDeliveredOrder } from "@/server/services/economy-service";
-import { revalidateAppViews } from "@/server/revalidate";
+import { revalidateOrderViews, revalidateWalletViews } from "@/server/revalidate";
 
 export type OrderFormState = { error?: string };
 
@@ -46,7 +46,7 @@ export async function claimItemAction(
     agreedFeeKop: fee.kop,
   });
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateOrderViews({ orderId: result.orderId, itemId: result.itemId });
   redirect(result.orderId ? `/orders/${result.orderId}` : "/orders");
 }
 
@@ -61,7 +61,7 @@ export async function proposePriceAction(
   const orderId = text(formData, "orderId");
   const result = await proposeOrderPrice(actor, { orderId, amountKop: fee.kop });
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateOrderViews({ orderId, itemId: result.itemId });
   if (actor.role === "DONOR_STAFF" && result.itemId) {
     redirect(`/cabinet/items/${result.itemId}`);
   }
@@ -75,7 +75,7 @@ export async function acceptOrderAction(
   const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
   const result = await acceptOrderProposal(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateOrderViews({ orderId: result.orderId, itemId: result.itemId });
   redirect(result.itemId ? `/cabinet/items/${result.itemId}` : "/cabinet");
 }
 
@@ -87,7 +87,7 @@ export async function advanceOrderAction(
   const orderId = text(formData, "orderId");
   const result = await advanceOrder(actor, orderId);
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateOrderViews({ orderId, itemId: result.itemId });
   redirect(`/orders/${orderId}`);
 }
 
@@ -98,7 +98,7 @@ export async function cancelOrderAction(
   const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
   const result = await cancelOrder(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateOrderViews({ orderId: result.orderId, itemId: result.itemId });
   redirect("/orders");
 }
 
@@ -110,7 +110,7 @@ export async function deliverOrderAction(
   const orderId = text(formData, "orderId");
   const result = await markOrderDelivered(actor, orderId);
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateOrderViews({ orderId, itemId: result.itemId });
   redirect(`/orders/${orderId}`);
 }
 
@@ -121,7 +121,7 @@ export async function unrepairableOrderAction(
   const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
   const result = await markOrderUnrepairable(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateOrderViews({ orderId: result.orderId, itemId: result.itemId });
   redirect("/orders");
 }
 
@@ -132,6 +132,7 @@ export async function closeOrderAction(
   const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
   const result = await closeDeliveredOrder(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateOrderViews({ orderId: result.orderId });
+  revalidateWalletViews();
   redirect("/orders");
 }

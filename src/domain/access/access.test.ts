@@ -20,7 +20,7 @@ describe("access roles", () => {
     expect(sectionsForRole("FREELANCER").map((s) => s.href)).toContain("/workshop");
   });
 
-  it("завхоз видит кабинет, каталог и расходы", () => {
+  it("завхоз видит кабинет, каталог и экономию", () => {
     expect(canAccess("DONOR_STAFF", "/cabinet")).toBe(true);
     expect(canAccess("DONOR_STAFF", "/catalog")).toBe(true);
     expect(canAccess("DONOR_STAFF", "/expenses")).toBe(true);

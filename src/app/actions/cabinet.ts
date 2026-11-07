@@ -11,7 +11,7 @@ import {
   withdrawItem,
 } from "@/server/services/item-service";
 import { publishRequest } from "@/server/services/request-service";
-import { revalidateAppViews } from "@/server/revalidate";
+import { revalidateItemListing, revalidateOrderViews } from "@/server/revalidate";
 import { itemFormSchema, repairBudgetFormSchema, requestFormSchema } from "@/lib/validators/item";
 
 export type ItemFormValues = {
@@ -148,7 +148,7 @@ export async function updateRepairBudgetAction(
   const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await setRepairBudget(actor, itemId, parsed.data.repairBudgetKop);
   if (!result.ok) return { error: result.error, budget };
-  revalidateAppViews();
+  revalidateItemListing(itemId);
   return { budget };
 }
 
@@ -164,7 +164,7 @@ export async function publishItemAction(
   const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await publishItem(actor, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
-  revalidateAppViews();
+  revalidateItemListing(result.itemId);
   redirect(`/catalog/${result.itemId}`);
 }
 
@@ -181,7 +181,7 @@ export async function reviseItemAction(
   const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await reviseItem(actor, itemId, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
-  revalidateAppViews();
+  revalidateItemListing(result.itemId);
   redirect(`/catalog/${result.itemId}`);
 }
 
@@ -193,9 +193,10 @@ export async function withdrawItemAction(
     return { error: "Отметьте, что карточку нужно снять" };
   }
   const actor = await requireRoles(["DONOR_STAFF"]);
-  const result = await withdrawItem(actor, text(formData, "itemId"));
+  const itemId = text(formData, "itemId");
+  const result = await withdrawItem(actor, itemId);
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateItemListing(itemId);
   redirect("/cabinet");
 }
 
@@ -209,9 +210,10 @@ export async function deleteItemAction(
     return { error: "Отметьте подтверждение удаления" };
   }
   const actor = await requireRoles(["DONOR_STAFF"]);
-  const result = await deletePublishedItem(actor, text(formData, "itemId"));
+  const itemId = text(formData, "itemId");
+  const result = await deletePublishedItem(actor, itemId);
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateItemListing(itemId);
   redirect("/cabinet");
 }
 
@@ -238,9 +240,10 @@ export async function confirmRepairAction(
   formData: FormData,
 ): Promise<ConfirmRepairState> {
   const actor = await requireRoles(["DONOR_STAFF"]);
-  const result = await confirmRepairBySchool(actor, text(formData, "itemId"));
+  const itemId = text(formData, "itemId");
+  const result = await confirmRepairBySchool(actor, itemId);
   if (!result.ok) return { error: result.error };
   // Без revalidate страница кабинета остаётся со старым RSC-снимком.
-  revalidateAppViews();
+  revalidateOrderViews({ itemId });
   redirect("/cabinet");
 }

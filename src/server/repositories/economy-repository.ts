@@ -46,12 +46,18 @@ export function findDashboardAssumption() {
   });
 }
 
-export function listDistrictSnapshots(district: string | null) {
+const SNAPSHOTS_TAKE = 200;
+
+export function listDistrictSnapshots(
+  district: string | null,
+  options?: { take?: number },
+) {
   return prisma.economySnapshot.findMany({
     where: district
       ? { order: { item: { institution: { district } } } }
       : {},
     orderBy: { computedAt: "desc" },
+    take: Math.min(Math.max(options?.take ?? SNAPSHOTS_TAKE, 1), 500),
     select: {
       id: true,
       newPriceKop: true,
@@ -81,16 +87,23 @@ export function listDistrictSnapshots(district: string | null) {
 }
 
 /** Расходы учреждения по подтверждённым ремонтам (снимки экономии). */
-export function listInstitutionExpenseSnapshots(institutionId: string) {
+export function listInstitutionExpenseSnapshots(
+  institutionId: string,
+  options?: { take?: number },
+) {
   return prisma.economySnapshot.findMany({
     where: { order: { item: { institutionId } } },
     orderBy: { computedAt: "desc" },
+    take: Math.min(Math.max(options?.take ?? SNAPSHOTS_TAKE, 1), 500),
     select: {
       id: true,
       newPriceKop: true,
       materialsKop: true,
       transportKop: true,
       freelancerFeeKop: true,
+      procurementSavingKop: true,
+      avoidedDisposalKop: true,
+      propertyBudgetKop: true,
       computedAt: true,
       order: {
         select: {

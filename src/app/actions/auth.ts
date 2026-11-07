@@ -45,8 +45,21 @@ async function establishSession(result: {
   role: import("@/domain/access/roles").UserRole;
   fullName: string;
   email: string;
+  institutionId: string | null;
+  institutionName: string | null;
+  institutionType: string | null;
+  district: string | null;
 }) {
-  await writeSession({ userId: result.userId, role: result.role });
+  await writeSession({
+    userId: result.userId,
+    role: result.role,
+    fullName: result.fullName,
+    email: result.email,
+    institutionId: result.institutionId,
+    institutionName: result.institutionName,
+    institutionType: result.institutionType,
+    district: result.district,
+  });
   // Сидовые .demo не запоминаем для быстрого входа — только сами регистрации пользователей.
   if (!isSeedDemoEmail(result.email)) {
     await writeRememberedProfile({
@@ -208,6 +221,10 @@ export async function quickLoginAction(formData: FormData): Promise<void> {
     role: user.role,
     fullName: user.fullName,
     email: user.email,
+    institutionId: user.institutionId,
+    institutionName: user.institution?.name ?? null,
+    institutionType: user.institution?.type ?? null,
+    district: user.institution?.district ?? null,
   });
 
   const next = readNext(formData);

@@ -124,6 +124,8 @@ model Institution {
   sent      Transfer[]      @relation("TransferFrom")
   received  Transfer[]      @relation("TransferTo")
   createdAt DateTime        @default(now())
+
+  @@index([district])
 }
 
 model User {
@@ -215,6 +217,9 @@ model Item {
   @@index([status])
   @@index([institutionId])
   @@index([categoryId])
+  @@index([status, createdAt])
+  @@index([institutionId, status])
+  @@index([status, condition, createdAt])
 }
 
 model ItemPhoto {
@@ -256,6 +261,7 @@ model RepairOrder {
   updatedAt           DateTime           @updatedAt
 
   @@index([masterId, status])
+  @@index([masterId, updatedAt])
   @@index([itemId])
   @@index([status])
 }

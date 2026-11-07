@@ -96,7 +96,7 @@ export function RoleLoginPicker({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
+      <div className={`flex flex-col gap-2 ${role ? "items-center text-center" : ""}`}>
         {picked ? (
           <BackButton
             onClick={() => {
@@ -162,16 +162,16 @@ export function RoleLoginPicker({
           })}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-3">
           {accounts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-line bg-muted/40 px-4 py-5 text-sm leading-6 text-leaf">
+            <div className="w-full rounded-2xl border border-dashed border-line bg-muted/40 px-4 py-5 text-center text-sm leading-6 text-leaf">
               Пока нет зарегистрированных аккаунтов для роли «{activeCard?.title ?? ""}». Создайте
               учётку — она появится в этом списке.
             </div>
           ) : (
             <>
               {!picked ? (
-                <p className="text-sm text-leaf">
+                <p className="text-center text-sm text-leaf">
                   {role === "DISTRICT_ANALYST"
                     ? "Выберите профиль аналитика"
                     : `Выберите свой аккаунт и введите пароль${
@@ -180,7 +180,7 @@ export function RoleLoginPicker({
                 </p>
               ) : null}
               {picked ? (
-                <div className="max-w-md rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-soft)]">
+                <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-4 shadow-[var(--shadow-soft)] sm:p-5">
                   <div className="mb-3 flex items-center gap-3">
                     <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint/35 text-xs font-semibold text-ink ring-1 ring-line-strong">
                       {initials(picked.fullName)}
@@ -195,7 +195,7 @@ export function RoleLoginPicker({
                   <LoginForm next={next} defaultEmail={picked.email} />
                 </div>
               ) : (
-              <ul className="grid gap-2 sm:grid-cols-2">
+              <ul className="grid w-full gap-2">
                 {accounts.map((account) => {
                   const seedAnalyst =
                     role === "DISTRICT_ANALYST" && isSeedDemoEmail(account.email);
@@ -277,7 +277,7 @@ export function RoleLoginPicker({
           )}
 
           {showRegister && activeCard?.registerHref ? (
-            <p className="text-sm text-leaf">
+            <p className="text-center text-sm text-leaf">
               Нужна новая учётка?{" "}
               <Link
                 href={activeCard.registerHref}

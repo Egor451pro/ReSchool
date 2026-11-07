@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireRoles } from "@/server/auth/current-user";
-import { revalidateAppViews } from "@/server/revalidate";
+import { revalidateDisposalViews } from "@/server/revalidate";
 import {
   markDisposalDeliveredByFreelancer,
   markItemDisposedBySchool,
@@ -28,7 +28,7 @@ export async function chooseSelfDisposalAction(
     pointId: text(formData, "pointId"),
   });
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateDisposalViews(itemId);
   redirect(`/cabinet/items/${itemId}`);
 }
 
@@ -44,7 +44,7 @@ export async function chooseFreelancerDisposalAction(
     feeByn: text(formData, "feeByn"),
   });
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateDisposalViews(itemId);
   redirect(`/cabinet/items/${itemId}`);
 }
 
@@ -53,9 +53,10 @@ export async function confirmDisposalAction(
   formData: FormData,
 ): Promise<DisposalFormState> {
   const actor = await requireRoles(["DONOR_STAFF"]);
-  const result = await markItemDisposedBySchool(actor, text(formData, "itemId"));
+  const itemId = text(formData, "itemId");
+  const result = await markItemDisposedBySchool(actor, itemId);
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateDisposalViews(itemId);
   redirect("/cabinet");
 }
 
@@ -67,6 +68,6 @@ export async function deliverDisposalAction(
   const itemId = text(formData, "itemId");
   const result = await markDisposalDeliveredByFreelancer(actor, itemId);
   if (!result.ok) return { error: result.error };
-  revalidateAppViews();
+  revalidateDisposalViews(itemId);
   redirect("/orders");
 }
