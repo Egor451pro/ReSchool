@@ -57,19 +57,27 @@ export type InstitutionExpenseRow = {
   computedAt: Date;
 };
 
-export async function loadInstitutionExpenses(actor: ExpenseActor): Promise<{
-  rows: InstitutionExpenseRow[];
-  totalKop: number;
-  repairTotalKop: number;
-  disposalTotalKop: number;
-} | null> {
-  if (actor.role !== "DONOR_STAFF" || !actor.institutionId) return null;
+export type InstitutionEconomyBoard = {
+  expenses: {
+    rows: InstitutionExpenseRow[];
+    totalKop: number;
+    repairTotalKop: number;
+    disposalTotalKop: number;
+  };
+  savings: InstitutionSavings;
+};
 
-  const [snapshots, disposals] = await Promise.all([
-    listInstitutionExpenseSnapshots(actor.institutionId),
-    listInstitutionDisposalExpenses(actor.institutionId),
+async function loadInstitutionLedger(institutionId: string) {
+  return Promise.all([
+    listInstitutionExpenseSnapshots(institutionId),
+    listInstitutionDisposalExpenses(institutionId),
   ]);
+}
 
+function buildExpenses(
+  snapshots: Awaited<ReturnType<typeof listInstitutionExpenseSnapshots>>,
+  disposals: Awaited<ReturnType<typeof listInstitutionDisposalExpenses>>,
+) {
   const repairRows: InstitutionExpenseRow[] = snapshots.map((row) => {
     const amountKop = Math.round(Number(row.freelancerFeeKop) || 0);
     const newPriceKop = Math.round(Number(row.newPriceKop) || 0);
@@ -79,7 +87,7 @@ export async function loadInstitutionExpenses(actor: ExpenseActor): Promise<{
       title: row.order.item.title,
       quantity: row.order.item.quantity,
       masterName: row.order.master.fullName,
-      kind: "REPAIR",
+      kind: "REPAIR" as const,
       amountKop,
       newPriceKop,
       computedAt: row.computedAt,
@@ -92,7 +100,7 @@ export async function loadInstitutionExpenses(actor: ExpenseActor): Promise<{
     title: row.item.title,
     quantity: row.item.quantity,
     masterName: row.freelancer?.fullName ?? "Фрилансер",
-    kind: "DISPOSAL",
+    kind: "DISPOSAL" as const,
     amountKop: Math.round(Number(row.feeKop) || 0),
     newPriceKop: Math.round(Number(row.item.newUnitPriceKop) * row.item.quantity) || 0,
     computedAt: row.confirmedAt ?? row.updatedAt,
@@ -113,17 +121,10 @@ export async function loadInstitutionExpenses(actor: ExpenseActor): Promise<{
   };
 }
 
-/** Теоретическая экономия школы по подтверждённым ремонтам. */
-export async function loadInstitutionSavings(
-  actor: ExpenseActor,
-): Promise<InstitutionSavings | null> {
-  if (actor.role !== "DONOR_STAFF" || !actor.institutionId) return null;
-
-  const [snapshots, disposals] = await Promise.all([
-    listInstitutionExpenseSnapshots(actor.institutionId),
-    listInstitutionDisposalExpenses(actor.institutionId),
-  ]);
-
+function buildSavings(
+  snapshots: Awaited<ReturnType<typeof listInstitutionExpenseSnapshots>>,
+  disposals: Awaited<ReturnType<typeof listInstitutionDisposalExpenses>>,
+): InstitutionSavings {
   const rows: InstitutionSavingRow[] = snapshots.map((row) => {
     const materialsKop = Math.round(Number(row.materialsKop) || 0);
     const transportKop = Math.round(Number(row.transportKop) || 0);
@@ -163,4 +164,28 @@ export async function loadInstitutionSavings(
     netSavingKop: propertyBudgetKop - disposalSpentKop,
     rows,
   };
+}
+
+/** Оплаты и теоретическая экономия школы — один запрос к БД. */
+export async function loadInstitutionEconomyBoard(
+  actor: ExpenseActor,
+): Promise<InstitutionEconomyBoard | null> {
+  if (actor.role !== "DONOR_STAFF" || !actor.institutionId) return null;
+
+  const [snapshots, disposals] = await loadInstitutionLedger(actor.institutionId);
+  return {
+    expenses: buildExpenses(snapshots, disposals),
+    savings: buildSavings(snapshots, disposals),
+  };
+}
+
+export async function loadInstitutionExpenses(actor: ExpenseActor) {
+  const board = await loadInstitutionEconomyBoard(actor);
+  return board?.expenses ?? null;
+}
+
+/** Теоретическая экономия школы по подтверждённым ремонтам. */
+export async function loadInstitutionSavings(actor: ExpenseActor) {
+  const board = await loadInstitutionEconomyBoard(actor);
+  return board?.savings ?? null;
 }

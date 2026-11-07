@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { DocumentType, Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { formatActNumber, parseActSerial } from "@/domain/documents";
 import { prisma } from "@/server/db";
 
@@ -35,14 +35,6 @@ export function findDocumentById(id: string) {
   });
 }
 
-export function listDocumentsForOrder(orderId: string) {
-  return prisma.document.findMany({
-    where: { orderId },
-    orderBy: { createdAt: "asc" },
-    select: documentSelect,
-  });
-}
-
 export function listDocumentsForItem(itemId: string) {
   return prisma.document.findMany({
     where: { order: { itemId } },
@@ -63,68 +55,6 @@ async function nextActNumber(tx: Prisma.TransactionClient): Promise<string> {
     if (serial !== null && serial > max) max = serial;
   }
   return formatActNumber(max + 1);
-}
-
-export async function createReturnOrTransferAct(input: {
-  type: Extract<DocumentType, "RETURN_ACT" | "TRANSFER_ACT">;
-  orderId: string;
-  itemId: string;
-  fromInstitutionId: string;
-  toInstitutionId: string;
-  payloadJson: string;
-  actorId: string;
-  fromItemStatus: "READY";
-  comment: string;
-}) {
-  return prisma.$transaction(async (tx) => {
-    const existing = await tx.document.count({
-      where: {
-        orderId: input.orderId,
-        type: { in: ["RETURN_ACT", "TRANSFER_ACT"] },
-      },
-    });
-    if (existing > 0) return { ok: false as const, reason: "exists" as const };
-
-    const updated = await tx.item.updateMany({
-      where: { id: input.itemId, status: input.fromItemStatus },
-      data: { status: "DELIVERED" },
-    });
-    if (updated.count !== 1) return { ok: false as const, reason: "locked" as const };
-
-    const number = await nextActNumber(tx);
-    const document = await tx.document.create({
-      data: {
-        type: input.type,
-        number,
-        orderId: input.orderId,
-        payload: input.payloadJson,
-      },
-      select: documentSelect,
-    });
-
-    await tx.transfer.create({
-      data: {
-        itemId: input.itemId,
-        fromInstitutionId: input.fromInstitutionId,
-        toInstitutionId: input.toInstitutionId,
-        transferredAt: new Date(),
-        documentId: document.id,
-      },
-    });
-
-    await tx.statusEvent.create({
-      data: {
-        itemId: input.itemId,
-        orderId: input.orderId,
-        fromStatus: input.fromItemStatus,
-        toStatus: "DELIVERED",
-        actorId: input.actorId,
-        comment: input.comment,
-      },
-    });
-
-    return { ok: true as const, document };
-  });
 }
 
 /** Школа подтверждает ремонт: акт возврата + закрытие со снимком экономии + симуляция выплат. */

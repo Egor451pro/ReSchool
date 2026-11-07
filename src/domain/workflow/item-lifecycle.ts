@@ -17,7 +17,7 @@ export type CloseReason = (typeof closeReasons)[number];
 const transitions: Record<ItemStatus, readonly ItemStatus[]> = {
   LISTED: ["REQUESTED", "CLOSED"],
   REQUESTED: ["LISTED", "IN_REPAIR"],
-  // LISTED — мастерская вернула карточку до выдачи, без закрытия как лом.
+  // LISTED — фрилансер вернул карточку до выдачи, без закрытия как лом.
   IN_REPAIR: ["READY", "CLOSED", "LISTED", "DISPOSAL_PENDING"],
   READY: ["DELIVERED"],
   DELIVERED: ["CLOSED"],

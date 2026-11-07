@@ -4,14 +4,9 @@ import type { ScenarioKind } from "@prisma/client";
 import { calculateItemEconomy, projectYear, sumSnapshots } from "@/domain/economy";
 import type { SnapshotTotals, YearProjection } from "@/domain/economy";
 import type { UserRole } from "@/domain/access/roles";
-import { planCloseCompleted } from "@/domain/workflow/order-item-sync";
 import {
-  closeOrderWithSnapshot,
   districtOverview,
   findAssumptionByKind,
-  findCloseableOrder,
-  findDashboardAssumption,
-  findDisposalRate,
   listAssumptionSets,
   listDistrictSnapshots,
   updateAssumptionSet,
@@ -22,10 +17,6 @@ export type EconomyActor = {
   role: UserRole;
   institutionId: string | null;
 };
-
-export type CloseEconomyResult =
-  | { ok: true; orderId: string }
-  | { ok: false; error: string };
 
 export type AssumptionUpdateResult =
   | { ok: true }
@@ -81,12 +72,6 @@ export type AdminEconomyOverview = {
   savingTotalKop: number;
   items: AdminRepairedItem[];
 };
-
-function canCloseOrder(actor: EconomyActor, order: { masterId: string }): boolean {
-  if (actor.role === "PLATFORM_ADMIN") return true;
-  if (actor.role !== "FREELANCER") return false;
-  return order.masterId === actor.id;
-}
 
 function rankInstitutions(
   rows: Awaited<ReturnType<typeof listDistrictSnapshots>>,
@@ -237,71 +222,3 @@ export async function saveAssumptionSet(
   return { ok: true };
 }
 
-export async function closeDeliveredOrder(
-  actor: EconomyActor,
-  orderId: string,
-): Promise<CloseEconomyResult> {
-  if (actor.role !== "FREELANCER" && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Закрыть заказ может исполнитель или администратор" };
-  }
-
-  const order = await findCloseableOrder(orderId);
-  if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canCloseOrder(actor, order)) return { ok: false, error: "Это заказ другого исполнителя" };
-  if (order.status !== "COMPLETED") {
-    return { ok: false, error: "Сначала завершите проверку качества" };
-  }
-
-  try {
-    planCloseCompleted(order.item.status);
-  } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : "Нельзя закрыть предмет",
-    };
-  }
-
-  const base =
-    (await findAssumptionByKind("BASE")) ?? (await findDashboardAssumption());
-  if (!base) return { ok: false, error: "Нет набора допущений для снимка" };
-
-  const rate = await findDisposalRate(base.id, order.item.categoryId);
-  const disposalPerUnitKop = rate?.perUnitKop ?? base.avgDisposalKop;
-  const materialsKop = order.actualMaterialsKop;
-  const transportKop = order.transportKop;
-  const freelancerFeeKop = order.agreedFeeKop;
-  const economy = calculateItemEconomy({
-    quantity: order.item.quantity,
-    newUnitPriceKop: order.item.newUnitPriceKop,
-    materialsKop,
-    transportKop,
-    freelancerFeeKop,
-    disposalPerUnitKop,
-    practiceConsumableKop: base.practiceConsumableKop,
-    substitutionMilli: base.substitutionMilli,
-  });
-
-  const result = await closeOrderWithSnapshot({
-    orderId: order.id,
-    itemId: order.item.id,
-    actorId: actor.id,
-    assumptionId: base.id,
-    materialsKop,
-    transportKop,
-    freelancerFeeKop: economy.freelancerFeeKop,
-    newPriceKop: economy.newPriceKop,
-    procurementSavingKop: economy.procurementSavingKop,
-    avoidedDisposalKop: economy.avoidedDisposalKop,
-    propertyBudgetKop: economy.propertyBudgetKop,
-    practiceSavingKop: economy.practiceSavingKop,
-  });
-
-  if (!result.ok) {
-    if (result.reason === "snapshot") {
-      return { ok: false, error: "Снимок экономии уже записан" };
-    }
-    return { ok: false, error: "Статус уже изменился" };
-  }
-
-  return { ok: true, orderId: order.id };
-}

@@ -8,12 +8,10 @@ import {
   advanceOrder,
   cancelOrder,
   claimListedItem,
-  markOrderDelivered,
   markOrderUnrepairable,
   proposeOrderPrice,
 } from "@/server/services/order-service";
-import { closeDeliveredOrder } from "@/server/services/economy-service";
-import { revalidateOrderViews, revalidateWalletViews } from "@/server/revalidate";
+import { revalidateOrderViews } from "@/server/revalidate";
 
 export type OrderFormState = { error?: string };
 
@@ -102,18 +100,6 @@ export async function cancelOrderAction(
   redirect("/orders");
 }
 
-export async function deliverOrderAction(
-  _state: OrderFormState,
-  formData: FormData,
-): Promise<OrderFormState> {
-  const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
-  const orderId = text(formData, "orderId");
-  const result = await markOrderDelivered(actor, orderId);
-  if (!result.ok) return { error: result.error };
-  revalidateOrderViews({ orderId, itemId: result.itemId });
-  redirect(`/orders/${orderId}`);
-}
-
 export async function unrepairableOrderAction(
   _state: OrderFormState,
   formData: FormData,
@@ -122,17 +108,5 @@ export async function unrepairableOrderAction(
   const result = await markOrderUnrepairable(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
   revalidateOrderViews({ orderId: result.orderId, itemId: result.itemId });
-  redirect("/orders");
-}
-
-export async function closeOrderAction(
-  _state: OrderFormState,
-  formData: FormData,
-): Promise<OrderFormState> {
-  const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
-  const result = await closeDeliveredOrder(actor, text(formData, "orderId"));
-  if (!result.ok) return { error: result.error };
-  revalidateOrderViews({ orderId: result.orderId });
-  revalidateWalletViews();
   redirect("/orders");
 }

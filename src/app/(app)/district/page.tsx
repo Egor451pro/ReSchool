@@ -41,7 +41,7 @@ export default async function DistrictPage() {
         <Metric value={String(dashboard.overview.disposed)} label="сдано в утиль" />
       </section>
       <p className="text-sm text-leaf">
-        Учебной практики по снимкам: {hoursFromMinutes(dashboard.fact.minutes)} ч. Прогноз
+        Часы по закрытым заказам: {hoursFromMinutes(dashboard.fact.minutes)} ч. Прогноз
         масштабирования по СНГ — в{" "}
         <Link href="/district/forecast" className="font-medium text-ink underline decoration-line underline-offset-2">
           разделе «Прогноз»
@@ -65,15 +65,10 @@ export default async function DistrictPage() {
               value={dashboard.fact.avoidedDisposalKop}
               label="избегнутая утилизация"
             />
-            <MoneyMetric
-              value={dashboard.fact.practiceSavingKop}
-              label="замещение заготовок"
-            />
           </ul>
           <p className="text-sm text-leaf">
-            Труд учащихся в сумму не входит. Закрыто с причиной «выполнено»:{" "}
-            {dashboard.overview.completedClosed}. Сдано в утиль:{" "}
-            {dashboard.overview.disposed}. В работе сейчас:{" "}
+            Закрыто с причиной «выполнено»: {dashboard.overview.completedClosed}. Сдано в
+            утиль: {dashboard.overview.disposed}. В работе сейчас:{" "}
             {dashboard.overview.activeOrders}.
           </p>
         </div>
@@ -89,10 +84,6 @@ export default async function DistrictPage() {
                 <MoneyMetric
                   value={shown.projection.propertyBudgetKop}
                   label="прогноз бюджета имущества / год"
-                />
-                <MoneyMetric
-                  value={shown.projection.practiceSavingKop}
-                  label="прогноз замещения / год"
                 />
                 <MoneyMetric
                   value={shown.projection.platformCostKop}

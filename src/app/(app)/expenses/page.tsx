@@ -4,19 +4,15 @@ import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
 import { itemsCountLabel } from "@/domain/items/labels";
 import { requireRoles } from "@/server/auth/current-user";
-import {
-  loadInstitutionExpenses,
-  loadInstitutionSavings,
-} from "@/server/services/expense-service";
+import { loadInstitutionEconomyBoard } from "@/server/services/expense-service";
 
 export const instant = false;
 
 export default async function ExpensesPage() {
   const user = await requireRoles(["DONOR_STAFF"]);
-  const [expenses, savings] = await Promise.all([
-    loadInstitutionExpenses(user),
-    loadInstitutionSavings(user),
-  ]);
+  const board = await loadInstitutionEconomyBoard(user);
+  const expenses = board?.expenses ?? null;
+  const savings = board?.savings ?? null;
 
   return (
     <PageShell>

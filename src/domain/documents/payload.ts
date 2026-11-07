@@ -54,7 +54,7 @@ export function buildWriteOffPayload(input: {
   return {
     watermark: DRAFT_WATERMARK,
     title: input.title.trim(),
-    reason: (input.reason ?? "Ремонт в рамках практики признан нецелесообразным.").trim(),
+    reason: (input.reason ?? "Ремонт признан нецелесообразным.").trim(),
     synthetic: input.synthetic ?? false,
   };
 }

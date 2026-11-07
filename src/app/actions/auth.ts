@@ -155,14 +155,6 @@ export async function registerFreelancerAction(
   redirect(safeNextPath(null, result.role));
 }
 
-/** @deprecated используйте registerDonorAction */
-export async function registerAction(
-  _state: AuthFormState,
-  formData: FormData,
-): Promise<AuthFormState> {
-  return registerDonorAction(_state, formData);
-}
-
 export async function demoLoginAction(formData: FormData): Promise<void> {
   await loginAction({}, formData);
 }

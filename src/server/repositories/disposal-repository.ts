@@ -65,15 +65,6 @@ export function listDisposalJobsForFreelancer(freelancerId: string) {
   });
 }
 
-export function countDisposedItems(district?: string) {
-  return prisma.item.count({
-    where: {
-      status: "DISPOSED",
-      ...(district ? { institution: { district } } : {}),
-    },
-  });
-}
-
 /** Подтверждённые сдачи фрилансером — плата школы за утиль. */
 export function listInstitutionDisposalExpenses(
   institutionId: string,

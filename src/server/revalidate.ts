@@ -47,8 +47,3 @@ export function revalidateWalletViews() {
 export function revalidateAdminViews() {
   bump("/admin");
 }
-
-/** @deprecated используйте точечные revalidate* */
-export function revalidateAppViews() {
-  bump("/cabinet", "/catalog", "/orders", "/workshop", "/wallet", "/admin");
-}

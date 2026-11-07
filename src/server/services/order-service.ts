@@ -20,10 +20,7 @@ import {
   findOrderForMaster,
   proposePriceOnOrder,
 } from "@/server/repositories/order-repository";
-import {
-  deliverOrderWithAct,
-  markUnrepairableWithAct,
-} from "@/server/services/document-service";
+import { markUnrepairableWithAct } from "@/server/services/document-service";
 
 export type OrderActor = {
   id: string;
@@ -284,12 +281,6 @@ export async function cancelOrder(actor: OrderActor, orderId: string): Promise<O
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Нельзя отменить заказ" };
   }
-}
-
-export async function markOrderDelivered(actor: OrderActor, orderId: string): Promise<OrderResult> {
-  const result = await deliverOrderWithAct(actor, orderId);
-  if (!result.ok) return { ok: false, error: result.error };
-  return { ok: true, orderId: result.orderId };
 }
 
 export async function markOrderUnrepairable(

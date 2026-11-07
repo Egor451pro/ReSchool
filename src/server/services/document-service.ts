@@ -1,27 +1,17 @@
 import "server-only";
 
 import type { UserRole } from "@/domain/access/roles";
-import {
-  buildTransferActPayload,
-  buildWriteOffPayload,
-  isReturnAct,
-} from "@/domain/documents";
-import { planItemDeliver, planUnrepairable } from "@/domain/workflow/order-item-sync";
-import { calculateItemEconomy } from "@/domain/economy";
+import { buildTransferActPayload, buildWriteOffPayload } from "@/domain/documents";
+import { planUnrepairable } from "@/domain/workflow/order-item-sync";
 import {
   confirmSchoolRepair,
-  createReturnOrTransferAct,
   createWriteOffWithClose,
   findDocumentById,
 } from "@/server/repositories/document-repository";
-import {
-  findAssumptionByKind,
-  findDashboardAssumption,
-  findDisposalRate,
-} from "@/server/repositories/economy-repository";
 import { findConfirmableOrderForItem } from "@/server/repositories/item-repository";
 import { findOrderForMaster } from "@/server/repositories/order-repository";
 import { renderActPdf } from "@/server/services/document-pdf";
+import { buildOrderEconomySnapshot } from "@/server/services/economy-snapshot";
 
 export type DocumentActor = {
   id: string;
@@ -49,7 +39,10 @@ const catalogRoles: readonly UserRole[] = [
   "PLATFORM_ADMIN",
 ];
 
-/** Школа подтверждает получение ремонта: акт + закрытие + снимок экономии + выплаты. */
+/**
+ * Каноническое закрытие ремонта: акт возврата + EconomySnapshot + выплаты.
+ * Фрилансер только завершает заказ; снимок пишет эта функция.
+ */
 export async function confirmRepairBySchool(
   actor: DocumentActor,
   itemId: string,
@@ -69,26 +62,10 @@ export async function confirmRepairBySchool(
     return { ok: false, error: "Это предмет другого учреждения" };
   }
 
-  const base =
-    (await findAssumptionByKind("BASE")) ?? (await findDashboardAssumption());
-  if (!base) return { ok: false, error: "Нет набора допущений для снимка" };
+  const snapshot = await buildOrderEconomySnapshot(order);
+  if (!snapshot) return { ok: false, error: "Нет набора допущений для снимка" };
 
-  const rate = await findDisposalRate(base.id, order.item.categoryId);
-  const disposalPerUnitKop = rate?.perUnitKop ?? base.avgDisposalKop;
-  const materialsKop = order.actualMaterialsKop;
-  const transportKop = order.transportKop;
-  const freelancerFeeKop = order.agreedFeeKop;
-  const economy = calculateItemEconomy({
-    quantity: order.item.quantity,
-    newUnitPriceKop: order.item.newUnitPriceKop,
-    materialsKop,
-    transportKop,
-    freelancerFeeKop,
-    disposalPerUnitKop,
-    practiceConsumableKop: base.practiceConsumableKop,
-    substitutionMilli: base.substitutionMilli,
-  });
-
+  const { base, materialsKop, transportKop, freelancerFeeKop, economy } = snapshot;
   const zavhozBonusKop = Math.round(
     (base.slesarAnnualSalaryKop * base.zavhozBonusShareMilli) / 1000 / 12,
   );
@@ -139,61 +116,6 @@ export async function confirmRepairBySchool(
     return {
       ok: false,
       error: error instanceof Error ? error.message : "Нельзя подтвердить ремонт",
-    };
-  }
-}
-
-export async function deliverOrderWithAct(
-  actor: DocumentActor,
-  orderId: string,
-): Promise<DocumentResult> {
-  if (actor.role !== "FREELANCER" && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Отметить передачу может фрилансер или администратор" };
-  }
-
-  const order = await findOrderForMaster(orderId);
-  if (!order) return { ok: false, error: "Заказ не найден" };
-  if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого фрилансера" };
-  if (order.status !== "COMPLETED") {
-    return { ok: false, error: "Сначала завершите проверку качества" };
-  }
-
-  try {
-    const plan = planItemDeliver(order.item.status);
-    const ownerId = order.item.institutionId;
-    const ownerName = order.item.institution.name;
-    const type = isReturnAct(ownerId, ownerId) ? "RETURN_ACT" : "TRANSFER_ACT";
-    const payload = buildTransferActPayload({
-      title: order.item.title,
-      quantity: order.item.quantity,
-      materialsKop: order.actualMaterialsKop,
-      transportKop: order.transportKop,
-      fromName: ownerName,
-      toName: ownerName,
-    });
-
-    const result = await createReturnOrTransferAct({
-      type,
-      orderId: order.id,
-      itemId: order.item.id,
-      fromInstitutionId: ownerId,
-      toInstitutionId: ownerId,
-      payloadJson: JSON.stringify(payload),
-      actorId: actor.id,
-      fromItemStatus: "READY",
-      comment: plan.comment,
-    });
-
-    if (!result.ok) {
-      if (result.reason === "exists") return { ok: false, error: "Акт по этому заказу уже есть" };
-      return { ok: false, error: "Предмет уже передан или закрыт" };
-    }
-
-    return { ok: true, orderId: order.id, documentId: result.document.id };
-  } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : "Нельзя отметить передачу",
     };
   }
 }
