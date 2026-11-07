@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canPublishItems, itemManageState } from "./access";
+import { canPublishItems, canUpdateRepairBudget, itemManageState } from "./access";
 import { readCatalogQuery } from "./filters";
 import { detectPhotoKind } from "./image-file";
 import { itemsCountLabel } from "./labels";
@@ -29,6 +29,10 @@ describe("карточка предмета", () => {
     expect(itemManageState(donor, { institutionId: "gym", status: "LISTED" })).toBe("foreign");
     expect(itemManageState(donor, { institutionId: "school", status: "IN_REPAIR" })).toBe("locked");
     expect(itemManageState(admin, { institutionId: "gym", status: "LISTED" })).toBe("locked");
+    expect(canUpdateRepairBudget(donor, { institutionId: "school", status: "LISTED" })).toBe(true);
+    expect(canUpdateRepairBudget(donor, { institutionId: "school", status: "REQUESTED" })).toBe(
+      false,
+    );
   });
 
   it("оставляет в адресе каталога только известные фильтры", () => {

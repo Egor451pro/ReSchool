@@ -6,11 +6,19 @@ import {
   planOrderCancel,
 } from "@/domain/workflow/order-item-sync";
 import {
+  assertOfferAmountKop,
+  canConfirmPrice,
+  canProposePrice,
+  maxRepairFeeKop,
+  type PriceOfferSide,
+} from "@/domain/orders/price-deal";
+import {
   acceptOrderBySchool,
   applyOrderTransition,
   claimItemOrder,
   findClaimableItem,
   findOrderForMaster,
+  proposePriceOnOrder,
 } from "@/server/repositories/order-repository";
 import {
   deliverOrderWithAct,
@@ -52,9 +60,17 @@ export async function claimListedItem(
   if (item.condition === "SCRAP") return { ok: false, error: "Лом в ремонт не берём" };
   if (item.orders.length > 0) return { ok: false, error: "У предмета уже есть активный заказ" };
 
-  const maxFee = Math.max(item.repairBudgetKop, item.newUnitPriceKop * item.quantity);
-  if (input.agreedFeeKop > maxFee) {
-    return { ok: false, error: "Цена ремонта не может быть выше стоимости новых вещей" };
+  try {
+    assertOfferAmountKop(
+      input.agreedFeeKop,
+      maxRepairFeeKop({
+        repairBudgetKop: item.repairBudgetKop,
+        newUnitPriceKop: item.newUnitPriceKop,
+        quantity: item.quantity,
+      }),
+    );
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Некорректная цена" };
   }
 
   // Материалы и доставка — внутри цены фрилансера, школа их отдельно не платит.
@@ -76,25 +92,92 @@ export async function claimListedItem(
   return { ok: true, orderId: result.orderId };
 }
 
+export async function proposeOrderPrice(
+  actor: OrderActor,
+  input: { orderId: string; amountKop: number },
+): Promise<OrderResult> {
+  const order = await findOrderForMaster(input.orderId);
+  if (!order) return { ok: false, error: "Заказ не найден" };
+
+  const isMaster = order.masterId === actor.id;
+  const isSchoolStaff =
+    actor.role === "DONOR_STAFF" &&
+    actor.institutionId !== null &&
+    actor.institutionId === order.item.institutionId;
+
+  if (
+    !canProposePrice({
+      role: actor.role,
+      isMaster,
+      isSchoolStaff,
+      orderStatus: order.status,
+      schoolAcceptedAt: order.schoolAcceptedAt,
+    })
+  ) {
+    return { ok: false, error: "Сейчас нельзя менять цену" };
+  }
+
+  try {
+    assertOfferAmountKop(
+      input.amountKop,
+      maxRepairFeeKop({
+        repairBudgetKop: order.item.repairBudgetKop,
+        newUnitPriceKop: order.item.newUnitPriceKop,
+        quantity: order.item.quantity,
+      }),
+    );
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Некорректная цена" };
+  }
+
+  const side: PriceOfferSide =
+    actor.role === "FREELANCER" || (actor.role === "PLATFORM_ADMIN" && isMaster)
+      ? "FREELANCER"
+      : "SCHOOL";
+
+  const result = await proposePriceOnOrder({
+    orderId: order.id,
+    actorId: actor.id,
+    side,
+    amountKop: input.amountKop,
+  });
+  if (!result.ok) {
+    if (result.reason === "same") {
+      return { ok: false, error: "Это уже текущая открытая цена" };
+    }
+    return { ok: false, error: "Статус уже изменился" };
+  }
+  return { ok: true, orderId: order.id, itemId: order.item.id };
+}
+
 export async function acceptOrderProposal(
   actor: OrderActor,
   orderId: string,
 ): Promise<OrderResult> {
   if (actor.role !== "DONOR_STAFF" && actor.role !== "PLATFORM_ADMIN") {
-    return { ok: false, error: "Принять заказ может завхоз" };
+    return { ok: false, error: "Подтвердить цену может завхоз" };
   }
-  if (!actor.institutionId) return { ok: false, error: "Нужно учреждение" };
+  if (!actor.institutionId && actor.role !== "PLATFORM_ADMIN") {
+    return { ok: false, error: "Нужно учреждение" };
+  }
 
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
-  if (order.item.institutionId !== actor.institutionId && actor.role !== "PLATFORM_ADMIN") {
+  const isSchoolStaff =
+    actor.institutionId !== null && actor.institutionId === order.item.institutionId;
+  if (!isSchoolStaff && actor.role !== "PLATFORM_ADMIN") {
     return { ok: false, error: "Это предмет другого учреждения" };
   }
-  if (order.status !== "ASSIGNED" || order.schoolAcceptedAt) {
-    return { ok: false, error: "Цена уже подтверждена или заказ недоступен" };
-  }
-  if (!Number.isInteger(order.agreedFeeKop) || order.agreedFeeKop <= 0) {
-    return { ok: false, error: "В заказе нет цены для подтверждения" };
+  if (
+    !canConfirmPrice({
+      role: actor.role,
+      isSchoolStaff,
+      orderStatus: order.status,
+      schoolAcceptedAt: order.schoolAcceptedAt,
+      openOfferKop: order.openOfferKop,
+    })
+  ) {
+    return { ok: false, error: "Нет открытой цены для подтверждения" };
   }
 
   const result = await acceptOrderBySchool({
@@ -102,9 +185,13 @@ export async function acceptOrderProposal(
     itemId: order.item.id,
     actorId: actor.id,
     institutionId: order.item.institutionId,
-    agreedFeeKop: order.agreedFeeKop,
   });
-  if (!result.ok) return { ok: false, error: "Статус уже изменился" };
+  if (!result.ok) {
+    if (result.reason === "no-offer") {
+      return { ok: false, error: "Нет открытой цены для подтверждения" };
+    }
+    return { ok: false, error: "Статус уже изменился" };
+  }
   return { ok: true, orderId: order.id, itemId: order.item.id };
 }
 

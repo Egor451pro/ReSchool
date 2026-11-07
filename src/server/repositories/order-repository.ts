@@ -1,7 +1,17 @@
 import "server-only";
 
-import type { CloseReason, ItemStatus, OrderStatus, Prisma } from "@prisma/client";
+import type {
+  CloseReason,
+  ItemStatus,
+  OrderStatus,
+  PriceOfferSide,
+  Prisma,
+} from "@prisma/client";
 import { prisma } from "@/server/db";
+import {
+  priceAcceptedChatBody,
+  priceOfferChatBody,
+} from "@/domain/orders/price-deal";
 
 const exchangeSelect = {
   id: true,
@@ -25,6 +35,16 @@ const exchangeSelect = {
   photos: { orderBy: { sort: "asc" as const }, take: 1, select: { id: true, path: true } },
 } satisfies Prisma.ItemSelect;
 
+const priceOfferSelect = {
+  id: true,
+  amountKop: true,
+  side: true,
+  status: true,
+  createdAt: true,
+  actorId: true,
+  actor: { select: { id: true, fullName: true, role: true } },
+} satisfies Prisma.PriceOfferSelect;
+
 const orderCardSelect = {
   id: true,
   status: true,
@@ -34,6 +54,8 @@ const orderCardSelect = {
   plannedMinutes: true,
   actualMinutes: true,
   agreedFeeKop: true,
+  openOfferKop: true,
+  openOfferSide: true,
   schoolAcceptedAt: true,
   dueDate: true,
   createdAt: true,
@@ -45,6 +67,8 @@ const orderCardSelect = {
       status: true,
       condition: true,
       quantity: true,
+      newUnitPriceKop: true,
+      repairBudgetKop: true,
       institutionId: true,
       institution: { select: { id: true, name: true, district: true } },
       photos: { orderBy: { sort: "asc" as const }, take: 1, select: { id: true, path: true } },
@@ -54,10 +78,16 @@ const orderCardSelect = {
     orderBy: { createdAt: "asc" as const },
     select: { id: true, type: true, number: true, createdAt: true },
   },
+  priceOffers: {
+    orderBy: { createdAt: "asc" as const },
+    select: priceOfferSelect,
+  },
 } satisfies Prisma.RepairOrderSelect;
 
-/** Все свободные объявления биржи. */
-export function listExchangeItems() {
+/** Свободные объявления биржи (с пагинацией). */
+export function listExchangeItems(options?: { take?: number; skip?: number }) {
+  const take = Math.min(Math.max(options?.take ?? 48, 1), 100);
+  const skip = Math.max(options?.skip ?? 0, 0);
   return prisma.item.findMany({
     where: {
       status: "LISTED",
@@ -65,6 +95,8 @@ export function listExchangeItems() {
       orders: { none: { status: { not: "CANCELLED" } } },
     },
     orderBy: { createdAt: "desc" },
+    take,
+    skip,
     select: exchangeSelect,
   });
 }
@@ -99,8 +131,10 @@ export function listFreelancerRepairHistory(masterId: string) {
     where: {
       masterId,
       item: {
-        status: "CLOSED",
-        closeReason: { in: ["COMPLETED", "UNREPAIRABLE"] },
+        OR: [
+          { status: "CLOSED", closeReason: { in: ["COMPLETED", "UNREPAIRABLE"] } },
+          { status: "DISPOSED" },
+        ],
       },
     },
     orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
@@ -152,12 +186,23 @@ export function findOrderDetail(orderId: string) {
       plannedMinutes: true,
       actualMinutes: true,
       agreedFeeKop: true,
+      openOfferKop: true,
+      openOfferSide: true,
       schoolAcceptedAt: true,
       dueDate: true,
       createdAt: true,
       masterId: true,
       itemId: true,
-      master: { select: { id: true, fullName: true, role: true } },
+      master: {
+        select: {
+          id: true,
+          fullName: true,
+          role: true,
+          address: true,
+          lat: true,
+          lng: true,
+        },
+      },
       item: {
         select: {
           id: true,
@@ -166,8 +211,12 @@ export function findOrderDetail(orderId: string) {
           status: true,
           condition: true,
           quantity: true,
+          newUnitPriceKop: true,
+          repairBudgetKop: true,
           institutionId: true,
-          institution: { select: { id: true, name: true, district: true } },
+          institution: {
+            select: { id: true, name: true, district: true, address: true, lat: true, lng: true },
+          },
           category: { select: { name: true } },
           photos: {
             orderBy: { sort: "asc" as const },
@@ -179,6 +228,10 @@ export function findOrderDetail(orderId: string) {
       documents: {
         orderBy: { createdAt: "asc" as const },
         select: { id: true, type: true, number: true, createdAt: true },
+      },
+      priceOffers: {
+        orderBy: { createdAt: "asc" as const },
+        select: priceOfferSelect,
       },
     },
   });
@@ -244,6 +297,8 @@ export async function claimItemOrder(input: {
         itemId: input.itemId,
         masterId: input.masterId,
         agreedFeeKop: input.agreedFeeKop,
+        openOfferKop: input.agreedFeeKop,
+        openOfferSide: "FREELANCER",
         schoolAcceptedAt: null,
         status: "ASSIGNED",
         plannedMaterialsKop: input.plannedMaterialsKop,
@@ -254,6 +309,24 @@ export async function claimItemOrder(input: {
       select: { id: true },
     });
 
+    await tx.priceOffer.create({
+      data: {
+        orderId: order.id,
+        actorId: input.masterId,
+        amountKop: input.agreedFeeKop,
+        side: "FREELANCER",
+        status: "OPEN",
+      },
+    });
+
+    await tx.orderMessage.create({
+      data: {
+        orderId: order.id,
+        authorId: input.masterId,
+        body: priceOfferChatBody("FREELANCER", input.agreedFeeKop),
+      },
+    });
+
     await tx.statusEvent.create({
       data: {
         itemId: input.itemId,
@@ -261,7 +334,7 @@ export async function claimItemOrder(input: {
         fromStatus: "LISTED",
         toStatus: "REQUESTED",
         actorId: input.masterId,
-        comment: "Фрилансер предложил заказ и цену. Ждём подтверждения завхоза.",
+        comment: "Фрилансер открыл торг по цене. Ждём подтверждения или встречного предложения завхоза.",
       },
     });
 
@@ -269,13 +342,88 @@ export async function claimItemOrder(input: {
   });
 }
 
-/** Завхоз подтверждает цену фрилансера — заказ сразу «В работе». */
+/** Встречное предложение цены, пока заказ в ASSIGNED без schoolAcceptedAt. */
+export async function proposePriceOnOrder(input: {
+  orderId: string;
+  actorId: string;
+  side: PriceOfferSide;
+  amountKop: number;
+}) {
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.repairOrder.findFirst({
+      where: {
+        id: input.orderId,
+        status: "ASSIGNED",
+        schoolAcceptedAt: null,
+      },
+      select: {
+        id: true,
+        itemId: true,
+        openOfferKop: true,
+        item: { select: { status: true } },
+      },
+    });
+    if (!order || order.item.status !== "REQUESTED") {
+      return { ok: false as const, reason: "locked" as const };
+    }
+    if (order.openOfferKop === input.amountKop) {
+      return { ok: false as const, reason: "same" as const };
+    }
+
+    await tx.priceOffer.updateMany({
+      where: { orderId: order.id, status: "OPEN" },
+      data: { status: "SUPERSEDED" },
+    });
+
+    await tx.priceOffer.create({
+      data: {
+        orderId: order.id,
+        actorId: input.actorId,
+        amountKop: input.amountKop,
+        side: input.side,
+        status: "OPEN",
+      },
+    });
+
+    await tx.repairOrder.update({
+      where: { id: order.id },
+      data: {
+        openOfferKop: input.amountKop,
+        openOfferSide: input.side,
+        // Пока торг идёт — agreedFeeKop зеркалит открытое предложение для списков.
+        agreedFeeKop: input.amountKop,
+      },
+    });
+
+    await tx.orderMessage.create({
+      data: {
+        orderId: order.id,
+        authorId: input.actorId,
+        body: priceOfferChatBody(input.side, input.amountKop),
+      },
+    });
+
+    await tx.statusEvent.create({
+      data: {
+        itemId: order.itemId,
+        orderId: order.id,
+        fromStatus: "REQUESTED",
+        toStatus: "REQUESTED",
+        actorId: input.actorId,
+        comment: priceOfferChatBody(input.side, input.amountKop),
+      },
+    });
+
+    return { ok: true as const, orderId: order.id, itemId: order.itemId };
+  });
+}
+
+/** Завхоз подтверждает текущую открытую цену — заказ сразу «В работе». */
 export async function acceptOrderBySchool(input: {
   orderId: string;
   itemId: string;
   actorId: string;
   institutionId: string;
-  agreedFeeKop: number;
 }) {
   return prisma.$transaction(async (tx) => {
     const order = await tx.repairOrder.findFirst({
@@ -286,28 +434,47 @@ export async function acceptOrderBySchool(input: {
         schoolAcceptedAt: null,
         item: { institutionId: input.institutionId, status: "REQUESTED" },
       },
-      select: { id: true, agreedFeeKop: true },
+      select: { id: true, openOfferKop: true },
     });
     if (!order) return { ok: false as const, reason: "locked" as const };
+    if (!Number.isInteger(order.openOfferKop) || order.openOfferKop <= 0) {
+      return { ok: false as const, reason: "no-offer" as const };
+    }
+
+    const feeKop = order.openOfferKop;
 
     const updated = await tx.repairOrder.updateMany({
-      where: { id: order.id, status: "ASSIGNED", schoolAcceptedAt: null },
+      where: { id: order.id, status: "ASSIGNED", schoolAcceptedAt: null, openOfferKop: feeKop },
       data: {
         schoolAcceptedAt: new Date(),
         status: "IN_PROGRESS",
-        agreedFeeKop: input.agreedFeeKop,
+        agreedFeeKop: feeKop,
+        openOfferKop: feeKop,
       },
     });
     if (updated.count !== 1) return { ok: false as const, reason: "locked" as const };
+
+    await tx.priceOffer.updateMany({
+      where: { orderId: order.id, status: "OPEN" },
+      data: { status: "ACCEPTED" },
+    });
 
     const itemUpdated = await tx.item.updateMany({
       where: { id: input.itemId, status: "REQUESTED" },
       data: {
         status: "IN_REPAIR",
-        repairBudgetKop: input.agreedFeeKop,
+        repairBudgetKop: feeKop,
       },
     });
     if (itemUpdated.count !== 1) return { ok: false as const, reason: "locked" as const };
+
+    await tx.orderMessage.create({
+      data: {
+        orderId: order.id,
+        authorId: input.actorId,
+        body: priceAcceptedChatBody(feeKop),
+      },
+    });
 
     await tx.statusEvent.create({
       data: {
@@ -316,11 +483,11 @@ export async function acceptOrderBySchool(input: {
         fromStatus: "REQUESTED",
         toStatus: "IN_REPAIR",
         actorId: input.actorId,
-        comment: "Завхоз подтвердил цену фрилансера — ремонт в работе.",
+        comment: "Завхоз подтвердил цену — ремонт в работе.",
       },
     });
 
-    return { ok: true as const, orderId: order.id };
+    return { ok: true as const, orderId: order.id, agreedFeeKop: feeKop };
   });
 }
 

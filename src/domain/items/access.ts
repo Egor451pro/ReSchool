@@ -25,7 +25,7 @@ export function itemManageState(
   return "foreign";
 }
 
-/** Бюджет ремонта можно менять и после взятия в работу — пока заказ не закрыт. */
+/** Стартовый бюджет — только пока карточка свободна; дальше цена через панель сделки. */
 export function canUpdateRepairBudget(
   actor: ItemActor,
   item: { institutionId: string; status: string },
@@ -33,9 +33,16 @@ export function canUpdateRepairBudget(
   if (actor.role !== "DONOR_STAFF" || actor.institutionId !== item.institutionId) {
     return false;
   }
+  return item.status === "LISTED";
+}
+
+export function canManageDisposal(
+  actor: ItemActor,
+  item: { institutionId: string; status: string },
+): boolean {
   return (
-    item.status === "LISTED" ||
-    item.status === "REQUESTED" ||
-    item.status === "IN_REPAIR"
+    actor.role === "DONOR_STAFF" &&
+    actor.institutionId === item.institutionId &&
+    item.status === "DISPOSAL_PENDING"
   );
 }

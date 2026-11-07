@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -40,6 +40,8 @@ enum ItemStatus {
   READY
   DELIVERED
   CLOSED
+  DISPOSAL_PENDING
+  DISPOSED
 }
 
 enum CloseReason {
@@ -79,6 +81,30 @@ enum WalletTxnKind {
   PAYOUT
   BONUS
   ADJUSTMENT
+  DISPOSAL_FEE
+}
+
+enum DisposalMode {
+  SELF
+  FREELANCER
+}
+
+enum DisposalJobStatus {
+  PENDING
+  DELIVERED
+  CONFIRMED
+  CANCELLED
+}
+
+enum PriceOfferSide {
+  SCHOOL
+  FREELANCER
+}
+
+enum PriceOfferStatus {
+  OPEN
+  SUPERSEDED
+  ACCEPTED
 }
 
 model Institution {
@@ -91,6 +117,7 @@ model Institution {
   lng       Float?
   phone     String
   email     String
+  currency  String          @default("BYN")
   users     User[]
   items     Item[]
   requests  Request[]
@@ -107,12 +134,19 @@ model User {
   passwordHash   String
   institutionId  String?
   institution    Institution?      @relation(fields: [institutionId], references: [id])
+  address        String?
+  lat            Float?
+  lng            Float?
+  consentAt      DateTime?
+  consentVersion String?
   listedItems    Item[]            @relation("ListedBy")
   ordersLed      RepairOrder[]     @relation("OrderMaster")
   skills         FreelancerSkill[]
   wallet         Wallet?
   statusEvents   StatusEvent[]
   chatMessages   OrderMessage[]
+  disposalJobs   DisposalJob[]     @relation("DisposalFreelancer")
+  priceOffers    PriceOffer[]
 }
 
 model Category {
@@ -158,14 +192,14 @@ model Item {
   categoryId      String
   category        Category      @relation(fields: [categoryId], references: [id])
   title           String
-  description     String
+  description     String        @db.Text
   condition       ItemCondition
   status          ItemStatus
   closeReason     CloseReason?
   quantity         Int
   year             Int?
   newUnitPriceKop  Int
-  /** Сколько школа готова заплатить за весь ремонт (обсуждается в чате). */
+  /** Сколько школа готова заплатить за весь ремонт (стартовый бюджет сделки). */
   repairBudgetKop  Int
   listedById       String
   listedBy        User          @relation("ListedBy", fields: [listedById], references: [id])
@@ -174,6 +208,7 @@ model Item {
   events          StatusEvent[]
   transfer        Transfer?
   requests        Request[]
+  disposalJob     DisposalJob?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -188,6 +223,8 @@ model ItemPhoto {
   item   Item   @relation(fields: [itemId], references: [id])
   path   String
   sort   Int
+
+  @@index([itemId])
 }
 
 model RepairOrder {
@@ -204,10 +241,14 @@ model RepairOrder {
   plannedMinutes      Int
   actualMinutes       Int                @default(0)
   agreedFeeKop        Int                @default(0)
-  /** Когда завхоз принял предложение фрилансера. До этого ремонт не стартует. */
+  /** Текущая открытая сумма торга (до подтверждения завхоза). */
+  openOfferKop        Int                @default(0)
+  openOfferSide       PriceOfferSide?
+  /** Когда завхоз принял цену. До этого ремонт не стартует. */
   schoolAcceptedAt    DateTime?
   events              StatusEvent[]
   messages            OrderMessage[]
+  priceOffers         PriceOffer[]
   snapshot            EconomySnapshot?
   documents           Document[]
   walletTxns          WalletTransaction[]
@@ -216,6 +257,22 @@ model RepairOrder {
 
   @@index([masterId, status])
   @@index([itemId])
+  @@index([status])
+}
+
+model PriceOffer {
+  id        String           @id @default(cuid())
+  orderId   String
+  order     RepairOrder      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actorId   String
+  actor     User             @relation(fields: [actorId], references: [id])
+  amountKop Int
+  side      PriceOfferSide
+  status    PriceOfferStatus @default(OPEN)
+  createdAt DateTime         @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([orderId, status])
 }
 
 model OrderMessage {
@@ -224,7 +281,7 @@ model OrderMessage {
   order     RepairOrder @relation(fields: [orderId], references: [id])
   authorId  String
   author    User        @relation(fields: [authorId], references: [id])
-  body      String
+  body      String      @db.Text
   createdAt DateTime    @default(now())
 
   @@index([orderId, createdAt])
@@ -253,12 +310,15 @@ model Request {
   categoryId    String
   category      Category      @relation(fields: [categoryId], references: [id])
   title         String
-  description   String
+  description   String        @db.Text
   quantity      Int
   status        RequestStatus
   matchedItemId String?
   matchedItem   Item?         @relation(fields: [matchedItemId], references: [id])
   createdAt     DateTime      @default(now())
+
+  @@index([institutionId])
+  @@index([status])
 }
 
 model Transfer {
@@ -281,7 +341,7 @@ model Document {
   orderId   String?
   order     RepairOrder? @relation(fields: [orderId], references: [id])
   // JSON снимка реквизитов. PDF рисуется из него и не является источником правды.
-  payload   String
+  payload   String       @db.Text
   transfers Transfer[]
   createdAt DateTime     @default(now())
 }
@@ -329,7 +389,7 @@ model AssumptionSet {
   slesarAnnualSalaryKop    Int               @default(0)
   zavhozBonusShareMilli    Int               @default(0)
   freelancerAvgFeeKop      Int               @default(0)
-  basisNote                String
+  basisNote                String            @db.Text
   disposalRates            DisposalRate[]
   snapshots                EconomySnapshot[]
 }
@@ -359,4 +419,38 @@ model EconomySnapshot {
   propertyBudgetKop    Int
   practiceSavingKop    Int           @default(0)
   computedAt           DateTime      @default(now())
+}
+
+model RecyclingPoint {
+  id               String        @id @default(cuid())
+  name             String
+  address          String
+  lat              Float?
+  lng              Float?
+  phone            String        @default("")
+  hours            String        @default("")
+  acceptsCategories String[]
+  jobs             DisposalJob[]
+  createdAt        DateTime      @default(now())
+}
+
+model DisposalJob {
+  id           String            @id @default(cuid())
+  itemId       String            @unique
+  item         Item              @relation(fields: [itemId], references: [id])
+  pointId      String?
+  point        RecyclingPoint?   @relation(fields: [pointId], references: [id])
+  mode         DisposalMode
+  status       DisposalJobStatus @default(PENDING)
+  feeKop       Int               @default(0)
+  freelancerId String?
+  freelancer   User?             @relation("DisposalFreelancer", fields: [freelancerId], references: [id])
+  note         String            @default("")
+  deliveredAt  DateTime?
+  confirmedAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([status])
+  @@index([freelancerId])
 }

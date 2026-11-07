@@ -2,13 +2,18 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { DocumentLinks } from "@/components/document-links";
+import { LocationMap } from "@/components/location-map";
 import { OrderActions } from "@/components/order-actions";
 import { FreelancerOrderSteps } from "@/components/order-flow-steps";
 import { OrderChat } from "@/components/order-chat";
+import { PriceDealPanel } from "@/components/price-deal-panel";
 import { StatusBadge } from "@/components/status-badge";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
 import { orderStatusLabels, type OrderStatus } from "@/domain/orders/labels";
+import type { PriceOfferSide } from "@/domain/orders/price-deal";
+import { maxRepairFeeKop } from "@/domain/orders/price-deal";
+import { distanceKm, formatDistanceKm } from "@/domain/workflow/distance";
 import { requireRoles } from "@/server/auth/current-user";
 import { listOrderMessages } from "@/server/repositories/chat-repository";
 import { findOrderDetail } from "@/server/repositories/order-repository";
@@ -29,12 +34,34 @@ export default async function FreelancerOrderPage({
     redirect("/orders");
   }
 
-  const closed = order.item.status === "CLOSED";
+  const closed = order.item.status === "CLOSED" || order.item.status === "DISPOSED";
   if (closed) {
     redirect("/orders");
   }
 
   const messages = await listOrderMessages(order.id);
+  const school = order.item.institution;
+  const master = order.master;
+  const mapMarkers = [
+    school.lat != null && school.lng != null
+      ? { id: "school", lat: school.lat, lng: school.lng, label: school.name }
+      : null,
+    master.lat != null && master.lng != null
+      ? { id: "freelancer", lat: master.lat, lng: master.lng, label: master.fullName }
+      : null,
+  ].filter((row): row is NonNullable<typeof row> => Boolean(row));
+  const distanceLabel =
+    school.lat != null &&
+    school.lng != null &&
+    master.lat != null &&
+    master.lng != null
+      ? formatDistanceKm(
+          distanceKm(
+            { lat: school.lat, lng: school.lng },
+            { lat: master.lat, lng: master.lng },
+          ),
+        )
+      : null;
 
   return (
     <PageShell>
@@ -55,9 +82,12 @@ export default async function FreelancerOrderPage({
             <p className="text-sm text-leaf">
               {order.item.institution.name}
               {order.item.category?.name ? ` · ${order.item.category.name}` : null}
+              {distanceLabel ? ` · ${distanceLabel}` : null}
             </p>
             <p className="text-base font-medium text-ink">
-              Ваша цена {formatByn(order.agreedFeeKop)}
+              {order.schoolAcceptedAt
+                ? `Согласовано ${formatByn(order.agreedFeeKop)}`
+                : `Открытая цена ${formatByn(order.openOfferKop || order.agreedFeeKop)}`}
             </p>
             <Link href={`/catalog/${order.item.id}`} className="text-sm text-gold underline-offset-2 hover:underline">
               Карточка объекта в каталоге
@@ -73,6 +103,37 @@ export default async function FreelancerOrderPage({
             </Surface>
           ) : null}
 
+          {order.status === "ASSIGNED" && !order.schoolAcceptedAt ? (
+            <PriceDealPanel
+              orderId={order.id}
+              role={user.role === "PLATFORM_ADMIN" ? "PLATFORM_ADMIN" : "FREELANCER"}
+              schoolBudgetKop={order.item.repairBudgetKop}
+              openOfferKop={order.openOfferKop}
+              openOfferSide={(order.openOfferSide as PriceOfferSide | null) ?? null}
+              offers={order.priceOffers.map((offer) => ({
+                id: offer.id,
+                amountKop: offer.amountKop,
+                side: offer.side as PriceOfferSide,
+                status: offer.status,
+                createdAt: offer.createdAt,
+              }))}
+              maxKop={maxRepairFeeKop({
+                repairBudgetKop: order.item.repairBudgetKop,
+                newUnitPriceKop: order.item.newUnitPriceKop,
+                quantity: order.item.quantity,
+              })}
+            />
+          ) : null}
+
+          <Surface>
+            <h2 className="mb-3 text-sm font-semibold text-ink">На карте</h2>
+            <p className="mb-3 text-sm text-leaf">
+              Учреждение{school.address ? `: ${school.address}` : ""}
+              {master.address ? ` · вы: ${master.address}` : ""}
+            </p>
+            <LocationMap markers={mapMarkers} />
+          </Surface>
+
           <Surface className="flex flex-col gap-4">
             <div>
               <h2 className="mb-3 text-sm font-semibold text-ink">Шаги заказа</h2>
@@ -80,7 +141,7 @@ export default async function FreelancerOrderPage({
                 itemStatus={order.item.status}
                 orderStatus={order.status as OrderStatus}
                 schoolAccepted={Boolean(order.schoolAcceptedAt)}
-                agreedFeeKop={order.agreedFeeKop}
+                agreedFeeKop={order.openOfferKop || order.agreedFeeKop}
               />
             </div>
             <OrderActions
@@ -88,7 +149,7 @@ export default async function FreelancerOrderPage({
               orderStatus={order.status}
               itemStatus={order.item.status}
               schoolAccepted={Boolean(order.schoolAcceptedAt)}
-              agreedFeeKop={order.agreedFeeKop}
+              agreedFeeKop={order.openOfferKop || order.agreedFeeKop}
             />
           </Surface>
 

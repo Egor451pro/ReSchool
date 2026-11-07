@@ -5,6 +5,8 @@ export const itemStatuses = [
   "READY",
   "DELIVERED",
   "CLOSED",
+  "DISPOSAL_PENDING",
+  "DISPOSED",
 ] as const;
 
 export type ItemStatus = (typeof itemStatuses)[number];
@@ -16,10 +18,12 @@ const transitions: Record<ItemStatus, readonly ItemStatus[]> = {
   LISTED: ["REQUESTED", "CLOSED"],
   REQUESTED: ["LISTED", "IN_REPAIR"],
   // LISTED — мастерская вернула карточку до выдачи, без закрытия как лом.
-  IN_REPAIR: ["READY", "CLOSED", "LISTED"],
+  IN_REPAIR: ["READY", "CLOSED", "LISTED", "DISPOSAL_PENDING"],
   READY: ["DELIVERED"],
   DELIVERED: ["CLOSED"],
   CLOSED: [],
+  DISPOSAL_PENDING: ["DISPOSED"],
+  DISPOSED: [],
 };
 
 const closeReasonBySource: Partial<Record<ItemStatus, CloseReason>> = {

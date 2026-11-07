@@ -47,6 +47,8 @@ export async function createDonorWithInstitution(input: {
   fullName: string;
   email: string;
   passwordHash: string;
+  consentAt: Date;
+  consentVersion: string;
   institution: {
     name: string;
     type: InstitutionType;
@@ -76,6 +78,8 @@ export async function createDonorWithInstitution(input: {
         passwordHash: input.passwordHash,
         role: "DONOR_STAFF",
         institutionId: institution.id,
+        consentAt: input.consentAt,
+        consentVersion: input.consentVersion,
       },
       select: userSelect,
     });
@@ -93,6 +97,11 @@ export async function createFreelancer(input: {
   email: string;
   passwordHash: string;
   specialtyIds: string[];
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  consentAt: Date;
+  consentVersion: string;
 }) {
   return prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
@@ -102,6 +111,11 @@ export async function createFreelancer(input: {
         passwordHash: input.passwordHash,
         role: "FREELANCER",
         institutionId: null,
+        address: input.address ?? null,
+        lat: input.lat ?? null,
+        lng: input.lng ?? null,
+        consentAt: input.consentAt,
+        consentVersion: input.consentVersion,
       },
       select: userSelect,
     });

@@ -2,6 +2,8 @@
 
 import { Suspense, type ReactNode } from "react";
 import { NavigationChrome } from "@/components/navigation-chrome";
+import { OfflineBanner } from "@/components/offline-banner";
+import { SiteFooter } from "@/components/site-footer";
 
 function ChromeFallback() {
   return (
@@ -17,7 +19,11 @@ function ChromeFallback() {
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <>
-      <div className="flex min-h-full flex-1 flex-col">{children}</div>
+      <div className="flex min-h-full flex-1 flex-col">
+        <OfflineBanner />
+        {children}
+        <SiteFooter />
+      </div>
       <Suspense fallback={<ChromeFallback />}>
         <NavigationChrome />
       </Suspense>

@@ -66,8 +66,11 @@ export default async function CabinetPage() {
                     order?.status === "ASSIGNED" &&
                     !order.schoolAcceptedAt;
                   const waitingConfirm = item.status === "READY" && Boolean(order);
+                  const openFee = order
+                    ? order.openOfferKop || order.agreedFeeKop
+                    : 0;
                   const hint = awaitingAccept
-                    ? `Подтвердите цену · ${feeMeta(order!.agreedFeeKop)}`
+                    ? `Торг по цене · ${feeMeta(openFee)}`
                     : waitingConfirm
                       ? "Ждёт вашего подтверждения закрытия"
                       : order
@@ -82,7 +85,7 @@ export default async function CabinetPage() {
                       title={item.title}
                       subtitle={item.category.name}
                       status={item.status}
-                      meta={order ? feeMeta(order.agreedFeeKop) : undefined}
+                      meta={order ? feeMeta(openFee) : undefined}
                       hint={hint}
                     />
                   );

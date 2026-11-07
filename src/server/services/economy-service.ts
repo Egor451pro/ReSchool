@@ -45,6 +45,7 @@ export type DistrictDashboard = {
     items: number;
     completedClosed: number;
     activeOrders: number;
+    disposed: number;
   };
   fact: SnapshotTotals;
   topInstitutions: InstitutionSaving[];
@@ -115,7 +116,7 @@ export async function loadDistrictDashboard(
     districtOverview(district),
   ]);
 
-  const [institutions, items, completedClosed, activeOrders] = overviewCounts;
+  const [institutions, items, completedClosed, activeOrders, disposed] = overviewCounts;
   const fact = sumSnapshots(
     snapshots.map((row) => ({
       procurementSavingKop: row.procurementSavingKop,
@@ -151,7 +152,7 @@ export async function loadDistrictDashboard(
 
   return {
     districtLabel: district ?? "Все районы в базе",
-    overview: { institutions, items, completedClosed, activeOrders },
+    overview: { institutions, items, completedClosed, activeOrders, disposed },
     fact,
     topInstitutions: rankInstitutions(snapshots),
     scenarios,

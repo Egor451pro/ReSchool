@@ -127,6 +127,12 @@ export function districtOverview(district: string | null) {
         item: { institution: institutionWhere },
       },
     }),
+    prisma.item.count({
+      where: {
+        institution: institutionWhere,
+        status: "DISPOSED",
+      },
+    }),
   ]);
 }
 

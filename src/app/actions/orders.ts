@@ -10,6 +10,7 @@ import {
   claimListedItem,
   markOrderDelivered,
   markOrderUnrepairable,
+  proposeOrderPrice,
 } from "@/server/services/order-service";
 import { closeDeliveredOrder } from "@/server/services/economy-service";
 import { revalidateAppViews } from "@/server/revalidate";
@@ -21,28 +22,50 @@ function text(formData: FormData, key: string): string {
   return typeof value === "string" ? value : "";
 }
 
+function parseFee(formData: FormData, key = "feeByn"): { ok: true; kop: number } | { ok: false; error: string } {
+  try {
+    return { ok: true, kop: parseBynToKop(text(formData, key)) };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Укажите цену в белорусских рублях",
+    };
+  }
+}
+
 export async function claimItemAction(
   _state: OrderFormState,
   formData: FormData,
 ): Promise<OrderFormState> {
   const actor = await requireRoles(["FREELANCER"]);
-  const feeRaw = text(formData, "feeByn");
-  let agreedFeeKop = 0;
-  try {
-    agreedFeeKop = parseBynToKop(feeRaw);
-  } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "Укажите цену в белорусских рублях",
-    };
-  }
+  const fee = parseFee(formData);
+  if (!fee.ok) return { error: fee.error };
 
   const result = await claimListedItem(actor, {
     itemId: text(formData, "itemId"),
-    agreedFeeKop,
+    agreedFeeKop: fee.kop,
   });
   if (!result.ok) return { error: result.error };
   revalidateAppViews();
   redirect(result.orderId ? `/orders/${result.orderId}` : "/orders");
+}
+
+export async function proposePriceAction(
+  _state: OrderFormState,
+  formData: FormData,
+): Promise<OrderFormState> {
+  const actor = await requireRoles(["FREELANCER", "DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const fee = parseFee(formData);
+  if (!fee.ok) return { error: fee.error };
+
+  const orderId = text(formData, "orderId");
+  const result = await proposeOrderPrice(actor, { orderId, amountKop: fee.kop });
+  if (!result.ok) return { error: result.error };
+  revalidateAppViews();
+  if (actor.role === "DONOR_STAFF" && result.itemId) {
+    redirect(`/cabinet/items/${result.itemId}`);
+  }
+  redirect(`/orders/${orderId}`);
 }
 
 export async function acceptOrderAction(

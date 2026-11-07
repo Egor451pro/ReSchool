@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { AcceptOrderButton } from "@/components/accept-order-button";
 import { BackLink } from "@/components/back-link";
 import { ConfirmRepairButton } from "@/components/confirm-repair-button";
 import { DeleteItemButton } from "@/components/delete-item-button";
+import { DisposalPanel } from "@/components/disposal-panel";
 import { DocumentLinks } from "@/components/document-links";
 import { OrderChat } from "@/components/order-chat";
 import { SchoolOrderSteps } from "@/components/order-flow-steps";
+import { PriceDealPanel } from "@/components/price-deal-panel";
 import { RepairBudgetForm } from "@/components/repair-budget-form";
 import { StatusBadge } from "@/components/status-badge";
 import { PageShell, Surface } from "@/components/ui/surface";
@@ -14,9 +15,15 @@ import { formatByn } from "@/domain/economy/money";
 import { canUpdateRepairBudget } from "@/domain/items/access";
 import { statusLabels } from "@/domain/items/labels";
 import { orderStatusLabels, type OrderStatus } from "@/domain/orders/labels";
+import type { PriceOfferSide } from "@/domain/orders/price-deal";
 import { requireRoles } from "@/server/auth/current-user";
 import { listOrderMessages } from "@/server/repositories/chat-repository";
 import { findItemCard } from "@/server/repositories/item-repository";
+import {
+  loadDisposalJob,
+  loadRecyclingPointsForItem,
+} from "@/server/services/disposal-service";
+import { prisma } from "@/server/db";
 
 export const instant = false;
 
@@ -30,7 +37,7 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
     redirect("/cabinet");
   }
 
-  if (item.status === "CLOSED") {
+  if (item.status === "CLOSED" || item.status === "DISPOSED") {
     redirect("/cabinet");
   }
 
@@ -40,10 +47,22 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
     order?.status === "ASSIGNED" &&
     !order.schoolAcceptedAt;
   const waitingConfirm = item.status === "READY" && Boolean(order);
-  const showChat = Boolean(order) && item.status !== "LISTED";
+  const disposalPending = item.status === "DISPOSAL_PENDING";
+  const showChat = Boolean(order) && item.status !== "LISTED" && !disposalPending;
   const messages = order && showChat ? await listOrderMessages(order.id) : [];
   const canEditBudget = canUpdateRepairBudget(user, item);
   const maxBudgetKop = item.newUnitPriceKop * item.quantity;
+  const disposalJob = disposalPending ? await loadDisposalJob(item.id) : null;
+  const recyclingPoints = disposalPending
+    ? await loadRecyclingPointsForItem(item.category.slug)
+    : [];
+  const lastMaster = disposalPending
+    ? await prisma.repairOrder.findFirst({
+        where: { itemId: item.id },
+        orderBy: { createdAt: "desc" },
+        select: { master: { select: { fullName: true } } },
+      })
+    : null;
 
   return (
     <PageShell>
@@ -102,15 +121,21 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
             </Surface>
           ) : null}
 
-          <Surface>
-            <h2 className="mb-3 text-sm font-semibold text-ink">Шаги заказа</h2>
-            <SchoolOrderSteps
-              itemStatus={item.status}
-              orderStatus={order ? (order.status as OrderStatus) : null}
-              schoolAccepted={Boolean(order?.schoolAcceptedAt)}
-              agreedFeeKop={order?.agreedFeeKop}
-            />
-          </Surface>
+          {!disposalPending ? (
+            <Surface>
+              <h2 className="mb-3 text-sm font-semibold text-ink">Шаги заказа</h2>
+              <SchoolOrderSteps
+                itemStatus={item.status}
+                orderStatus={order ? (order.status as OrderStatus) : null}
+                schoolAccepted={Boolean(order?.schoolAcceptedAt)}
+                agreedFeeKop={
+                  order
+                    ? order.openOfferKop || order.agreedFeeKop
+                    : null
+                }
+              />
+            </Surface>
+          ) : null}
 
           {canEditBudget ? (
             <Surface>
@@ -124,18 +149,21 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
           ) : null}
 
           {awaitingAccept && order ? (
-            <Surface tone="accent" className="p-4">
-              <p className="text-sm leading-6">
-                Фрилансер предложил цену{" "}
-                <span className="font-semibold">{formatByn(order.agreedFeeKop)}</span>
-                {order.agreedFeeKop !== item.repairBudgetKop
-                  ? ` (ваш бюджет был ${formatByn(item.repairBudgetKop)})`
-                  : ""}
-                . Обсудите в чате при необходимости, затем подтвердите именно эту сумму — заказ
-                сразу перейдёт в работу.
-              </p>
-              <AcceptOrderButton orderId={order.id} agreedFeeKop={order.agreedFeeKop} />
-            </Surface>
+            <PriceDealPanel
+              orderId={order.id}
+              role="DONOR_STAFF"
+              schoolBudgetKop={item.repairBudgetKop}
+              openOfferKop={order.openOfferKop}
+              openOfferSide={(order.openOfferSide as PriceOfferSide | null) ?? null}
+              offers={order.priceOffers.map((offer) => ({
+                id: offer.id,
+                amountKop: offer.amountKop,
+                side: offer.side as PriceOfferSide,
+                status: offer.status,
+                createdAt: offer.createdAt,
+              }))}
+              maxKop={maxBudgetKop}
+            />
           ) : null}
 
           {waitingConfirm && order ? (
@@ -145,6 +173,19 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
                 карточка уйдёт в историю, выплата начислится.
               </p>
               <ConfirmRepairButton itemId={item.id} />
+            </Surface>
+          ) : null}
+
+          {disposalPending ? (
+            <Surface>
+              <DisposalPanel
+                itemId={item.id}
+                points={recyclingPoints}
+                job={disposalJob}
+                freelancerName={
+                  disposalJob?.freelancer?.fullName ?? lastMaster?.master.fullName ?? null
+                }
+              />
             </Surface>
           ) : null}
 

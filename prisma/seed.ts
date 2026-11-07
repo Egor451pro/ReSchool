@@ -31,10 +31,12 @@ async function clearDatabase(): Promise<void> {
   await prisma.document.deleteMany();
   await prisma.orderMessage.deleteMany();
   await prisma.statusEvent.deleteMany();
+  await prisma.disposalJob.deleteMany();
   await prisma.repairOrder.deleteMany();
   await prisma.request.deleteMany();
   await prisma.itemPhoto.deleteMany();
   await prisma.item.deleteMany();
+  await prisma.recyclingPoint.deleteMany();
   await prisma.freelancerSkill.deleteMany();
   await prisma.disposalRate.deleteMany();
   await prisma.assumptionSet.deleteMany();
@@ -44,6 +46,63 @@ async function clearDatabase(): Promise<void> {
   await prisma.user.deleteMany();
   await prisma.institution.deleteMany();
 }
+
+const recyclingPoints = [
+  {
+    name: "Вторчермет — Партизанский",
+    address: "г. Минск, ул. Партизанский пр-т, 8",
+    lat: 53.877,
+    lng: 27.62,
+    phone: "+375 17 246-00-01",
+    hours: "пн–пт 9:00–17:00",
+    acceptsCategories: ["furniture", "tools", "other"],
+  },
+  {
+    name: "Пункт приёма металла «Уручье»",
+    address: "г. Минск, ул. Логойский тракт, 37",
+    lat: 53.953,
+    lng: 27.685,
+    phone: "+375 29 111-22-33",
+    hours: "пн–сб 8:00–18:00",
+    acceptsCategories: ["furniture", "tools", "sport", "other"],
+  },
+  {
+    name: "Экопункт «Малиновка»",
+    address: "г. Минск, ул. Лобанка, 79",
+    lat: 53.846,
+    lng: 27.435,
+    phone: "+375 17 312-45-67",
+    hours: "ежедневно 10:00–19:00",
+    acceptsCategories: ["computers", "lab", "other"],
+  },
+  {
+    name: "Приём лома «Шабаны»",
+    address: "г. Минск, ул. Бабушкина, 49",
+    lat: 53.84,
+    lng: 27.68,
+    phone: "+375 29 555-66-77",
+    hours: "пн–пт 8:30–16:30",
+    acceptsCategories: ["furniture", "tools", "sport", "other"],
+  },
+  {
+    name: "Центр вторсырья «Серебрянка»",
+    address: "г. Минск, ул. Я. Лучины, 7",
+    lat: 53.865,
+    lng: 27.645,
+    phone: "+375 17 269-10-20",
+    hours: "пн–сб 9:00–18:00",
+    acceptsCategories: ["computers", "lab", "other"],
+  },
+  {
+    name: "Пункт «Каменная Горка»",
+    address: "г. Минск, ул. Притыцкого, 158",
+    lat: 53.908,
+    lng: 27.43,
+    phone: "+375 44 700-80-90",
+    hours: "пн–пт 9:00–17:00",
+    acceptsCategories: ["furniture", "computers", "tools", "sport", "lab", "other"],
+  },
+];
 
 async function main(): Promise<void> {
   const avgDisposalKop = Math.round(
@@ -139,13 +198,15 @@ async function main(): Promise<void> {
     }
   }
 
+  await prisma.recyclingPoint.createMany({ data: recyclingPoints });
+
   const itemCount = await prisma.item.count();
   if (itemCount !== 0) {
     throw new Error(`Каталог должен быть пустым, сейчас предметов: ${itemCount}`);
   }
 
   console.log(
-    `Сид готов: ${institutions.length} учреждений, ${staff.filter((s) => s.role === "FREELANCER").length} фрилансеров, каталог пустой.`,
+    `Сид готов: ${institutions.length} учреждений, ${staff.filter((s) => s.role === "FREELANCER").length} фрилансеров, ${recyclingPoints.length} пунктов приёма, каталог пустой.`,
   );
   console.log(`Демо-пароль всех учёток: ${DEMO_PASSWORD}`);
   console.log(`Фрилансер: freelancer.wood@reschool.demo / ${DEMO_PASSWORD}`);

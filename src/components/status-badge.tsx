@@ -13,6 +13,8 @@ const statusTone: Record<ItemStatus, string> = {
   READY: "bg-mint/25 text-ink ring-1 ring-mint/40",
   DELIVERED: "bg-muted text-ink ring-1 ring-line-strong",
   CLOSED: "bg-transparent text-leaf ring-1 ring-line-strong",
+  DISPOSAL_PENDING: "bg-gold/15 text-leaf ring-1 ring-gold/35",
+  DISPOSED: "bg-transparent text-leaf ring-1 ring-line-strong",
 };
 
 const conditionTone: Record<ItemCondition, string> = {

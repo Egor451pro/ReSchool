@@ -9,9 +9,14 @@ const uploadDir = path.join(process.cwd(), "data", "uploads");
 
 export type StoredPhoto = { ok: true; name: string } | { ok: false; error: string };
 
+const allowedMime = new Set(["image/jpeg", "image/png", "image/webp", ""]);
+
 export async function saveUploadedPhoto(file: File): Promise<StoredPhoto> {
   if (file.size === 0) return { ok: false, error: "Файл фотографии пустой" };
   if (file.size > maxPhotoBytes) return { ok: false, error: "Фото больше 5 МБ" };
+  if (file.type && !allowedMime.has(file.type)) {
+    return { ok: false, error: "Нужна фотография JPG, PNG или WebP" };
+  }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const kind = detectPhotoKind(bytes);

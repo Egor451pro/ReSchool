@@ -215,7 +215,7 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
                     orderStatus={order.status as OrderStatus}
                     itemStatus={item.status}
                     schoolAccepted={Boolean(order.schoolAcceptedAt)}
-                    agreedFeeKop={order.agreedFeeKop}
+                    agreedFeeKop={order.openOfferKop || order.agreedFeeKop}
                   />
                 </div>
               ) : null}

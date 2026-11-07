@@ -48,7 +48,7 @@ export function listCatalogItems(query: CatalogQuery) {
 /** Активные карточки школы: ещё не ушли в историю. */
 export function listInstitutionActiveItems(institutionId: string) {
   return prisma.item.findMany({
-    where: { institutionId, status: { not: "CLOSED" } },
+    where: { institutionId, status: { notIn: ["CLOSED", "DISPOSED"] } },
     orderBy: [{ createdAt: "desc" }, { title: "asc" }],
     select: {
       ...tileSelect,
@@ -60,6 +60,7 @@ export function listInstitutionActiveItems(institutionId: string) {
           id: true,
           status: true,
           agreedFeeKop: true,
+          openOfferKop: true,
           schoolAcceptedAt: true,
           master: { select: { fullName: true } },
         },
@@ -73,8 +74,10 @@ export function listInstitutionRepairHistory(institutionId: string) {
   return prisma.item.findMany({
     where: {
       institutionId,
-      status: "CLOSED",
-      closeReason: { in: ["COMPLETED", "UNREPAIRABLE"] },
+      OR: [
+        { status: "CLOSED", closeReason: { in: ["COMPLETED", "UNREPAIRABLE"] } },
+        { status: "DISPOSED" },
+      ],
     },
     orderBy: [{ updatedAt: "desc" }, { title: "asc" }],
     select: {
@@ -141,7 +144,9 @@ export function findItemCard(id: string) {
       institutionId: true,
       createdAt: true,
       category: { select: { id: true, slug: true, name: true } },
-      institution: { select: { name: true, district: true, address: true } },
+      institution: {
+        select: { name: true, district: true, address: true, lat: true, lng: true },
+      },
       listedBy: { select: { id: true, fullName: true, role: true } },
       photos: { orderBy: { sort: "asc" }, select: { id: true, path: true, sort: true } },
       orders: {
@@ -152,12 +157,26 @@ export function findItemCard(id: string) {
           id: true,
           status: true,
           agreedFeeKop: true,
+          openOfferKop: true,
+          openOfferSide: true,
           schoolAcceptedAt: true,
           masterId: true,
           master: { select: { id: true, fullName: true, role: true } },
           documents: {
             orderBy: { createdAt: "asc" },
             select: { id: true, type: true, number: true, createdAt: true },
+          },
+          priceOffers: {
+            orderBy: { createdAt: "asc" },
+            select: {
+              id: true,
+              amountKop: true,
+              side: true,
+              status: true,
+              createdAt: true,
+              actorId: true,
+              actor: { select: { id: true, fullName: true, role: true } },
+            },
           },
         },
       },
@@ -363,7 +382,7 @@ export async function deleteListedItem(input: { id: string; institutionId: strin
   });
 }
 
-/** Меняет бюджет ремонта и синхронизирует цену активного заказа. */
+/** Меняет стартовый бюджет ремонта только пока карточка свободна (LISTED). */
 export async function updateItemRepairBudget(input: {
   id: string;
   institutionId: string;
@@ -376,19 +395,10 @@ export async function updateItemRepairBudget(input: {
         status: true,
         newUnitPriceKop: true,
         quantity: true,
-        orders: {
-          where: { status: { in: ["ASSIGNED", "IN_PROGRESS", "QUALITY_CHECK"] } },
-          select: { id: true },
-          take: 1,
-        },
       },
     });
     if (!item) return { ok: false, reason: "not-found" };
-    if (
-      item.status !== "LISTED" &&
-      item.status !== "REQUESTED" &&
-      item.status !== "IN_REPAIR"
-    ) {
+    if (item.status !== "LISTED") {
       return { ok: false, reason: "locked" };
     }
 
@@ -399,14 +409,6 @@ export async function updateItemRepairBudget(input: {
       where: { id: input.id },
       data: { repairBudgetKop: input.repairBudgetKop },
     });
-
-    const order = item.orders[0];
-    if (order) {
-      await tx.repairOrder.update({
-        where: { id: order.id },
-        data: { agreedFeeKop: input.repairBudgetKop },
-      });
-    }
 
     return { ok: true };
   });

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { sendChatMessageAction, type ChatFormState } from "@/app/actions/chat";
 import { mvpRoleLabel, type UserRole } from "@/domain/access/roles";
+import { isPriceSystemMessage, stripPriceMarker } from "@/domain/orders/price-deal";
 
 const initial: ChatFormState = {};
 
@@ -64,17 +65,28 @@ export function OrderChat({
       <div className="flex max-h-[min(22rem,55dvh)] min-h-[10rem] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-line bg-paper/60 p-2.5 sm:min-h-[12rem]">
         {messages.length === 0 ? (
           <p className="px-1 py-6 text-center text-xs leading-5 text-leaf">
-            Пока тихо. Обсудите детали ремонта, сроки и материалы.
+            Пока тихо. Детали ремонта и сроки — здесь; цену меняйте в блоке «Сделка по цене».
           </p>
         ) : (
           messages.map((message) => {
-            const mine = message.authorId === currentUserId;
             const when = new Date(message.createdAt).toLocaleString("ru-BY", {
               day: "2-digit",
               month: "2-digit",
               hour: "2-digit",
               minute: "2-digit",
             });
+            if (isPriceSystemMessage(message.body)) {
+              return (
+                <div
+                  key={message.id}
+                  className="mx-auto max-w-[95%] rounded-xl bg-muted/70 px-3 py-1.5 text-center text-xs leading-5 text-leaf"
+                >
+                  <span>{stripPriceMarker(message.body)}</span>
+                  <span className="ml-2 opacity-70">{when}</span>
+                </div>
+              );
+            }
+            const mine = message.authorId === currentUserId;
             const roleName = mvpRoleLabel(message.author.role as UserRole);
             return (
               <div

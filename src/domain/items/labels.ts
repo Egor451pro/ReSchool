@@ -22,6 +22,8 @@ export const statusLabels: Record<ItemStatus, string> = {
   READY: "Ждёт подтверждения",
   DELIVERED: "Передано",
   CLOSED: "Закрыто",
+  DISPOSAL_PENDING: "Сдача в утиль",
+  DISPOSED: "Сдано в утиль",
 };
 
 export const closeReasonLabels: Record<CloseReason, string> = {

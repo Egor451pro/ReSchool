@@ -10,6 +10,7 @@ const kindLabels = {
   PAYOUT: "Выплата",
   BONUS: "Премия",
   ADJUSTMENT: "Корректировка",
+  DISPOSAL_FEE: "Сдача в утиль",
 } as const;
 
 export default async function WalletPage() {

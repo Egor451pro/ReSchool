@@ -80,8 +80,8 @@ export function OrderActions({
     <div className="flex flex-col gap-3">
       {waitingAccept ? (
         <p className="rounded-2xl border border-line bg-muted/60 px-3 py-2 text-sm leading-6 text-leaf">
-          Цена {formatByn(agreedFeeKop)} отправлена завхозу. Пока он не нажмёт «Подтвердить
-          цену», заказ не в работе — можно писать в чат.
+          Открытая сумма {formatByn(agreedFeeKop)}. Пока завхоз не подтвердит цену в блоке сделки,
+          заказ не в работе — детали ремонта можно обсуждать в чате.
         </p>
       ) : null}
 

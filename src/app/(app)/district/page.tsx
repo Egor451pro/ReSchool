@@ -38,11 +38,16 @@ export default async function DistrictPage() {
         <Metric value={String(dashboard.overview.institutions)} label="учреждений" />
         <Metric value={String(dashboard.overview.items)} label="предметов в учёте" />
         <Metric value={String(dashboard.fact.orders)} label="снимков экономии" />
-        <Metric
-          value={hoursFromMinutes(dashboard.fact.minutes)}
-          label="часов учебной практики"
-        />
+        <Metric value={String(dashboard.overview.disposed)} label="сдано в утиль" />
       </section>
+      <p className="text-sm text-leaf">
+        Учебной практики по снимкам: {hoursFromMinutes(dashboard.fact.minutes)} ч. Прогноз
+        масштабирования по СНГ — в{" "}
+        <Link href="/district/forecast" className="font-medium text-ink underline decoration-line underline-offset-2">
+          разделе «Прогноз»
+        </Link>
+        .
+      </p>
 
       <section className="grid gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
@@ -67,7 +72,8 @@ export default async function DistrictPage() {
           </ul>
           <p className="text-sm text-leaf">
             Труд учащихся в сумму не входит. Закрыто с причиной «выполнено»:{" "}
-            {dashboard.overview.completedClosed}. В работе сейчас:{" "}
+            {dashboard.overview.completedClosed}. Сдано в утиль:{" "}
+            {dashboard.overview.disposed}. В работе сейчас:{" "}
             {dashboard.overview.activeOrders}.
           </p>
         </div>

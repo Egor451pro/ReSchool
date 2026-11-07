@@ -8,6 +8,8 @@ describe("конвейер предмета", () => {
     expect(() => assertItemTransition("REQUESTED", "IN_REPAIR")).not.toThrow();
     expect(() => assertItemTransition("IN_REPAIR", "LISTED")).not.toThrow();
     expect(() => assertItemTransition("IN_REPAIR", "READY")).not.toThrow();
+    expect(() => assertItemTransition("IN_REPAIR", "DISPOSAL_PENDING")).not.toThrow();
+    expect(() => assertItemTransition("DISPOSAL_PENDING", "DISPOSED")).not.toThrow();
     expect(() => assertItemTransition("READY", "DELIVERED")).not.toThrow();
     expect(() => assertItemTransition("DELIVERED", "CLOSED", "COMPLETED")).not.toThrow();
   });

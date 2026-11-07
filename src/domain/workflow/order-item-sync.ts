@@ -86,12 +86,12 @@ export function planUnrepairable(itemStatus: ItemStatus, orderStatus: OrderStatu
     throw new Error("Неремонтопригодным закрывают уже начатый ремонт");
   }
   assertOrderTransition(orderStatus, "CANCELLED");
-  assertItemTransition(itemStatus, "CLOSED", "UNREPAIRABLE");
+  assertItemTransition(itemStatus, "DISPOSAL_PENDING");
   return {
     orderTo: "CANCELLED",
-    itemTo: "CLOSED",
+    itemTo: "DISPOSAL_PENDING",
     closeReason: "UNREPAIRABLE",
-    comment: "Ремонт признан нецелесообразным.",
+    comment: "Ремонт признан нецелесообразным. Нужна сдача в пункт приёма.",
   };
 }
 

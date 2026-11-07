@@ -3,6 +3,9 @@
 import { redirect } from "next/navigation";
 import { DEMO_PASSWORD } from "@/domain/access/demo-accounts";
 import { roleHome, safeNextPath } from "@/domain/access/roles";
+import { zodFieldErrors } from "@/lib/action-result";
+import { logger, withAction } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   loginSchema,
   registerDonorSchema,
@@ -29,12 +32,7 @@ export type AuthFormState = {
 };
 
 function fieldMessages(error: { issues: { path: PropertyKey[]; message: string }[] }) {
-  const fields: AuthFormState["fields"] = {};
-  for (const issue of error.issues) {
-    const key = String(issue.path[0] ?? "");
-    if (!fields[key]) fields[key] = issue.message;
-  }
-  return fields;
+  return zodFieldErrors(error);
 }
 
 function readNext(formData: FormData): string | null {
@@ -61,19 +59,31 @@ async function establishSession(result: {
 }
 
 export async function loginAction(_state: AuthFormState, formData: FormData): Promise<AuthFormState> {
-  const parsed = loginSchema.safeParse({
-    email: formData.get("email"),
-    password: formData.get("password"),
-  });
-  if (!parsed.success) {
-    return { error: "Проверьте почту и пароль", fields: fieldMessages(parsed.error) };
+  const emailHint =
+    typeof formData.get("email") === "string"
+      ? String(formData.get("email")).toLowerCase().slice(0, 80)
+      : "unknown";
+  const limited = rateLimit(`login-action:${emailHint}`, 10, 60_000);
+  if (!limited.ok) {
+    logger.warn("login.rate_limited", { action: "login", email: emailHint });
+    return { error: "Слишком много попыток входа. Подождите минуту." };
   }
 
-  const result = await loginWithPassword(parsed.data.email, parsed.data.password);
-  if (!result.ok) return { error: result.error };
+  return withAction("login", null, async () => {
+    const parsed = loginSchema.safeParse({
+      email: formData.get("email"),
+      password: formData.get("password"),
+    });
+    if (!parsed.success) {
+      return { error: "Проверьте почту и пароль", fields: fieldMessages(parsed.error) };
+    }
 
-  await establishSession(result);
-  redirect(safeNextPath(readNext(formData), result.role));
+    const result = await loginWithPassword(parsed.data.email, parsed.data.password);
+    if (!result.ok) return { error: result.error };
+
+    await establishSession(result);
+    redirect(safeNextPath(readNext(formData), result.role));
+  });
 }
 
 export async function registerDonorAction(
@@ -90,6 +100,8 @@ export async function registerDonorAction(
     address: formData.get("address"),
     phone: formData.get("phone"),
     institutionEmail: formData.get("institutionEmail"),
+    personalDataConsent: formData.get("personalDataConsent"),
+    acceptTerms: formData.get("acceptTerms"),
   });
   if (!parsed.success) {
     return { error: "Проверьте поля формы", fields: fieldMessages(parsed.error) };
@@ -115,6 +127,9 @@ export async function registerFreelancerAction(
     email: formData.get("email"),
     password: formData.get("password"),
     specialtyIds,
+    address: formData.get("address") || undefined,
+    personalDataConsent: formData.get("personalDataConsent"),
+    acceptTerms: formData.get("acceptTerms"),
   });
   if (!parsed.success) {
     return { error: "Проверьте поля формы", fields: fieldMessages(parsed.error) };

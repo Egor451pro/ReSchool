@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { registerFreelancerAction, type AuthFormState } from "@/app/actions/auth";
 
@@ -51,6 +52,18 @@ export function RegisterFreelancerForm({
           <span className="font-medium text-ink">{state.fields.password}</span>
         ) : null}
       </label>
+      <label className="flex flex-col gap-1 text-sm text-leaf">
+        Адрес (необязательно)
+        <input
+          name="address"
+          autoComplete="street-address"
+          placeholder="Город, улица, дом"
+          className="field"
+        />
+        {state.fields?.address ? (
+          <span className="font-medium text-ink">{state.fields.address}</span>
+        ) : null}
+      </label>
       <fieldset className="flex flex-col gap-2">
         <legend className="text-sm text-leaf">Навыки (необязательно)</legend>
         <div className="flex flex-col gap-2">
@@ -62,6 +75,25 @@ export function RegisterFreelancerForm({
           ))}
         </div>
       </fieldset>
+      <label className="flex items-start gap-2 text-sm text-leaf">
+        <input type="checkbox" name="acceptTerms" required className="mt-1" />
+        <span>
+          Принимаю{" "}
+          <Link href="/legal/terms" className="font-medium text-ink underline decoration-line underline-offset-2">
+            пользовательское соглашение
+          </Link>
+        </span>
+      </label>
+      <label className="flex items-start gap-2 text-sm text-leaf">
+        <input type="checkbox" name="personalDataConsent" required className="mt-1" />
+        <span>
+          Даю отдельное согласие на обработку персональных данных (
+          <Link href="/legal/consent" className="font-medium text-ink underline decoration-line underline-offset-2">
+            текст
+          </Link>
+          )
+        </span>
+      </label>
       {state.error ? (
         <p className="rounded-2xl border border-line-strong bg-muted px-3 py-2 text-sm text-ink">
           {state.error}

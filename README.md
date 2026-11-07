@@ -7,7 +7,7 @@
 ## Стек
 
 - Next.js, TypeScript, Tailwind CSS
-- Prisma и SQLite, файл `prisma/dev.db`
+- Prisma и PostgreSQL 16 (Docker Compose)
 - Vitest для чистой логики экономики и конвейера статусов
 - Zod для проверки входных данных
 
@@ -96,6 +96,7 @@ MVP без портфолио учащегося: группа на заказе
 ### Что нужно
 
 - **Node.js 20+** (лучше LTS) и npm  
+- **Docker Desktop** (PostgreSQL поднимается через `docker compose`)  
 - Git  
 - Windows / macOS / Linux  
 
@@ -104,6 +105,8 @@ MVP без портфолио учащегося: группа на заказе
 ```bash
 node -v
 npm -v
+docker --version
+docker compose version
 ```
 
 ### 1. Получить код
@@ -165,23 +168,38 @@ cp .env.example .env
 Проверить, что в `.env` есть:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://reschool:reschool@localhost:5432/reschool"
 DEMO_MODE="true"
 SESSION_SECRET="local-demo-only-change-for-real-use-32"
 ```
 
 `SESSION_SECRET` — не короче 32 символов. Для локального демо достаточно значения из примера.
 
-### 4. Создать базу и залить сид
+### 4. Поднять PostgreSQL и залить сид
 
-Только после появления `.env`:
+В `.env` ожидается:
+
+`DATABASE_URL="postgresql://reschool:reschool@localhost:5432/reschool"`
+
+**Вариант A — Docker Desktop** (если установлен):
 
 ```bash
-npx prisma db push
+npm run db:up
+npm run db:migrate
 npm run db:seed
 ```
 
-`db push` приводит SQLite-файл `prisma/dev.db` к актуальной схеме. Сид создаёт учреждения, демо-учётки и пустой каталог.
+**Вариант B — уже установленный PostgreSQL 16 на Windows** (у вас часто так: служба `postgresql-x64-16` занимает порт 5432). Docker тогда не нужен. Один раз создайте пользователя и БД `reschool`:
+
+```bat
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-local-pg.ps1
+npm run db:migrate
+npm run db:seed
+```
+
+Скрипт спросит пароль суперпользователя `postgres` (тот, что задавали при установке PostgreSQL).
+
+`db:migrate` применяет миграции. Сид создаёт учреждения, демо-учётки, пункты приёма лома и пустой каталог.
 
 Повторно залить демо-данные без сброса схемы:
 
@@ -192,8 +210,13 @@ npm run db:seed
 Полностью пересоздать базу с нуля (удалит все данные):
 
 ```bash
-npx prisma db push --force-reset
-npm run db:seed
+npm run db:reset
+```
+
+Остановить контейнер БД:
+
+```bash
+npm run db:down
 ```
 
 ### 5. (Опционально) Проверить тесты
@@ -216,12 +239,14 @@ npm run dev
 
 | Симптом | Что сделать |
 | --- | --- |
-| `Environment variable not found: DATABASE_URL` | В корне проекта создать `.env`: в **cmd** — `copy .env.example .env`, в PowerShell — `Copy-Item .env.example .env`. Потом `npx prisma db push`, `npm run db:seed`, перезапустить `npm run dev` |
-| Ошибка Prisma / нет таблиц | `npx prisma generate`, затем снова `npx prisma db push` и `npm run db:seed` |
+| `Environment variable not found: DATABASE_URL` | В корне проекта создать `.env`: в **cmd** — `copy .env.example .env`, в PowerShell — `Copy-Item .env.example .env`. Потом `npm run db:up`, `npm run db:migrate`, `npm run db:seed`, перезапустить `npm run dev` |
+| `Can't reach database server` / `Authentication failed` | На порту 5432 уже крутится локальный PostgreSQL, а не Docker. Выполните `scripts\setup-local-pg.ps1` (пароль пользователя `postgres`), затем `npm run db:migrate` и `npm run db:seed`. Либо поставьте Docker Desktop и остановите службу `postgresql-x64-16`, если хотите именно контейнер |
+| Ошибка Prisma / нет таблиц | `npx prisma generate`, затем `npm run db:migrate` и `npm run db:seed` |
 | Порт 3000 занят / старый Next без `.env` | В **cmd**: `taskkill /PID <номер> /F` (номер пишет Next), потом снова `npm run dev`. Не смотреть старую вкладку со старым сервером |
 | `EPERM ... query_engine-windows.dll.node` | Сначала убить все `next`/`node` по проекту (`taskkill`), затем `npx prisma generate` и `npm run dev` |
 | `SESSION_SECRET` слишком короткий | Поправить `.env`, перезапустить `npm run dev` |
-| Старая база после `git pull` | `npx prisma db push` и при необходимости `npm run db:seed` |
+| Старая база после `git pull` | `npm run db:migrate` и при необходимости `npm run db:seed` |
+| Порт 5432 занят | Остановить другой Postgres или сменить порт в `docker-compose.yml` и `DATABASE_URL` |
 
 ## Демо-учётки
 
@@ -237,6 +262,10 @@ npm run dev
 | Админ | `admin@reschool.demo` | Сводка, район, каталог |
 
 В сиде 6 учреждений Пилотного района. Каталог и заказы стартуют пустыми: школа публикует первую вещь уже во время демо.
+
+## Правовые тексты
+
+Страницы `/legal/terms`, `/legal/privacy`, `/legal/consent` — **шаблоны** для пилота по праву Республики Беларусь (в т.ч. Закон № 99-З). Перед промышленным запуском их нужно согласовать с юристом. При регистрации согласие на обработку ПДн хранится отдельно (`consentAt`, `consentVersion`).
 
 ## Допущения
 

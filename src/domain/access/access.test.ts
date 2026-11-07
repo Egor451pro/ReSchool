@@ -37,6 +37,7 @@ describe("access roles", () => {
     expect(sectionsForRole("DISTRICT_ANALYST").map((s) => s.href)).toEqual([
       "/district",
       "/district/calculator",
+      "/district/forecast",
     ]);
   });
 

@@ -312,11 +312,22 @@ export async function createWriteOffWithClose(input: {
 
     const itemUpdate = await tx.item.updateMany({
       where: { id: input.itemId, status: input.fromItemStatus },
-      data: { status: "CLOSED", closeReason: "UNREPAIRABLE" },
+      data: { status: "DISPOSAL_PENDING", closeReason: "UNREPAIRABLE" },
     });
     if (itemUpdate.count !== 1) {
       throw new Error("Статус предмета изменился параллельно");
     }
+
+    await tx.disposalJob.create({
+      data: {
+        itemId: input.itemId,
+        mode: "SELF",
+        status: "PENDING",
+        feeKop: 0,
+        freelancerId: null,
+        note: "Ожидает выбора способа сдачи завхозом",
+      },
+    });
 
     const number = await nextActNumber(tx);
     const document = await tx.document.create({
@@ -334,7 +345,7 @@ export async function createWriteOffWithClose(input: {
         itemId: input.itemId,
         orderId: input.orderId,
         fromStatus: input.fromItemStatus,
-        toStatus: "CLOSED",
+        toStatus: "DISPOSAL_PENDING",
         actorId: input.actorId,
         comment: input.comment,
       },

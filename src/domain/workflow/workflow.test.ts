@@ -31,10 +31,10 @@ describe("синхронизация заказа и предмета", () => {
     expect(planOrderCancel("IN_PROGRESS", "IN_REPAIR").itemTo).toBe("LISTED");
   });
 
-  it("закрывает предмет как неремонтопригодный после начала ремонта", () => {
+  it("переводит предмет на сдачу в утиль после начала ремонта", () => {
     expect(planUnrepairable("IN_REPAIR", "IN_PROGRESS")).toMatchObject({
       orderTo: "CANCELLED",
-      itemTo: "CLOSED",
+      itemTo: "DISPOSAL_PENDING",
       closeReason: "UNREPAIRABLE",
     });
     expect(() => planUnrepairable("REQUESTED", "ASSIGNED")).toThrow(/начатый ремонт/);

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: reschool-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: reschool
+      POSTGRES_PASSWORD: reschool
+      POSTGRES_DB: reschool
+    ports:
+      - "5432:5432"
+    volumes:
+      - reschool_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reschool -d reschool"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  reschool_pg_data:

@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { registerDonorAction, type AuthFormState } from "@/app/actions/auth";
 import {
@@ -132,6 +133,36 @@ export function RegisterForm() {
           <span className="font-medium text-ink">{state.fields.institutionEmail}</span>
         ) : null}
       </label>
+
+      <label className="flex items-start gap-2 text-sm text-leaf">
+        <input type="checkbox" name="acceptTerms" required className="mt-1" />
+        <span>
+          Принимаю{" "}
+          <Link href="/legal/terms" className="font-medium text-ink underline decoration-line underline-offset-2">
+            пользовательское соглашение
+          </Link>
+        </span>
+      </label>
+      {state.fields?.acceptTerms ? (
+        <span className="text-sm font-medium text-ink">{state.fields.acceptTerms}</span>
+      ) : null}
+      <label className="flex items-start gap-2 text-sm text-leaf">
+        <input type="checkbox" name="personalDataConsent" required className="mt-1" />
+        <span>
+          Даю отдельное согласие на обработку персональных данных по Закону РБ № 99-З (
+          <Link href="/legal/consent" className="font-medium text-ink underline decoration-line underline-offset-2">
+            текст согласия
+          </Link>
+          ,{" "}
+          <Link href="/legal/privacy" className="font-medium text-ink underline decoration-line underline-offset-2">
+            политика
+          </Link>
+          )
+        </span>
+      </label>
+      {state.fields?.personalDataConsent ? (
+        <span className="text-sm font-medium text-ink">{state.fields.personalDataConsent}</span>
+      ) : null}
 
       {state.error ? (
         <p className="rounded-2xl border border-line-strong bg-muted px-3 py-2 text-sm text-ink">

@@ -92,6 +92,12 @@ export const appSections: readonly AppSection[] = [
     roles: ["DISTRICT_ANALYST", "PLATFORM_ADMIN"],
   },
   {
+    href: "/district/forecast",
+    label: "Прогноз",
+    hint: "масштаб СНГ",
+    roles: ["DISTRICT_ANALYST", "PLATFORM_ADMIN"],
+  },
+  {
     href: "/cabinet",
     label: "Кабинет",
     hint: "мои заявки",

@@ -514,4 +514,46 @@ body {
   .nav-island-dots span {
     opacity: 0.7;
   }
+
+  .page-enter,
+  .fade-up {
+    animation: none;
+  }
+}
+
+.btn-primary:focus-visible,
+.btn-ghost:focus-visible,
+.field:focus-visible,
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gold) 55%, transparent);
+  outline-offset: 2px;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-shell > * {
+  animation: page-enter 320ms ease both;
+}
+
+.page-shell > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.page-shell > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+
+.leaflet-container {
+  font: inherit;
+  z-index: 0;
 }
