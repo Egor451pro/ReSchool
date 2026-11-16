@@ -25,6 +25,14 @@ export function findUserById(id: string) {
   return prisma.user.findUnique({ where: { id }, select: userSelect });
 }
 
+/** Завхозы учреждения — получатели уведомлений по заказам школы. */
+export function listDonorStaffIds(institutionId: string) {
+  return prisma.user.findMany({
+    where: { institutionId, role: "DONOR_STAFF" },
+    select: { id: true },
+  });
+}
+
 export function createUser(input: {
   fullName: string;
   email: string;

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { sendChatMessageAction, type ChatFormState } from "@/app/actions/chat";
 import { mvpRoleLabel, type UserRole } from "@/domain/access/roles";
 import { isPriceSystemMessage, stripPriceMarker } from "@/domain/orders/price-deal";
@@ -15,10 +15,20 @@ export type ChatMessageView = {
   author: { id: string; fullName: string; role: string };
 };
 
+function normalizeMessage(message: ChatMessageView): ChatMessageView {
+  return {
+    ...message,
+    createdAt:
+      typeof message.createdAt === "string"
+        ? message.createdAt
+        : message.createdAt.toISOString(),
+  };
+}
+
 export function OrderChat({
   orderId,
   currentUserId,
-  messages,
+  messages: initialMessages,
   title = "Обсуждение объекта",
   peerLabel = "Собеседник",
   compact = false,
@@ -27,24 +37,64 @@ export function OrderChat({
   currentUserId: string;
   messages: ChatMessageView[];
   title?: string;
-  /** Кто «в сети» с другой стороны (Завхоз / Фрилансер). */
   peerLabel?: string;
-  /** Компактный вид для боковой колонки карточки. */
   compact?: boolean;
 }) {
+  const [messages, setMessages] = useState(() => initialMessages.map(normalizeMessage));
+  const [live, setLive] = useState(false);
   const [state, action, pending] = useActionState(sendChatMessageAction, initial);
   const bottomRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const seenIds = useRef(new Set(initialMessages.map((row) => row.id)));
+
+  useEffect(() => {
+    setMessages(initialMessages.map(normalizeMessage));
+    seenIds.current = new Set(initialMessages.map((row) => row.id));
+  }, [initialMessages]);
+
+  useEffect(() => {
+    const source = new EventSource(`/api/chat/${orderId}/stream`);
+    const onReady = () => setLive(true);
+    const onMessage = (event: MessageEvent) => {
+      try {
+        const payload = JSON.parse(event.data) as {
+          type?: string;
+          message?: ChatMessageView;
+        };
+        if (payload.type !== "chat" || !payload.message?.id) return;
+        if (seenIds.current.has(payload.message.id)) return;
+        seenIds.current.add(payload.message.id);
+        setMessages((prev) => [...prev, normalizeMessage(payload.message!)]);
+      } catch {
+        // ignore malformed events
+      }
+    };
+    const onError = () => setLive(false);
+    source.addEventListener("ready", onReady);
+    source.addEventListener("message", onMessage);
+    source.addEventListener("error", onError);
+    return () => {
+      source.removeEventListener("ready", onReady);
+      source.removeEventListener("message", onMessage);
+      source.removeEventListener("error", onError);
+      source.close();
+      setLive(false);
+    };
+  }, [orderId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages.length]);
 
   useEffect(() => {
-    if (!state.error && !pending) {
+    if (state.message?.id && !seenIds.current.has(state.message.id)) {
+      seenIds.current.add(state.message.id);
+      setMessages((prev) => [...prev, normalizeMessage(state.message!)]);
+    }
+    if (!state.error && !pending && state.message) {
       formRef.current?.reset();
     }
-  }, [state, pending, messages.length]);
+  }, [state, pending]);
 
   return (
     <section
@@ -56,8 +106,13 @@ export function OrderChat({
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-ink">{title}</h2>
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-leaf">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#7d9a7a]" aria-hidden />
-            В сети: {peerLabel}
+            <span
+              className={`inline-block h-1.5 w-1.5 rounded-full ${
+                live ? "bg-[#7d9a7a]" : "bg-line-strong"
+              }`}
+              aria-hidden
+            />
+            {live ? `Онлайн · ${peerLabel}` : `Подключение… · ${peerLabel}`}
           </p>
         </div>
       </header>

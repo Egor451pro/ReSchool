@@ -12,6 +12,7 @@ import { findConfirmableOrderForItem } from "@/server/repositories/item-reposito
 import { findOrderForMaster } from "@/server/repositories/order-repository";
 import { renderActPdf } from "@/server/services/document-pdf";
 import { buildOrderEconomySnapshot } from "@/server/services/economy-snapshot";
+import { notifyRepairConfirmed } from "@/server/services/order-notify";
 
 export type DocumentActor = {
   id: string;
@@ -114,7 +115,12 @@ export async function confirmRepairBySchool(
       return { ok: false, error: "Статус уже изменился" };
     }
 
-    return {
+        await notifyRepairConfirmed({
+      orderId: order.id,
+      masterId: order.masterId,
+      actorId: actor.id,
+    });
+return {
       ok: true,
       orderId: order.id,
       documentId: result.document.id,

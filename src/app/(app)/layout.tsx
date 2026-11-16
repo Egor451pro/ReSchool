@@ -2,10 +2,15 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AccountHistorySync } from "@/components/account-history-sync";
 import { AuthHeader } from "@/components/auth-header";
+import { NotificationBell } from "@/components/notification-bell";
 import { SectionNav } from "@/components/section-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { roleHome, sectionsForRole } from "@/domain/access/roles";
 import { requireUser } from "@/server/auth/current-user";
+import {
+  countUnreadNotifications,
+  listRecentNotifications,
+} from "@/server/repositories/notification-repository";
 
 export const instant = false;
 
@@ -23,6 +28,19 @@ async function AppShell({ children }: { children: ReactNode }) {
     href: section.href,
     label: section.label,
     hint: section.hint,
+  }));
+  const [recent, unread] = await Promise.all([
+    listRecentNotifications(user.id, 20),
+    countUnreadNotifications(user.id),
+  ]);
+  const notifications = recent.map((row) => ({
+    id: row.id,
+    kind: row.kind,
+    title: row.title,
+    body: row.body,
+    href: row.href,
+    createdAt: row.createdAt.toISOString(),
+    readAt: row.readAt?.toISOString() ?? null,
   }));
 
   return (
@@ -45,6 +63,7 @@ async function AppShell({ children }: { children: ReactNode }) {
               ReSchool
             </Link>
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <NotificationBell initialItems={notifications} initialUnread={unread} />
               <ThemeToggle />
               <AuthHeader
                 user={{ fullName: user.fullName, role: user.role, email: user.email }}

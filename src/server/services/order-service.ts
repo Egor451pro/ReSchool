@@ -21,6 +21,11 @@ import {
   proposePriceOnOrder,
 } from "@/server/repositories/order-repository";
 import { markUnrepairableWithAct } from "@/server/services/document-service";
+import {
+  notifyPriceAccepted,
+  notifyPriceOffered,
+  notifyRepairAwaitingConfirm,
+} from "@/server/services/order-notify";
 
 export type OrderActor = {
   id: string;
@@ -86,6 +91,15 @@ export async function claimListedItem(
     if (result.reason === "busy") return { ok: false, error: "У предмета уже есть активный заказ" };
     return { ok: false, error: "Карточку уже взяли или сняли" };
   }
+    await notifyPriceOffered({
+    orderId: result.orderId,
+    itemId: item.id,
+    institutionId: item.institutionId,
+    masterId: actor.id,
+    actorId: actor.id,
+    side: "FREELANCER",
+    amountKop: input.agreedFeeKop,
+  });
   return { ok: true, orderId: result.orderId, itemId: item.id };
 }
 
@@ -144,6 +158,15 @@ export async function proposeOrderPrice(
     }
     return { ok: false, error: "Статус уже изменился" };
   }
+    await notifyPriceOffered({
+    orderId: order.id,
+    itemId: order.item.id,
+    institutionId: order.item.institutionId,
+    masterId: order.masterId,
+    actorId: actor.id,
+    side,
+    amountKop: input.amountKop,
+  });
   return { ok: true, orderId: order.id, itemId: order.item.id };
 }
 
@@ -189,6 +212,12 @@ export async function acceptOrderProposal(
     }
     return { ok: false, error: "Статус уже изменился" };
   }
+    await notifyPriceAccepted({
+    orderId: order.id,
+    masterId: order.masterId,
+    actorId: actor.id,
+    amountKop: result.agreedFeeKop,
+  });
   return { ok: true, orderId: order.id, itemId: order.item.id };
 }
 
@@ -234,6 +263,11 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
         actualMinutes: order.plannedMinutes,
       });
       if (!done) return { ok: false, error: "Не удалось завершить заказ" };
+      await notifyRepairAwaitingConfirm({
+        itemId: order.item.id,
+        institutionId: order.item.institutionId,
+        actorId: actor.id,
+      });
       return { ok: true, orderId: order.id, itemId: order.item.id };
     }
 
@@ -252,7 +286,12 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
       actualMinutes: plan.orderTo === "COMPLETED" ? order.plannedMinutes : undefined,
     });
     if (!ok) return { ok: false, error: "Статус заказа уже изменился" };
-    return { ok: true, orderId: order.id, itemId: order.item.id };
+    await notifyRepairAwaitingConfirm({
+        itemId: order.item.id,
+        institutionId: order.item.institutionId,
+        actorId: actor.id,
+      });
+      return { ok: true, orderId: order.id, itemId: order.item.id };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : "Нельзя продвинуть заказ" };
   }

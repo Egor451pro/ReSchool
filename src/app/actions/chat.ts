@@ -2,9 +2,15 @@
 
 import { requireRoles } from "@/server/auth/current-user";
 import { revalidateOrderViews } from "@/server/revalidate";
-import { sendOrderChatMessage } from "@/server/services/chat-service";
+import {
+  sendOrderChatMessage,
+  type ChatMessageDto,
+} from "@/server/services/chat-service";
 
-export type ChatFormState = { error?: string };
+export type ChatFormState = {
+  error?: string;
+  message?: ChatMessageDto;
+};
 
 export async function sendChatMessageAction(
   _state: ChatFormState,
@@ -16,5 +22,5 @@ export async function sendChatMessageAction(
   const result = await sendOrderChatMessage(actor, orderId, body);
   if (!result.ok) return { error: result.error };
   revalidateOrderViews({ orderId, itemId: result.itemId });
-  return {};
+  return { message: result.message };
 }

@@ -4,24 +4,27 @@ import { prisma } from "@/server/db";
 
 const CHAT_TAKE = 100;
 
-export async function listOrderMessages(
+const messageSelect = {
+  id: true,
+  body: true,
+  createdAt: true,
+  authorId: true,
+  author: { select: { id: true, fullName: true, role: true } },
+} as const;
+
+export function listOrderMessages(
   orderId: string,
   options?: { take?: number },
 ) {
   const take = Math.min(Math.max(options?.take ?? CHAT_TAKE, 1), 200);
-  const rows = await prisma.orderMessage.findMany({
-    where: { orderId },
-    orderBy: { createdAt: "desc" },
-    take,
-    select: {
-      id: true,
-      body: true,
-      createdAt: true,
-      authorId: true,
-      author: { select: { id: true, fullName: true, role: true } },
-    },
-  });
-  return rows.reverse();
+  return prisma.orderMessage
+    .findMany({
+      where: { orderId },
+      orderBy: { createdAt: "desc" },
+      take,
+      select: messageSelect,
+    })
+    .then((rows) => rows.reverse());
 }
 
 export function createOrderMessage(input: {
@@ -35,7 +38,7 @@ export function createOrderMessage(input: {
       authorId: input.authorId,
       body: input.body,
     },
-    select: { id: true },
+    select: messageSelect,
   });
 }
 
