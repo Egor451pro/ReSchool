@@ -70,9 +70,7 @@ export function OrderActions({
     (orderStatus === "QUALITY_CHECK" && itemStatus === "IN_REPAIR");
   const canFinish = working && itemStatus !== "READY" && itemStatus !== "CLOSED";
   const canCancel = orderStatus === "ASSIGNED" || orderStatus === "IN_PROGRESS";
-  const canUnrepair =
-    (orderStatus === "IN_PROGRESS" || (orderStatus === "ASSIGNED" && schoolAccepted)) &&
-    (itemStatus === "IN_REPAIR" || itemStatus === "REQUESTED");
+  const canUnrepair = orderStatus === "IN_PROGRESS" && itemStatus === "IN_REPAIR";
   const waitingSchool = orderStatus === "COMPLETED" && itemStatus === "READY";
   const closed = itemStatus === "CLOSED";
 

@@ -31,7 +31,7 @@ export function revalidateOrderViews(input?: {
 
 /** Утилизация и подтверждение списания. */
 export function revalidateDisposalViews(itemId?: string | null) {
-  const paths = ["/cabinet", "/orders", "/catalog"];
+  const paths = ["/cabinet", "/orders", "/catalog", "/wallet", "/expenses", "/admin", "/district"];
   if (itemId) {
     paths.push(`/cabinet/items/${itemId}`, `/catalog/${itemId}`);
   }
@@ -40,10 +40,10 @@ export function revalidateDisposalViews(itemId?: string | null) {
 
 /** Кошелёк и выплаты. */
 export function revalidateWalletViews() {
-  bump("/wallet", "/orders", "/admin");
+  bump("/wallet", "/orders", "/admin", "/expenses", "/cabinet", "/district");
 }
 
 /** Дашборд района / админ-экономика. */
 export function revalidateAdminViews() {
-  bump("/admin");
+  bump("/admin", "/district", "/district/calculator", "/district/forecast");
 }

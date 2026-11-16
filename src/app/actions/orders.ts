@@ -63,6 +63,9 @@ export async function proposePriceAction(
   if (actor.role === "DONOR_STAFF" && result.itemId) {
     redirect(`/cabinet/items/${result.itemId}`);
   }
+  if (actor.role === "PLATFORM_ADMIN" && result.itemId) {
+    redirect(`/catalog/${result.itemId}`);
+  }
   redirect(`/orders/${orderId}`);
 }
 
@@ -74,6 +77,9 @@ export async function acceptOrderAction(
   const result = await acceptOrderProposal(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
   revalidateOrderViews({ orderId: result.orderId, itemId: result.itemId });
+  if (actor.role === "PLATFORM_ADMIN") {
+    redirect(result.itemId ? `/catalog/${result.itemId}` : "/admin");
+  }
   redirect(result.itemId ? `/cabinet/items/${result.itemId}` : "/cabinet");
 }
 

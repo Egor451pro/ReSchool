@@ -62,8 +62,11 @@ export function DisposalPanel({
   }
 
   const chosen = Boolean(job.point);
-  // Подтверждает завхоз только если сдаёт сам; фрилансер закрывает утиль сам при отметке сдачи.
-  const canConfirm = job.mode === "SELF" && chosen && job.status === "PENDING";
+  // SELF: PENDING (основной) или DELIVERED (recovery после частичного сбоя).
+  const canConfirm =
+    job.mode === "SELF" &&
+    chosen &&
+    (job.status === "PENDING" || job.status === "DELIVERED");
 
   return (
     <div className="flex flex-col gap-4">
@@ -97,6 +100,11 @@ export function DisposalPanel({
                     ? "сдано"
                     : job.status}
           </p>
+        </div>
+      ) : points.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-line bg-muted/40 p-4 text-sm text-leaf">
+          В справочнике нет пунктов приёма для этой категории. Добавьте их в сид или админку
+          пилота.
         </div>
       ) : (
         <>

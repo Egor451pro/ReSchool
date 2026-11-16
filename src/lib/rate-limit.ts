@@ -8,7 +8,7 @@ export type RateLimitResult = {
   retryAfterSec: number;
 };
 
-/** Простой in-memory лимит. Для нескольких инстансов замените на Redis. */
+/** Простой in-memory лимит. Для кластера замените на Redis. */
 export function rateLimit(
   key: string,
   limit: number,
@@ -39,11 +39,28 @@ export function rateLimit(
   };
 }
 
+/**
+ * IP для rate limit.
+ * X-Forwarded-For доверяем только за reverse-proxy в production
+ * (TRUST_PROXY=true). Иначе клиент может подделать заголовок.
+ */
 export function clientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) return first;
+  const trustProxy =
+    process.env.TRUST_PROXY === "true" ||
+    process.env.TRUST_PROXY === "1" ||
+    (process.env.NODE_ENV === "production" && process.env.TRUST_PROXY !== "false");
+
+  if (trustProxy) {
+    const forwarded = request.headers.get("x-forwarded-for");
+    if (forwarded) {
+      // Берём последний hop — обычно его ставит доверенный proxy.
+      const parts = forwarded.split(",").map((part) => part.trim()).filter(Boolean);
+      const last = parts[parts.length - 1];
+      if (last) return last;
+    }
+    const realIp = request.headers.get("x-real-ip")?.trim();
+    if (realIp) return realIp;
   }
-  return request.headers.get("x-real-ip")?.trim() || "unknown";
+
+  return "unknown";
 }

@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { roleHome, type UserRole } from "@/domain/access/roles";
+import { findUserById } from "@/server/repositories/user-repository";
 import { decryptSession, SESSION_COOKIE } from "./session";
 
 export type CurrentUser = {
@@ -40,23 +41,28 @@ function asInstitutionType(value: string | null): CurrentInstitutionType | null 
   return null;
 }
 
-/** SSR/actions: роль и учреждение из JWT, без повторного запроса в БД. */
+/**
+ * SSR/actions: JWT проверяется, затем роль/учреждение сверяются с БД,
+ * чтобы удалённый или пониженный пользователь не жил на старых claims.
+ */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
-  // jose jwtVerify использует Date — нельзя на prerender.
   await connection();
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = await decryptSession(token);
   if (!session) return null;
 
+  const user = await findUserById(session.userId);
+  if (!user) return null;
+
   return {
-    id: session.userId,
-    fullName: session.fullName,
-    role: session.role,
-    email: session.email,
-    institutionId: session.institutionId,
-    institutionName: session.institutionName,
-    institutionType: asInstitutionType(session.institutionType),
-    district: session.district,
+    id: user.id,
+    fullName: user.fullName,
+    role: user.role as UserRole,
+    email: user.email,
+    institutionId: user.institutionId,
+    institutionName: user.institution?.name ?? null,
+    institutionType: asInstitutionType(user.institution?.type ?? null),
+    district: user.institution?.district ?? null,
   };
 });
 

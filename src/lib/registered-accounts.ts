@@ -1,8 +1,11 @@
 import type { PickerAccount } from "@/components/role-login-picker";
 import type { UserRole } from "@/domain/access/roles";
+import { isDemoMode } from "@/lib/demo-mode";
 import { listRegisteredAccounts } from "@/server/repositories/user-repository";
 
+/** Публичный список аккаунтов на / и /login — только в DEMO_MODE и только *.demo. */
 export async function loadPickerAccounts(): Promise<PickerAccount[]> {
+  if (!isDemoMode()) return [];
   try {
     const rows = await listRegisteredAccounts();
     return rows.map((row) => ({

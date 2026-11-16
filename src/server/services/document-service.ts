@@ -20,7 +20,7 @@ export type DocumentActor = {
 };
 
 export type DocumentResult =
-  | { ok: true; orderId: string; documentId: string }
+  | { ok: true; orderId: string; documentId: string; itemId: string }
   | { ok: false; error: string };
 
 function canManageOrder(
@@ -50,7 +50,7 @@ export async function confirmRepairBySchool(
   if (actor.role !== "DONOR_STAFF" && actor.role !== "PLATFORM_ADMIN") {
     return { ok: false, error: "Подтвердить ремонт может завхоз учреждения" };
   }
-  if (!actor.institutionId) {
+  if (actor.role === "DONOR_STAFF" && !actor.institutionId) {
     return { ok: false, error: "Нужно учреждение" };
   }
 
@@ -58,7 +58,10 @@ export async function confirmRepairBySchool(
   if (!order) {
     return { ok: false, error: "Нет готового ремонта для подтверждения" };
   }
-  if (order.item.institutionId !== actor.institutionId && actor.role !== "PLATFORM_ADMIN") {
+  if (
+    actor.role === "DONOR_STAFF" &&
+    order.item.institutionId !== actor.institutionId
+  ) {
     return { ok: false, error: "Это предмет другого учреждения" };
   }
 
@@ -111,7 +114,12 @@ export async function confirmRepairBySchool(
       return { ok: false, error: "Статус уже изменился" };
     }
 
-    return { ok: true, orderId: order.id, documentId: result.document.id };
+    return {
+      ok: true,
+      orderId: order.id,
+      documentId: result.document.id,
+      itemId: order.item.id,
+    };
   } catch (error) {
     return {
       ok: false,
@@ -152,7 +160,12 @@ export async function markUnrepairableWithAct(
       return { ok: false, error: "Статус уже изменился" };
     }
 
-    return { ok: true, orderId: order.id, documentId: result.document.id };
+    return {
+      ok: true,
+      orderId: order.id,
+      documentId: result.document.id,
+      itemId: order.item.id,
+    };
   } catch (error) {
     return {
       ok: false,

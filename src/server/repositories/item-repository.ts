@@ -94,7 +94,7 @@ export function listInstitutionActiveItems(
   });
 }
 
-/** История подтверждённых ремонтов (снятые вручную сюда не попадают). */
+/** История: закрытые ремонты, списания и снятые с публикации карточки. */
 export function listInstitutionRepairHistory(
   institutionId: string,
   options?: { take?: number; skip?: number },
@@ -103,7 +103,10 @@ export function listInstitutionRepairHistory(
     where: {
       institutionId,
       OR: [
-        { status: "CLOSED", closeReason: { in: ["COMPLETED", "UNREPAIRABLE"] } },
+        {
+          status: "CLOSED",
+          closeReason: { in: ["COMPLETED", "UNREPAIRABLE", "WITHDRAWN"] },
+        },
         { status: "DISPOSED" },
       ],
     },
@@ -331,8 +334,8 @@ export async function updateListedItem(input: {
       return { updated: false, removedPhotoPaths: [] };
     }
 
-    await tx.item.update({
-      where: { id: input.id },
+    const updated = await tx.item.updateMany({
+      where: { id: input.id, status: "LISTED" },
       data: {
         categoryId: input.categoryId,
         title: input.title,
@@ -344,6 +347,9 @@ export async function updateListedItem(input: {
         repairBudgetKop: input.repairBudgetKop,
       },
     });
+    if (updated.count !== 1) {
+      return { updated: false, removedPhotoPaths: [] };
+    }
 
     if (input.nextPhotoPath) {
       await tx.itemPhoto.deleteMany({ where: { itemId: input.id } });
@@ -452,10 +458,15 @@ export async function updateItemRepairBudget(input: {
     const maxKop = item.newUnitPriceKop * item.quantity;
     if (input.repairBudgetKop > maxKop) return { ok: false, reason: "too-high" };
 
-    await tx.item.update({
-      where: { id: input.id },
+    const updated = await tx.item.updateMany({
+      where: {
+        id: input.id,
+        institutionId: input.institutionId,
+        status: "LISTED",
+      },
       data: { repairBudgetKop: input.repairBudgetKop },
     });
+    if (updated.count !== 1) return { ok: false, reason: "locked" };
 
     return { ok: true };
   });

@@ -43,7 +43,7 @@ export default async function ExpensesPage() {
               </p>
               <p className="panel-accent-muted max-w-2xl text-sm leading-6">
                 {savings.repairedCount > 0
-                  ? `По ${itemsCountLabel(savings.repairedCount)} с подтверждённым ремонтом: вместо новых ${formatByn(savings.procurementSavingKop)} плюс избежанная утилизация → ${formatByn(savings.propertyBudgetKop)}${savings.disposalSpentKop > 0 ? `, минус сдача лома ${formatByn(savings.disposalSpentKop)}` : ""}. Нажмите, чтобы разобрать по позициям.`
+                  ? `По ${itemsCountLabel(savings.repairedCount)} с подтверждённым ремонтом: вместо новых ${formatByn(savings.procurementSavingKop)} плюс избежанная утилизация → ${formatByn(savings.propertyBudgetKop)}${savings.disposalSpentKop > 0 ? `. Плата за сдачу лома учтена отдельно в оплатах: ${formatByn(savings.disposalSpentKop)}` : ""}. Нажмите, чтобы разобрать по позициям.`
                   : "Появится после того, как вы подтвердите первый выполненный ремонт."}
               </p>
             </summary>

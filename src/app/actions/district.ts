@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { assumptionFormSchema } from "@/lib/validators/assumption";
 import { requireRoles } from "@/server/auth/current-user";
+import { revalidateAdminViews } from "@/server/revalidate";
 import { saveAssumptionSet } from "@/server/services/economy-service";
 
 export type AssumptionFormValues = {
@@ -72,5 +73,6 @@ export async function updateAssumptionAction(
   });
 
   if (!result.ok) return { error: result.error, values };
+  revalidateAdminViews();
   redirect("/district/calculator");
 }

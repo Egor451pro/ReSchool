@@ -10,6 +10,7 @@ import { SchoolOrderSteps } from "@/components/order-flow-steps";
 import { PriceDealPanel } from "@/components/price-deal-panel";
 import { RepairBudgetForm } from "@/components/repair-budget-form";
 import { StatusBadge } from "@/components/status-badge";
+import { WithdrawItemForm } from "@/components/withdraw-item-form";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
 import { canUpdateRepairBudget } from "@/domain/items/access";
@@ -18,6 +19,7 @@ import { orderStatusLabels, type OrderStatus } from "@/domain/orders/labels";
 import type { PriceOfferSide } from "@/domain/orders/price-deal";
 import { requireRoles } from "@/server/auth/current-user";
 import { listOrderMessages } from "@/server/repositories/chat-repository";
+import { listDocumentsForItem } from "@/server/repositories/document-repository";
 import { findItemCard } from "@/server/repositories/item-repository";
 import {
   loadDisposalJob,
@@ -37,20 +39,22 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
     redirect("/cabinet");
   }
 
-  if (item.status === "CLOSED" || item.status === "DISPOSED") {
-    redirect("/cabinet");
-  }
-
+  const readOnly = item.status === "CLOSED" || item.status === "DISPOSED";
   const order = item.orders[0] ?? null;
   const awaitingAccept =
+    !readOnly &&
     item.status === "REQUESTED" &&
     order?.status === "ASSIGNED" &&
     !order.schoolAcceptedAt;
-  const waitingConfirm = item.status === "READY" && Boolean(order);
-  const disposalPending = item.status === "DISPOSAL_PENDING";
-  const showChat = Boolean(order) && item.status !== "LISTED" && !disposalPending;
-  const messages = order && showChat ? await listOrderMessages(order.id) : [];
-  const canEditBudget = canUpdateRepairBudget(user, item);
+  const waitingConfirm = !readOnly && item.status === "READY" && Boolean(order);
+  const disposalPending = !readOnly && item.status === "DISPOSAL_PENDING";
+  const showChat =
+    !readOnly && Boolean(order) && item.status !== "LISTED" && !disposalPending;
+  const [messages, documents] = await Promise.all([
+    order && showChat ? listOrderMessages(order.id) : Promise.resolve([]),
+    listDocumentsForItem(item.id),
+  ]);
+  const canEditBudget = !readOnly && canUpdateRepairBudget(user, item);
   const maxBudgetKop = item.newUnitPriceKop * item.quantity;
   const disposalJob = disposalPending ? await loadDisposalJob(item.id) : null;
   const recyclingPoints = disposalPending
@@ -101,6 +105,17 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
                 </Link>
               ) : null}
             </div>
+            {readOnly ? (
+              <p className="text-sm text-leaf">
+                Карточка в истории
+                {item.closeReason === "WITHDRAWN"
+                  ? " (снята с публикации)"
+                  : item.status === "DISPOSED"
+                    ? " (сдана в утиль)"
+                    : ""}
+                . Действия недоступны.
+              </p>
+            ) : null}
           </header>
 
           {item.description ? (
@@ -115,13 +130,15 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
           {item.status === "LISTED" ? (
             <Surface className="flex flex-col gap-3">
               <p className="text-sm text-leaf">
-                Объявление свободно. Можно удалить карточку, пока её не взяли в работу.
+                Объявление свободно. Можно снять с публикации или удалить карточку, пока её не
+                взяли в работу.
               </p>
+              <WithdrawItemForm itemId={item.id} />
               <DeleteItemButton itemId={item.id} />
             </Surface>
           ) : null}
 
-          {!disposalPending ? (
+          {!readOnly && !disposalPending ? (
             <Surface>
               <h2 className="mb-3 text-sm font-semibold text-ink">Шаги заказа</h2>
               <SchoolOrderSteps
@@ -189,10 +206,10 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
             </Surface>
           ) : null}
 
-          {order?.documents && order.documents.length > 0 ? (
+          {documents.length > 0 ? (
             <Surface>
               <h2 className="mb-2 text-sm font-semibold text-ink">Документы</h2>
-              <DocumentLinks documents={order.documents} />
+              <DocumentLinks documents={documents} />
             </Surface>
           ) : null}
         </div>
@@ -206,7 +223,7 @@ export default async function CabinetItemPage({ params }: { params: Promise<{ id
             peerLabel={order.master?.fullName.split(/\s+/)[0] ?? "Фрилансер"}
             compact
           />
-        ) : (
+        ) : readOnly ? null : (
           <Surface className="border-dashed text-sm text-leaf">
             Чат появится, когда фрилансер возьмёт объект в работу.
           </Surface>

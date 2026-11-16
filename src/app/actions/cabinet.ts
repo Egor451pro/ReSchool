@@ -11,7 +11,12 @@ import {
   withdrawItem,
 } from "@/server/services/item-service";
 import { publishRequest } from "@/server/services/request-service";
-import { revalidateItemListing, revalidateOrderViews } from "@/server/revalidate";
+import {
+  revalidateAdminViews,
+  revalidateItemListing,
+  revalidateOrderViews,
+  revalidateWalletViews,
+} from "@/server/revalidate";
 import { itemFormSchema, repairBudgetFormSchema, requestFormSchema } from "@/lib/validators/item";
 
 export type ItemFormValues = {
@@ -230,7 +235,8 @@ export async function publishRequestAction(
   const actor = await requireRoles(["DONOR_STAFF"]);
   const result = await publishRequest(actor, parsed.data);
   if (!result.ok) return { error: result.error, request };
-  redirect("/cabinet#needs");
+  revalidateItemListing();
+  redirect("/cabinet");
 }
 
 export type ConfirmRepairState = { error?: string };
@@ -239,11 +245,15 @@ export async function confirmRepairAction(
   _state: ConfirmRepairState,
   formData: FormData,
 ): Promise<ConfirmRepairState> {
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
   const itemId = text(formData, "itemId");
   const result = await confirmRepairBySchool(actor, itemId);
   if (!result.ok) return { error: result.error };
-  // Без revalidate страница кабинета остаётся со старым RSC-снимком.
-  revalidateOrderViews({ itemId });
+  revalidateOrderViews({ itemId, orderId: result.orderId });
+  revalidateWalletViews();
+  revalidateAdminViews();
+  if (actor.role === "PLATFORM_ADMIN") {
+    redirect(itemId ? `/catalog/${itemId}` : "/admin");
+  }
   redirect("/cabinet");
 }

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { DEMO_PASSWORD } from "@/domain/access/demo-accounts";
+import { isDemoMode } from "@/lib/demo-mode";
 import { roleHome, safeNextPath } from "@/domain/access/roles";
 import { zodFieldErrors } from "@/lib/action-result";
 import { logger, withAction } from "@/lib/logger";
@@ -103,6 +104,10 @@ export async function registerDonorAction(
   _state: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
+  const limited = rateLimit("register-donor", 8, 60_000);
+  if (!limited.ok) {
+    return { error: "Слишком много попыток регистрации. Подождите минуту." };
+  }
   const parsed = registerDonorSchema.safeParse({
     fullName: formData.get("fullName"),
     email: formData.get("email"),
@@ -131,6 +136,10 @@ export async function registerFreelancerAction(
   _state: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
+  const limited = rateLimit("register-freelancer", 8, 60_000);
+  if (!limited.ok) {
+    return { error: "Слишком много попыток регистрации. Подождите минуту." };
+  }
   const specialtyIds = formData
     .getAll("specialtyIds")
     .filter((value): value is string => typeof value === "string" && value.length > 0);
@@ -161,6 +170,13 @@ export async function demoLoginAction(formData: FormData): Promise<void> {
 
 /** Однокликовый вход в сидовый профиль аналитика (*.demo). */
 export async function demoAnalystLoginAction(formData: FormData): Promise<void> {
+  if (!isDemoMode()) {
+    redirect("/login?role=analyst");
+  }
+  const limited = rateLimit("demo-analyst-login", 20, 60_000);
+  if (!limited.ok) {
+    redirect("/login?role=analyst");
+  }
   const emailRaw = formData.get("email");
   const email = typeof emailRaw === "string" ? emailRaw.trim().toLowerCase() : "";
   if (!email || !isSeedDemoEmail(email)) {
@@ -184,6 +200,7 @@ export async function demoAnalystLoginAction(formData: FormData): Promise<void> 
 /** Выход из сессии, но профиль для быстрого входа сохраняется. */
 export async function logoutAction(): Promise<void> {
   await clearSession();
+  await clearRememberedProfile();
   redirect("/");
 }
 
@@ -196,6 +213,10 @@ export async function switchAccountAction(): Promise<void> {
 
 /** Восстановление сессии по запомненному профилю (один клик). */
 export async function quickLoginAction(formData: FormData): Promise<void> {
+  const limited = rateLimit("quick-login", 20, 60_000);
+  if (!limited.ok) {
+    redirect("/login");
+  }
   const remembered = await readRememberedProfile();
   if (!remembered || isSeedDemoEmail(remembered.email)) {
     if (remembered) await clearRememberedProfile();

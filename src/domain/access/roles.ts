@@ -107,7 +107,7 @@ export const appSections: readonly AppSection[] = [
     href: "/catalog",
     label: "Каталог",
     hint: "объявления",
-    roles: ["DONOR_STAFF", "FREELANCER", "PLATFORM_ADMIN"],
+    roles: ["DONOR_STAFF", "FREELANCER", "DISTRICT_ANALYST", "PLATFORM_ADMIN"],
     navRoles: ["DONOR_STAFF", "PLATFORM_ADMIN"],
   },
   {
@@ -126,13 +126,15 @@ export const appSections: readonly AppSection[] = [
     href: "/orders",
     label: "Заказы",
     hint: "ход ремонта",
-    roles: ["FREELANCER"],
+    roles: ["FREELANCER", "PLATFORM_ADMIN"],
+    navRoles: ["FREELANCER"],
   },
   {
     href: "/wallet",
     label: "Кошелёк",
     hint: "выплаты",
-    roles: ["FREELANCER"],
+    roles: ["FREELANCER", "PLATFORM_ADMIN"],
+    navRoles: ["FREELANCER"],
   },
 ];
 
@@ -167,12 +169,27 @@ export function canAccess(role: UserRole, pathname: string): boolean {
   return section !== undefined && section.roles.includes(role);
 }
 
+/** Нормализует внутренний путь: убирает `..` и лишние слэши. */
+export function normalizeInternalPath(raw: string): string | null {
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return null;
+  const pathOnly = raw.split("?")[0] ?? "";
+  const parts: string[] = [];
+  for (const segment of pathOnly.split("/")) {
+    if (!segment || segment === ".") continue;
+    if (segment === "..") {
+      if (parts.length === 0) return null;
+      parts.pop();
+      continue;
+    }
+    parts.push(segment);
+  }
+  return `/${parts.join("/")}`;
+}
+
 /** Оставляет только внутренний путь, который эта роль может открыть. */
 export function safeNextPath(next: string | null | undefined, role: UserRole): string {
-  if (!next || !next.startsWith("/") || next.startsWith("//") || next.includes("\\")) {
-    return roleHome(role);
-  }
-  const path = next.split("?")[0] ?? "";
-  if (!canAccess(role, path)) return roleHome(role);
+  if (!next) return roleHome(role);
+  const path = normalizeInternalPath(next);
+  if (!path || !canAccess(role, path)) return roleHome(role);
   return path;
 }

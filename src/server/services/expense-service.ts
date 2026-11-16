@@ -161,7 +161,8 @@ function buildSavings(
     propertyBudgetKop,
     repairSpentKop,
     disposalSpentKop,
-    netSavingKop: propertyBudgetKop - disposalSpentKop,
+    // Сдача лома — отдельный расход; не вычитаем её из экономии на ремонтах.
+    netSavingKop: propertyBudgetKop,
     rows,
   };
 }

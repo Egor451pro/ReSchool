@@ -98,16 +98,11 @@ export async function markItemDisposedBySchool(
 
   const job = await findDisposalJobByItemId(itemId);
   if (!job) return { ok: false, error: "Заявка на утиль не найдена" };
-
-  if (job.mode === "SELF" && job.status === "PENDING" && job.pointId) {
-    const delivered = await markDisposalDelivered({
-      itemId,
-      actorId: actor.id,
-      asFreelancer: false,
-    });
-    if (!delivered.ok) return delivered;
+  if (job.mode !== "SELF") {
+    return { ok: false, error: "Сдачу фрилансера подтверждает сам исполнитель" };
   }
 
+  // Один транзакционный confirm: принимает SELF+PENDING+point или застрявший DELIVERED.
   return confirmDisposal({ itemId, actorId: actor.id });
 }
 

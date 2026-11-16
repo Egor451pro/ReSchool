@@ -47,7 +47,7 @@ async function nextActNumber(tx: Prisma.TransactionClient): Promise<string> {
   const latest = await tx.document.findMany({
     select: { number: true },
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: 200,
   });
   let max = 0;
   for (const row of latest) {
@@ -55,6 +55,46 @@ async function nextActNumber(tx: Prisma.TransactionClient): Promise<string> {
     if (serial !== null && serial > max) max = serial;
   }
   return formatActNumber(max + 1);
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: string }).code === "P2002"
+  );
+}
+
+async function createDocumentWithNumber(
+  tx: Prisma.TransactionClient,
+  data: {
+    type: "RETURN_ACT" | "WRITE_OFF_DRAFT" | "TRANSFER_ACT";
+    orderId: string;
+    payload: string;
+  },
+) {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const number = await nextActNumber(tx);
+    try {
+      return await tx.document.create({
+        data: {
+          type: data.type,
+          number,
+          orderId: data.orderId,
+          payload: data.payload,
+        },
+        select: documentSelect,
+      });
+    } catch (error) {
+      lastError = error;
+      if (!isUniqueViolation(error)) throw error;
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Не удалось выделить номер акта");
 }
 
 /** Школа подтверждает ремонт: акт возврата + закрытие со снимком экономии + симуляция выплат. */
@@ -99,15 +139,10 @@ export async function confirmSchoolRepair(input: {
     });
     if (delivered.count !== 1) return { ok: false as const, reason: "locked" as const };
 
-    const number = await nextActNumber(tx);
-    const document = await tx.document.create({
-      data: {
-        type: "RETURN_ACT",
-        number,
-        orderId: input.orderId,
-        payload: input.payloadJson,
-      },
-      select: documentSelect,
+    const document = await createDocumentWithNumber(tx, {
+      type: "RETURN_ACT",
+      orderId: input.orderId,
+      payload: input.payloadJson,
     });
 
     await tx.transfer.create({
@@ -259,15 +294,10 @@ export async function createWriteOffWithClose(input: {
       },
     });
 
-    const number = await nextActNumber(tx);
-    const document = await tx.document.create({
-      data: {
-        type: "WRITE_OFF_DRAFT",
-        number,
-        orderId: input.orderId,
-        payload: input.payloadJson,
-      },
-      select: documentSelect,
+    const document = await createDocumentWithNumber(tx, {
+      type: "WRITE_OFF_DRAFT",
+      orderId: input.orderId,
+      payload: input.payloadJson,
     });
 
     await tx.statusEvent.create({

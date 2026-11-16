@@ -289,5 +289,5 @@ export async function markOrderUnrepairable(
 ): Promise<OrderResult> {
   const result = await markUnrepairableWithAct(actor, orderId);
   if (!result.ok) return { ok: false, error: result.error };
-  return { ok: true, orderId: result.orderId };
+  return { ok: true, orderId: result.orderId, itemId: result.itemId };
 }

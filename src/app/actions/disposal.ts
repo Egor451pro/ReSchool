@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireRoles } from "@/server/auth/current-user";
-import { revalidateDisposalViews } from "@/server/revalidate";
+import { revalidateDisposalViews, revalidateWalletViews } from "@/server/revalidate";
 import {
   markDisposalDeliveredByFreelancer,
   markItemDisposedBySchool,
@@ -57,6 +57,7 @@ export async function confirmDisposalAction(
   const result = await markItemDisposedBySchool(actor, itemId);
   if (!result.ok) return { error: result.error };
   revalidateDisposalViews(itemId);
+  revalidateWalletViews();
   redirect("/cabinet");
 }
 
@@ -69,5 +70,6 @@ export async function deliverDisposalAction(
   const result = await markDisposalDeliveredByFreelancer(actor, itemId);
   if (!result.ok) return { error: result.error };
   revalidateDisposalViews(itemId);
+  revalidateWalletViews();
   redirect("/orders");
 }

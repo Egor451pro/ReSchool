@@ -122,12 +122,12 @@ export async function chooseDisposalMode(input: {
 
     const job = await tx.disposalJob.findUnique({ where: { itemId: input.itemId } });
     if (!job) return { ok: false as const, error: "Заявка на утиль не найдена" };
-    if (job.status !== "PENDING") {
+    if (job.status !== "PENDING" || job.pointId) {
       return { ok: false as const, error: "Способ сдачи уже выбран" };
     }
 
-    await tx.disposalJob.update({
-      where: { id: job.id },
+    const chosen = await tx.disposalJob.updateMany({
+      where: { id: job.id, status: "PENDING", pointId: null },
       data: {
         mode: input.mode,
         pointId: input.pointId,
@@ -139,6 +139,9 @@ export async function chooseDisposalMode(input: {
             : "Поручено фрилансеру за отдельную плату",
       },
     });
+    if (chosen.count !== 1) {
+      return { ok: false as const, error: "Способ сдачи уже выбран" };
+    }
 
     await tx.statusEvent.create({
       data: {

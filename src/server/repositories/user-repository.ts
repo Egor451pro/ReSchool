@@ -149,17 +149,13 @@ export function listUsers() {
  * Учётки для быстрого входа по роли:
  * саморегистрации (не *.demo) + сидовый аналитик района.
  */
-const loadRegisteredAccounts = unstable_cache(
+/** Только сидовые *.demo для пикерa в DEMO_MODE — без реальных PII. */
+const loadDemoPickerAccounts = unstable_cache(
   async () =>
     prisma.user.findMany({
-      where: {
-        OR: [
-          { NOT: { email: { endsWith: ".demo" } } },
-          { role: "DISTRICT_ANALYST" },
-        ],
-      },
+      where: { email: { endsWith: ".demo" } },
       orderBy: [{ role: "asc" }, { fullName: "asc" }],
-      take: 100,
+      take: 40,
       select: {
         id: true,
         fullName: true,
@@ -168,12 +164,12 @@ const loadRegisteredAccounts = unstable_cache(
         institution: { select: { name: true } },
       },
     }),
-  ["registered-accounts"],
+  ["demo-picker-accounts"],
   { revalidate: 60, tags: ["registered-accounts"] },
 );
 
 export function listRegisteredAccounts() {
-  return loadRegisteredAccounts();
+  return loadDemoPickerAccounts();
 }
 
 const loadSpecialties = unstable_cache(

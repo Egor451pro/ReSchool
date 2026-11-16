@@ -46,7 +46,10 @@ describe("access roles", () => {
     expect(canAccess("PLATFORM_ADMIN", "/district")).toBe(true);
     expect(canAccess("PLATFORM_ADMIN", "/district/calculator")).toBe(true);
     expect(canAccess("PLATFORM_ADMIN", "/catalog")).toBe(true);
+    expect(canAccess("PLATFORM_ADMIN", "/orders")).toBe(true);
+    expect(canAccess("DISTRICT_ANALYST", "/catalog")).toBe(true);
     expect(sectionsForRole("PLATFORM_ADMIN").map((s) => s.href)).toContain("/district");
+    expect(sectionsForRole("PLATFORM_ADMIN").map((s) => s.href)).not.toContain("/orders");
   });
 
   it("sectionForPath выбирает самый длинный префикс", () => {
@@ -58,6 +61,8 @@ describe("access roles", () => {
     expect(safeNextPath("/admin", "FREELANCER")).toBe("/workshop");
     expect(safeNextPath("/district", "DISTRICT_ANALYST")).toBe("/district");
     expect(safeNextPath(null, "DONOR_STAFF")).toBe("/cabinet");
+    expect(safeNextPath("/cabinet/../admin", "DONOR_STAFF")).toBe("/cabinet");
+    expect(safeNextPath("/orders/abc", "PLATFORM_ADMIN")).toBe("/orders/abc");
   });
 
   it("типы учреждений для саморегистрации завхоза", () => {
