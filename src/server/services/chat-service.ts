@@ -62,6 +62,16 @@ export async function loadOrderChat(actor: ChatActor, orderId: string) {
   return { order, messages };
 }
 
+/** Для polling: DTO сообщений, если актёр имеет доступ к чату заказа. */
+export async function listOrderChatDtos(
+  actor: ChatActor,
+  orderId: string,
+): Promise<ChatMessageDto[] | null> {
+  const loaded = await loadOrderChat(actor, orderId);
+  if (!loaded) return null;
+  return loaded.messages.map(toDto);
+}
+
 export async function sendOrderChatMessage(
   actor: ChatActor,
   orderId: string,
@@ -89,33 +99,40 @@ export async function sendOrderChatMessage(
   });
   const message = toDto(created);
 
+  // Сначала SSE — собеседник видит текст сразу; колокольчик не блокирует ответ.
   publish(chatChannel(orderId), { type: "chat", message });
 
   const preview = trimmed.length > 120 ? `${trimmed.slice(0, 117)}…` : trimmed;
   const schoolHref = `/cabinet/items/${order.item.id}`;
   const freelancerHref = `/orders/${orderId}`;
 
-  if (actor.role === "FREELANCER" || actor.id === order.masterId) {
-    const staff = await listDonorStaffIds(order.item.institutionId);
-    await notifyUsers(
-      staff.map((row) => row.id),
-      {
-        kind: "CHAT_MESSAGE",
-        title: "Новое сообщение по заказу",
-        body: preview,
-        href: schoolHref,
-        exceptUserId: actor.id,
-      },
-    );
-  } else {
-    await notifyUsers([order.masterId], {
-      kind: "CHAT_MESSAGE",
-      title: "Новое сообщение по заказу",
-      body: preview,
-      href: freelancerHref,
-      exceptUserId: actor.id,
-    });
-  }
+  void (async () => {
+    try {
+      if (actor.role === "FREELANCER" || actor.id === order.masterId) {
+        const staff = await listDonorStaffIds(order.item.institutionId);
+        await notifyUsers(
+          staff.map((row) => row.id),
+          {
+            kind: "CHAT_MESSAGE",
+            title: "Новое сообщение по заказу",
+            body: preview,
+            href: schoolHref,
+            exceptUserId: actor.id,
+          },
+        );
+      } else {
+        await notifyUsers([order.masterId], {
+          kind: "CHAT_MESSAGE",
+          title: "Новое сообщение по заказу",
+          body: preview,
+          href: freelancerHref,
+          exceptUserId: actor.id,
+        });
+      }
+    } catch {
+      // уведомление вторично — чат уже доставлен
+    }
+  })();
 
   return { ok: true, itemId: order.item.id, message };
 }

@@ -1,11 +1,14 @@
 ﻿"use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
-import { sendChatMessageAction, type ChatFormState } from "@/app/actions/chat";
+import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
+import {
+  listOrderChatMessagesAction,
+  sendChatMessageAction,
+} from "@/app/actions/chat";
 import { mvpRoleLabel, type UserRole } from "@/domain/access/roles";
 import { isPriceSystemMessage, stripPriceMarker } from "@/domain/orders/price-deal";
 
-const initial: ChatFormState = {};
+const POLL_MS = 1500;
 
 export type ChatMessageView = {
   id: string;
@@ -25,6 +28,28 @@ function normalizeMessage(message: ChatMessageView): ChatMessageView {
   };
 }
 
+function mergeById(
+  current: ChatMessageView[],
+  incoming: ChatMessageView[],
+): ChatMessageView[] {
+  const map = new Map<string, ChatMessageView>();
+  for (const row of current) map.set(row.id, row);
+  for (const row of incoming) map.set(row.id, normalizeMessage(row));
+  const merged = [...map.values()].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+  // Убрать optimistic local-*, если сервер уже отдал то же тело от того же автора.
+  const confirmed = new Set(
+    merged
+      .filter((row) => !row.id.startsWith("local-"))
+      .map((row) => `${row.authorId}\0${row.body}`),
+  );
+  return merged.filter((row) => {
+    if (!row.id.startsWith("local-")) return true;
+    return !confirmed.has(`${row.authorId}\0${row.body}`);
+  });
+}
+
 export function OrderChat({
   orderId,
   currentUserId,
@@ -42,15 +67,29 @@ export function OrderChat({
 }) {
   const [messages, setMessages] = useState(() => initialMessages.map(normalizeMessage));
   const [live, setLive] = useState(false);
-  const [state, action, pending] = useActionState(sendChatMessageAction, initial);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const bottomRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const seenIds = useRef(new Set(initialMessages.map((row) => row.id)));
 
+  // Не затираем локальные/SSE сообщения при редком RSC refresh — только доливаем.
+  const onInitialMessages = useEffectEvent((next: ChatMessageView[]) => {
+    const normalized = next.map(normalizeMessage);
+    for (const row of normalized) seenIds.current.add(row.id);
+    setMessages((prev) => mergeById(prev, normalized));
+  });
+
   useEffect(() => {
-    setMessages(initialMessages.map(normalizeMessage));
-    seenIds.current = new Set(initialMessages.map((row) => row.id));
+    onInitialMessages(initialMessages);
   }, [initialMessages]);
+
+  const ingestMessages = useEffectEvent((incoming: ChatMessageView[]) => {
+    if (incoming.length === 0) return;
+    for (const row of incoming) seenIds.current.add(row.id);
+    setMessages((prev) => mergeById(prev, incoming));
+  });
 
   useEffect(() => {
     const source = new EventSource(`/api/chat/${orderId}/stream`);
@@ -63,8 +102,7 @@ export function OrderChat({
         };
         if (payload.type !== "chat" || !payload.message?.id) return;
         if (seenIds.current.has(payload.message.id)) return;
-        seenIds.current.add(payload.message.id);
-        setMessages((prev) => [...prev, normalizeMessage(payload.message!)]);
+        ingestMessages([payload.message]);
       } catch {
         // ignore malformed events
       }
@@ -82,19 +120,73 @@ export function OrderChat({
     };
   }, [orderId]);
 
+  // Страховка: даже если SSE и Action на разных копиях шины — подтянем из БД.
+  useEffect(() => {
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const result = await listOrderChatMessagesAction(orderId);
+        if (cancelled || !result.ok) return;
+        ingestMessages(result.messages);
+      } catch {
+        // сеть / HMR — следующий тик
+      }
+    };
+    const id = window.setInterval(tick, POLL_MS);
+    void tick();
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [orderId]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages.length]);
 
-  useEffect(() => {
-    if (state.message?.id && !seenIds.current.has(state.message.id)) {
-      seenIds.current.add(state.message.id);
-      setMessages((prev) => [...prev, normalizeMessage(state.message!)]);
-    }
-    if (!state.error && !pending && state.message) {
-      formRef.current?.reset();
-    }
-  }, [state, pending]);
+  function submitBody(raw: string) {
+    const body = raw.trim();
+    if (!body || pending) return;
+
+    const optimisticId = `local-${Date.now()}`;
+    const optimistic: ChatMessageView = {
+      id: optimisticId,
+      body,
+      createdAt: new Date().toISOString(),
+      authorId: currentUserId,
+      author: { id: currentUserId, fullName: "", role: "" },
+    };
+    seenIds.current.add(optimisticId);
+    setMessages((prev) => [...prev, optimistic]);
+    setError(null);
+    formRef.current?.reset();
+    textareaRef.current?.focus();
+
+    const formData = new FormData();
+    formData.set("orderId", orderId);
+    formData.set("body", body);
+
+    startTransition(async () => {
+      const result = await sendChatMessageAction({}, formData);
+      if (result.error) {
+        setMessages((prev) => prev.filter((row) => row.id !== optimisticId));
+        seenIds.current.delete(optimisticId);
+        setError(result.error);
+        return;
+      }
+      if (result.message) {
+        seenIds.current.add(result.message.id);
+        setMessages((prev) => {
+          const withoutLocal = prev.filter((row) => row.id !== optimisticId);
+          if (withoutLocal.some((row) => row.id === result.message!.id)) {
+            return withoutLocal;
+          }
+          return [...withoutLocal, normalizeMessage(result.message!)];
+        });
+        seenIds.current.delete(optimisticId);
+      }
+    });
+  }
 
   return (
     <section
@@ -142,7 +234,9 @@ export function OrderChat({
               );
             }
             const mine = message.authorId === currentUserId;
-            const roleName = mvpRoleLabel(message.author.role as UserRole);
+            const roleName = message.author.role
+              ? mvpRoleLabel(message.author.role as UserRole)
+              : "Вы";
             return (
               <div
                 key={message.id}
@@ -168,9 +262,16 @@ export function OrderChat({
         <div ref={bottomRef} />
       </div>
 
-      <form ref={formRef} action={action} className="flex items-end gap-2">
-        <input type="hidden" name="orderId" value={orderId} />
+      <form
+        ref={formRef}
+        className="flex items-end gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          submitBody(textareaRef.current?.value ?? "");
+        }}
+      >
         <textarea
+          ref={textareaRef}
           name="body"
           required
           rows={1}
@@ -180,7 +281,7 @@ export function OrderChat({
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              event.currentTarget.form?.requestSubmit();
+              submitBody(event.currentTarget.value);
             }
           }}
         />
@@ -195,7 +296,7 @@ export function OrderChat({
           </svg>
         </button>
       </form>
-      {state.error ? <p className="text-xs text-leaf">{state.error}</p> : null}
+      {error ? <p className="text-xs text-leaf">{error}</p> : null}
     </section>
   );
 }
