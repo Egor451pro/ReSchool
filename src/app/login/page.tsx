@@ -1,3 +1,4 @@
+import { DemoWalkthroughTrigger } from "@/components/demo-walkthrough";
 import { LoginForm } from "@/components/login-form";
 import { RoleLoginPicker } from "@/components/role-login-picker";
 import { SiteHeader } from "@/components/site-header";
@@ -58,6 +59,12 @@ export default async function LoginPage({
             rememberedUserId={rememberedUserId}
             accounts={accounts}
           />
+          <div className="mt-5 flex flex-col gap-2 border-t border-line pt-4">
+            <p className="text-xs leading-5 text-leaf">
+              Наглядный прогон сценария без входа и без записи в базу.
+            </p>
+            <DemoWalkthroughTrigger />
+          </div>
         </section>
 
         <section
