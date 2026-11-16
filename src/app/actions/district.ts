@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { assumptionFormSchema } from "@/lib/validators/assumption";
-import { requireRoles } from "@/server/auth/current-user";
+import { requireRolesFresh } from "@/server/auth/current-user";
 import { revalidateAdminViews } from "@/server/revalidate";
 import { saveAssumptionSet } from "@/server/services/economy-service";
 
@@ -40,7 +40,7 @@ export async function updateAssumptionAction(
   _state: AssumptionFormState,
   formData: FormData,
 ): Promise<AssumptionFormState> {
-  const actor = await requireRoles(["DISTRICT_ANALYST", "PLATFORM_ADMIN"]);
+  const actor = await requireRolesFresh(["DISTRICT_ANALYST", "PLATFORM_ADMIN"]);
   const values = valuesFromForm(formData);
   const parsed = assumptionFormSchema.safeParse({
     kind: text(formData, "kind"),

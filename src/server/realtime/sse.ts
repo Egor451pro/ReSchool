@@ -3,7 +3,7 @@ import "server-only";
 import { subscribe } from "@/server/realtime/bus";
 
 export function sseResponse(channel: string, init?: { heartbeatMs?: number }) {
-  const heartbeatMs = init?.heartbeatMs ?? 20_000;
+  const heartbeatMs = init?.heartbeatMs ?? 30_000;
   const encoder = new TextEncoder();
   let unsubscribe: (() => void) | null = null;
   let heartbeat: ReturnType<typeof setInterval> | null = null;

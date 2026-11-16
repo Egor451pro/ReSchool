@@ -1,5 +1,5 @@
 export const DISTRICT = "Пилотный район";
-export const DEMO_PASSWORD = "demo1234";
+export const DEMO_PASSWORD = "12345678";
 export const DEMO_NOW = new Date("2026-11-05T06:00:00.000Z");
 
 export const disposalKop = {

@@ -1,6 +1,6 @@
 "use server";
 
-import { requireRoles } from "@/server/auth/current-user";
+import { requireRolesFresh } from "@/server/auth/current-user";
 import { revalidateOrderViews } from "@/server/revalidate";
 import {
   sendOrderChatMessage,
@@ -16,7 +16,7 @@ export async function sendChatMessageAction(
   _state: ChatFormState,
   formData: FormData,
 ): Promise<ChatFormState> {
-  const actor = await requireRoles(["DONOR_STAFF", "FREELANCER", "PLATFORM_ADMIN"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF", "FREELANCER", "PLATFORM_ADMIN"]);
   const orderId = String(formData.get("orderId") ?? "");
   const body = String(formData.get("body") ?? "");
   const result = await sendOrderChatMessage(actor, orderId, body);

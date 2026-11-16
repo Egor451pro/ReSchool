@@ -51,7 +51,9 @@ export function NotificationBell({
   }, []);
 
   useEffect(() => {
-    const source = new EventSource("/api/notifications/stream");
+    let source: EventSource | null = null;
+    let cancelled = false;
+
     const onMessage = (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data) as {
@@ -81,10 +83,21 @@ export function NotificationBell({
         // ignore
       }
     };
-    source.addEventListener("message", onMessage);
+
+    // Не конкурируем с гидрацией и первым paint — подключаемся через ~1 с.
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      source = new EventSource("/api/notifications/stream");
+      source.addEventListener("message", onMessage);
+    }, 1000);
+
     return () => {
-      source.removeEventListener("message", onMessage);
-      source.close();
+      cancelled = true;
+      window.clearTimeout(timer);
+      if (source) {
+        source.removeEventListener("message", onMessage);
+        source.close();
+      }
     };
   }, []);
 

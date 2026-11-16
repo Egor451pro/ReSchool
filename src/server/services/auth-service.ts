@@ -13,6 +13,7 @@ import {
   findUserByEmail,
 } from "@/server/repositories/user-repository";
 import { geocodeAddress } from "@/server/services/geocode-service";
+import { isDemoMode } from "@/lib/demo-mode";
 
 export type AuthSuccess = {
   ok: true;
@@ -30,7 +31,10 @@ export type AuthFailure = { ok: false; error: string };
 const INVALID_LOGIN = "Неверная почта или пароль";
 
 async function loginDelay(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 250 + Math.floor(Math.random() * 200)));
+  const padMs = isDemoMode()
+    ? 100 + Math.floor(Math.random() * 50)
+    : 250 + Math.floor(Math.random() * 200);
+  await new Promise((resolve) => setTimeout(resolve, padMs));
 }
 
 function sessionFields(user: {

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireRoles } from "@/server/auth/current-user";
+import { requireRolesFresh } from "@/server/auth/current-user";
 import { revalidateDisposalViews, revalidateWalletViews } from "@/server/revalidate";
 import {
   markDisposalDeliveredByFreelancer,
@@ -21,7 +21,7 @@ export async function chooseSelfDisposalAction(
   _state: DisposalFormState,
   formData: FormData,
 ): Promise<DisposalFormState> {
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF"]);
   const itemId = text(formData, "itemId");
   const result = await startDisposalSelf(actor, {
     itemId,
@@ -36,7 +36,7 @@ export async function chooseFreelancerDisposalAction(
   _state: DisposalFormState,
   formData: FormData,
 ): Promise<DisposalFormState> {
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF"]);
   const itemId = text(formData, "itemId");
   const result = await startDisposalFreelancer(actor, {
     itemId,
@@ -52,7 +52,7 @@ export async function confirmDisposalAction(
   _state: DisposalFormState,
   formData: FormData,
 ): Promise<DisposalFormState> {
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF"]);
   const itemId = text(formData, "itemId");
   const result = await markItemDisposedBySchool(actor, itemId);
   if (!result.ok) return { error: result.error };
@@ -65,7 +65,7 @@ export async function deliverDisposalAction(
   _state: DisposalFormState,
   formData: FormData,
 ): Promise<DisposalFormState> {
-  const actor = await requireRoles(["FREELANCER"]);
+  const actor = await requireRolesFresh(["FREELANCER"]);
   const itemId = text(formData, "itemId");
   const result = await markDisposalDeliveredByFreelancer(actor, itemId);
   if (!result.ok) return { error: result.error };

@@ -7,10 +7,7 @@ import { SectionNav } from "@/components/section-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { roleHome, sectionsForRole } from "@/domain/access/roles";
 import { requireUser } from "@/server/auth/current-user";
-import {
-  countUnreadNotifications,
-  listRecentNotifications,
-} from "@/server/repositories/notification-repository";
+import { listRecentNotifications } from "@/server/repositories/notification-repository";
 
 export const instant = false;
 
@@ -22,17 +19,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   );
 }
 
-async function AppShell({ children }: { children: ReactNode }) {
+function BellSkeleton() {
+  return (
+    <div
+      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-surface"
+      aria-hidden
+    />
+  );
+}
+
+async function HeaderNotifications() {
   const user = await requireUser();
-  const links = sectionsForRole(user.role).map((section) => ({
-    href: section.href,
-    label: section.label,
-    hint: section.hint,
-  }));
-  const [recent, unread] = await Promise.all([
-    listRecentNotifications(user.id, 20),
-    countUnreadNotifications(user.id),
-  ]);
+  const recent = await listRecentNotifications(user.id, 20);
   const notifications = recent.map((row) => ({
     id: row.id,
     kind: row.kind,
@@ -41,6 +39,18 @@ async function AppShell({ children }: { children: ReactNode }) {
     href: row.href,
     createdAt: row.createdAt.toISOString(),
     readAt: row.readAt?.toISOString() ?? null,
+  }));
+  const unread = notifications.filter((row) => !row.readAt).length;
+
+  return <NotificationBell initialItems={notifications} initialUnread={unread} />;
+}
+
+async function AppShell({ children }: { children: ReactNode }) {
+  const user = await requireUser();
+  const links = sectionsForRole(user.role).map((section) => ({
+    href: section.href,
+    label: section.label,
+    hint: section.hint,
   }));
 
   return (
@@ -63,7 +73,9 @@ async function AppShell({ children }: { children: ReactNode }) {
               ReSchool
             </Link>
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              <NotificationBell initialItems={notifications} initialUnread={unread} />
+              <Suspense fallback={<BellSkeleton />}>
+                <HeaderNotifications />
+              </Suspense>
               <ThemeToggle />
               <AuthHeader
                 user={{ fullName: user.fullName, role: user.role, email: user.email }}

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { parseBynToKop } from "@/domain/economy/money";
-import { requireRoles } from "@/server/auth/current-user";
+import { requireRolesFresh } from "@/server/auth/current-user";
 import {
   acceptOrderProposal,
   advanceOrder,
@@ -35,7 +35,7 @@ export async function claimItemAction(
   _state: OrderFormState,
   formData: FormData,
 ): Promise<OrderFormState> {
-  const actor = await requireRoles(["FREELANCER"]);
+  const actor = await requireRolesFresh(["FREELANCER"]);
   const fee = parseFee(formData);
   if (!fee.ok) return { error: fee.error };
 
@@ -52,7 +52,7 @@ export async function proposePriceAction(
   _state: OrderFormState,
   formData: FormData,
 ): Promise<OrderFormState> {
-  const actor = await requireRoles(["FREELANCER", "DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const actor = await requireRolesFresh(["FREELANCER", "DONOR_STAFF", "PLATFORM_ADMIN"]);
   const fee = parseFee(formData);
   if (!fee.ok) return { error: fee.error };
 
@@ -73,7 +73,7 @@ export async function acceptOrderAction(
   _state: OrderFormState,
   formData: FormData,
 ): Promise<OrderFormState> {
-  const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF", "PLATFORM_ADMIN"]);
   const result = await acceptOrderProposal(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
   revalidateOrderViews({ orderId: result.orderId, itemId: result.itemId });
@@ -87,7 +87,7 @@ export async function advanceOrderAction(
   _state: OrderFormState,
   formData: FormData,
 ): Promise<OrderFormState> {
-  const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
+  const actor = await requireRolesFresh(["FREELANCER", "PLATFORM_ADMIN"]);
   const orderId = text(formData, "orderId");
   const result = await advanceOrder(actor, orderId);
   if (!result.ok) return { error: result.error };
@@ -99,7 +99,7 @@ export async function cancelOrderAction(
   _state: OrderFormState,
   formData: FormData,
 ): Promise<OrderFormState> {
-  const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
+  const actor = await requireRolesFresh(["FREELANCER", "PLATFORM_ADMIN"]);
   const result = await cancelOrder(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
   revalidateOrderViews({ orderId: result.orderId, itemId: result.itemId });
@@ -110,7 +110,7 @@ export async function unrepairableOrderAction(
   _state: OrderFormState,
   formData: FormData,
 ): Promise<OrderFormState> {
-  const actor = await requireRoles(["FREELANCER", "PLATFORM_ADMIN"]);
+  const actor = await requireRolesFresh(["FREELANCER", "PLATFORM_ADMIN"]);
   const result = await markOrderUnrepairable(actor, text(formData, "orderId"));
   if (!result.ok) return { error: result.error };
   revalidateOrderViews({ orderId: result.orderId, itemId: result.itemId });

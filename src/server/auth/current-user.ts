@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { roleHome, type UserRole } from "@/domain/access/roles";
+import { clearSession } from "@/server/auth/cookies";
 import { findUserById } from "@/server/repositories/user-repository";
 import { decryptSession, SESSION_COOKIE } from "./session";
 
@@ -42,8 +43,8 @@ function asInstitutionType(value: string | null): CurrentInstitutionType | null 
 }
 
 /**
- * SSR/actions: JWT проверяется, затем роль/учреждение сверяются с БД,
- * чтобы удалённый или пониженный пользователь не жил на старых claims.
+ * Быстрый путь для SSR страниц: только JWT claims, без запроса в БД.
+ * Мутации должны использовать requireFreshUser / requireRolesFresh.
  */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   await connection();
@@ -51,18 +52,15 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const session = await decryptSession(token);
   if (!session) return null;
 
-  const user = await findUserById(session.userId);
-  if (!user) return null;
-
   return {
-    id: user.id,
-    fullName: user.fullName,
-    role: user.role as UserRole,
-    email: user.email,
-    institutionId: user.institutionId,
-    institutionName: user.institution?.name ?? null,
-    institutionType: asInstitutionType(user.institution?.type ?? null),
-    district: user.institution?.district ?? null,
+    id: session.userId,
+    fullName: session.fullName,
+    role: session.role,
+    email: session.email,
+    institutionId: session.institutionId,
+    institutionName: session.institutionName,
+    institutionType: asInstitutionType(session.institutionType),
+    district: session.district,
   };
 });
 
@@ -74,6 +72,35 @@ export async function requireUser(): Promise<CurrentUser> {
 
 export async function requireRoles(roles: readonly UserRole[]): Promise<CurrentUser> {
   const user = await requireUser();
+  if (!roles.includes(user.role)) redirect(roleHome(user.role));
+  return user;
+}
+
+/**
+ * Для Server Actions: JWT + сверка с БД (роль/учреждение актуальны).
+ */
+export async function requireFreshUser(): Promise<CurrentUser> {
+  const sessionUser = await requireUser();
+  const dbUser = await findUserById(sessionUser.id);
+  if (!dbUser || (dbUser.role as UserRole) !== sessionUser.role) {
+    await clearSession();
+    redirect("/login");
+  }
+
+  return {
+    id: dbUser.id,
+    fullName: dbUser.fullName,
+    role: dbUser.role as UserRole,
+    email: dbUser.email,
+    institutionId: dbUser.institutionId,
+    institutionName: dbUser.institution?.name ?? null,
+    institutionType: asInstitutionType(dbUser.institution?.type ?? null),
+    district: dbUser.institution?.district ?? null,
+  };
+}
+
+export async function requireRolesFresh(roles: readonly UserRole[]): Promise<CurrentUser> {
+  const user = await requireFreshUser();
   if (!roles.includes(user.role)) redirect(roleHome(user.role));
   return user;
 }

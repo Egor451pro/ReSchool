@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireRoles } from "@/server/auth/current-user";
+import { requireRolesFresh } from "@/server/auth/current-user";
 import { confirmRepairBySchool } from "@/server/services/document-service";
 import {
   deletePublishedItem,
@@ -150,7 +150,7 @@ export async function updateRepairBudgetAction(
     return { error: message, budget };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF"]);
   const result = await setRepairBudget(actor, itemId, parsed.data.repairBudgetKop);
   if (!result.ok) return { error: result.error, budget };
   revalidateItemListing(itemId);
@@ -166,7 +166,7 @@ export async function publishItemAction(
     return { error: "Проверьте поля карточки", fields: fieldMessages(parsed.error), item };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF"]);
   const result = await publishItem(actor, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
   revalidateItemListing(result.itemId);
@@ -183,7 +183,7 @@ export async function reviseItemAction(
     return { error: "Проверьте поля карточки", fields: fieldMessages(parsed.error), item };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF"]);
   const result = await reviseItem(actor, itemId, parsed.data, readPhoto(formData));
   if (!result.ok) return { error: result.error, item };
   revalidateItemListing(result.itemId);
@@ -197,7 +197,7 @@ export async function withdrawItemAction(
   if (formData.get("confirm") !== "on") {
     return { error: "Отметьте, что карточку нужно снять" };
   }
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF"]);
   const itemId = text(formData, "itemId");
   const result = await withdrawItem(actor, itemId);
   if (!result.ok) return { error: result.error };
@@ -214,7 +214,7 @@ export async function deleteItemAction(
   if (formData.get("confirm") !== "on") {
     return { error: "Отметьте подтверждение удаления" };
   }
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF"]);
   const itemId = text(formData, "itemId");
   const result = await deletePublishedItem(actor, itemId);
   if (!result.ok) return { error: result.error };
@@ -232,7 +232,7 @@ export async function publishRequestAction(
     return { error: "Проверьте поля запроса", fields: fieldMessages(parsed.error), request };
   }
 
-  const actor = await requireRoles(["DONOR_STAFF"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF"]);
   const result = await publishRequest(actor, parsed.data);
   if (!result.ok) return { error: result.error, request };
   revalidateItemListing();
@@ -245,7 +245,7 @@ export async function confirmRepairAction(
   _state: ConfirmRepairState,
   formData: FormData,
 ): Promise<ConfirmRepairState> {
-  const actor = await requireRoles(["DONOR_STAFF", "PLATFORM_ADMIN"]);
+  const actor = await requireRolesFresh(["DONOR_STAFF", "PLATFORM_ADMIN"]);
   const itemId = text(formData, "itemId");
   const result = await confirmRepairBySchool(actor, itemId);
   if (!result.ok) return { error: result.error };
