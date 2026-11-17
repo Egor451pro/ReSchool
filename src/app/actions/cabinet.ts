@@ -255,5 +255,6 @@ export async function confirmRepairAction(
   if (actor.role === "PLATFORM_ADMIN") {
     redirect(itemId ? `/catalog/${itemId}` : "/admin");
   }
-  redirect("/cabinet");
+  // Show before/after + economy on the public card instead of a bare cabinet list.
+  redirect(itemId ? `/catalog/${itemId}` : "/cabinet");
 }

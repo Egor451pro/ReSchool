@@ -17,12 +17,21 @@ export type ItemTileData = {
   photos: { id: string; path: string }[];
 };
 
-export function ItemTile({ item, showPlace }: { item: ItemTileData; showPlace?: boolean }) {
+export function ItemTile({
+  item,
+  showPlace,
+  href,
+}: {
+  item: ItemTileData;
+  showPlace?: boolean;
+  /** Override default catalog link (e.g. freelancer closed order result). */
+  href?: string;
+}) {
   const photo = item.photos[0];
 
   return (
     <Link
-      href={`/catalog/${item.id}`}
+      href={href ?? `/catalog/${item.id}`}
       className="flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-[var(--shadow-soft)] transition-colors duration-300 hover:border-mint"
     >
       <div className="aspect-[4/3] bg-placeholder transition-colors duration-300">

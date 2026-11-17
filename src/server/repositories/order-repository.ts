@@ -224,6 +224,7 @@ export function findOrderDetail(orderId: string) {
           title: true,
           description: true,
           status: true,
+          closeReason: true,
           condition: true,
           quantity: true,
           newUnitPriceKop: true,
@@ -235,10 +236,13 @@ export function findOrderDetail(orderId: string) {
           category: { select: { name: true } },
           photos: {
             orderBy: { sort: "asc" as const },
-            take: 1,
-            select: { id: true, path: true },
+            take: 8,
+            select: { id: true, path: true, sort: true, role: true },
           },
         },
+      },
+      snapshot: {
+        select: { propertyBudgetKop: true, freelancerFeeKop: true },
       },
       documents: {
         orderBy: { createdAt: "asc" as const },

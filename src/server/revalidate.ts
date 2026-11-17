@@ -9,7 +9,7 @@ function bump(...paths: string[]) {
 
 /** Каталог + кабинет после публикации / правки / снятия карточки. */
 export function revalidateItemListing(itemId?: string | null) {
-  const paths = ["/catalog", "/cabinet", "/workshop"];
+  const paths = ["/catalog", "/cabinet", "/cabinet/in-progress", "/workshop"];
   if (itemId) {
     paths.push(`/catalog/${itemId}`, `/cabinet/items/${itemId}`);
   }
@@ -21,7 +21,7 @@ export function revalidateOrderViews(input?: {
   orderId?: string | null;
   itemId?: string | null;
 }) {
-  const paths = ["/orders", "/workshop", "/cabinet", "/catalog"];
+  const paths = ["/orders", "/workshop", "/cabinet", "/cabinet/in-progress", "/catalog"];
   if (input?.orderId) paths.push(`/orders/${input.orderId}`);
   if (input?.itemId) {
     paths.push(`/catalog/${input.itemId}`, `/cabinet/items/${input.itemId}`);
@@ -31,7 +31,16 @@ export function revalidateOrderViews(input?: {
 
 /** Утилизация и подтверждение списания. */
 export function revalidateDisposalViews(itemId?: string | null) {
-  const paths = ["/cabinet", "/orders", "/catalog", "/wallet", "/expenses", "/admin", "/district"];
+  const paths = [
+    "/cabinet",
+    "/cabinet/in-progress",
+    "/orders",
+    "/catalog",
+    "/wallet",
+    "/expenses",
+    "/admin",
+    "/district",
+  ];
   if (itemId) {
     paths.push(`/cabinet/items/${itemId}`, `/catalog/${itemId}`);
   }
@@ -40,7 +49,15 @@ export function revalidateDisposalViews(itemId?: string | null) {
 
 /** Кошелёк и выплаты. */
 export function revalidateWalletViews() {
-  bump("/wallet", "/orders", "/admin", "/expenses", "/cabinet", "/district");
+  bump(
+    "/wallet",
+    "/orders",
+    "/admin",
+    "/expenses",
+    "/cabinet",
+    "/cabinet/in-progress",
+    "/district",
+  );
 }
 
 /** Дашборд района / админ-экономика. */

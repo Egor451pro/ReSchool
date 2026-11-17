@@ -102,6 +102,7 @@ export default async function OrdersPage() {
               ...order.item,
               closeReason: (order.item.closeReason as CloseReason | null) ?? null,
               feeKop: order.agreedFeeKop,
+              href: `/orders/${order.id}`,
             }))}
             showPlace
           />

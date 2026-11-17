@@ -104,6 +104,12 @@ export const appSections: readonly AppSection[] = [
     roles: ["DONOR_STAFF"],
   },
   {
+    href: "/cabinet/in-progress",
+    label: "В работе",
+    hint: "торг и ремонт",
+    roles: ["DONOR_STAFF"],
+  },
+  {
     href: "/catalog",
     label: "Каталог",
     hint: "объявления",

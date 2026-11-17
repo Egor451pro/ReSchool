@@ -9,6 +9,7 @@ import { closeReasonLabels, itemsCountLabel, type CloseReason } from "@/domain/i
 export type HistoryItem = ItemTileData & {
   closeReason: CloseReason | null;
   feeKop?: number;
+  href?: string;
 };
 
 export function RepairHistoryPanel({
@@ -44,7 +45,7 @@ export function RepairHistoryPanel({
           <div className="grid gap-4 sm:grid-cols-2">
             {items.map((item) => (
               <div key={item.id} className="flex flex-col gap-2">
-                <ItemTile item={item} showPlace={showPlace} />
+                <ItemTile item={item} showPlace={showPlace} href={item.href} />
                 <p className="px-1 text-xs text-leaf">
                   {item.closeReason ? closeReasonLabels[item.closeReason] : "Закрыто"}
                   {typeof item.feeKop === "number" ? ` · ${formatByn(item.feeKop)}` : null}

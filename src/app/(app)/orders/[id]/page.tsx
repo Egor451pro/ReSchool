@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { BackLink } from "@/components/back-link";
+import { BeforeAfterSlider } from "@/components/before-after-slider";
 import { DocumentLinks } from "@/components/document-links";
 import { OrderActions } from "@/components/order-actions";
 import { FreelancerOrderSteps } from "@/components/order-flow-steps";
-import { OrderChat } from "@/components/order-chat";
+import { OrderChat, OrderChatLocked } from "@/components/order-chat";
 import { PriceDealPanel } from "@/components/price-deal-panel";
 import { StatusBadge } from "@/components/status-badge";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
+import { itemPhotoSrc } from "@/domain/items/photo";
 import { orderStatusLabels, type OrderStatus } from "@/domain/orders/labels";
 import type { PriceOfferSide } from "@/domain/orders/price-deal";
 import { maxRepairFeeKop } from "@/domain/orders/price-deal";
@@ -34,11 +36,17 @@ export default async function FreelancerOrderPage({
   }
 
   const closed = order.item.status === "CLOSED" || order.item.status === "DISPOSED";
-  if (closed) {
-    redirect("/orders");
-  }
+  const photos = order.item.photos;
+  const beforePhoto =
+    photos.find((photo) => photo.role === "BEFORE") ?? photos[0] ?? null;
+  const afterPhoto =
+    photos.find((photo) => photo.role === "AFTER") ??
+    (photos.length > 1 ? photos[photos.length - 1] : null);
+  const showBeforeAfter = Boolean(
+    closed && beforePhoto && afterPhoto && beforePhoto.id !== afterPhoto.id,
+  );
 
-  const messages = await listOrderMessages(order.id);
+  const messages = closed ? [] : await listOrderMessages(order.id);
   const school = order.item.institution;
   const master = order.master;
   const distanceLabel =
@@ -53,6 +61,97 @@ export default async function FreelancerOrderPage({
           ),
         )
       : null;
+
+  if (closed) {
+    const payoutKop = order.snapshot?.freelancerFeeKop ?? order.agreedFeeKop;
+    const schoolSavingKop = order.snapshot?.propertyBudgetKop;
+    const completedClose =
+      order.item.status === "CLOSED" && order.item.closeReason === "COMPLETED";
+
+    return (
+      <PageShell>
+        <BackLink href="/orders">К списку заказов</BackLink>
+
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+          <div className="flex flex-col gap-5">
+            <header className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={order.item.status} />
+                <span className="text-sm text-leaf">
+                  {orderStatusLabels[order.status as OrderStatus]}
+                </span>
+              </div>
+              <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+                {order.item.title}
+              </h1>
+              <p className="text-sm text-leaf">
+                {order.item.institution.name}
+                {order.item.category?.name ? ` · ${order.item.category.name}` : null}
+                {distanceLabel ? ` · ${distanceLabel}` : null}
+              </p>
+              <Link
+                href={`/catalog/${order.item.id}`}
+                className="text-sm text-gold underline-offset-2 hover:underline"
+              >
+                Карточка объекта в каталоге
+              </Link>
+            </header>
+
+            {showBeforeAfter && beforePhoto && afterPhoto ? (
+              <BeforeAfterSlider
+                beforeSrc={itemPhotoSrc(beforePhoto)}
+                afterSrc={itemPhotoSrc(afterPhoto)}
+                savingLabel={
+                  schoolSavingKop != null ? `+${formatByn(schoolSavingKop)}` : undefined
+                }
+              />
+            ) : null}
+
+            <Surface className="flex flex-col gap-3">
+              <h2 className="text-sm font-semibold text-ink">Итог заказа</h2>
+              <p className="text-sm leading-6 text-leaf">
+                {completedClose
+                  ? "Завхоз подтвердил закрытие. Выплата зачислена в кошелёк."
+                  : order.item.status === "DISPOSED"
+                    ? "Объект списан. Заказ закрыт — детали в кошельке, если была выплата."
+                    : "Заказ закрыт."}
+              </p>
+              <dl className="grid gap-2 sm:grid-cols-2">
+                <div className="rounded-2xl bg-muted px-3.5 py-3 ring-1 ring-line">
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-leaf">
+                    Ваша выплата
+                  </dt>
+                  <dd className="mt-1 text-lg font-semibold text-ink">{formatByn(payoutKop)}</dd>
+                </div>
+                {schoolSavingKop != null ? (
+                  <div className="rounded-2xl bg-muted px-3.5 py-3 ring-1 ring-line">
+                    <dt className="text-[11px] font-semibold uppercase tracking-[0.08em] text-leaf">
+                      Экономия школы
+                    </dt>
+                    <dd className="mt-1 text-lg font-semibold text-ink">
+                      {formatByn(schoolSavingKop)}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+              <Link href="/wallet" className="btn-primary btn-sm self-start">
+                В кошелёк
+              </Link>
+            </Surface>
+
+            {order.documents.length > 0 ? (
+              <Surface>
+                <h2 className="mb-2 text-sm font-semibold text-ink">Документы</h2>
+                <DocumentLinks documents={order.documents} />
+              </Surface>
+            ) : null}
+          </div>
+
+          <OrderChatLocked reason="Заказ закрыт — чат только для архива на карточке объекта." />
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell>

@@ -20,13 +20,15 @@ describe("access roles", () => {
     expect(sectionsForRole("FREELANCER").map((s) => s.href)).toContain("/workshop");
   });
 
-  it("завхоз видит кабинет, каталог и экономию", () => {
+  it("завхоз видит кабинет, в работе, каталог и экономию", () => {
     expect(canAccess("DONOR_STAFF", "/cabinet")).toBe(true);
+    expect(canAccess("DONOR_STAFF", "/cabinet/in-progress")).toBe(true);
     expect(canAccess("DONOR_STAFF", "/catalog")).toBe(true);
     expect(canAccess("DONOR_STAFF", "/expenses")).toBe(true);
     expect(canAccess("DONOR_STAFF", "/wallet")).toBe(false);
     expect(canAccess("DONOR_STAFF", "/workshop")).toBe(false);
     expect(roleHome("DONOR_STAFF")).toBe("/cabinet");
+    expect(sectionsForRole("DONOR_STAFF").map((s) => s.href)).toContain("/cabinet/in-progress");
   });
 
   it("аналитик видит район и калькулятор", () => {
@@ -55,6 +57,8 @@ describe("access roles", () => {
   it("sectionForPath выбирает самый длинный префикс", () => {
     expect(sectionForPath("/district/calculator")?.href).toBe("/district/calculator");
     expect(sectionForPath("/district")?.href).toBe("/district");
+    expect(sectionForPath("/cabinet/in-progress")?.href).toBe("/cabinet/in-progress");
+    expect(sectionForPath("/cabinet")?.href).toBe("/cabinet");
   });
 
   it("safeNextPath не пускает чужие разделы", () => {
