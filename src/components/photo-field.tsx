@@ -35,7 +35,19 @@ function firstClipboardImage(data: DataTransfer | null): File | null {
   return null;
 }
 
-export function PhotoField({ currentPhotoSrc }: { currentPhotoSrc?: string }) {
+export function PhotoField({
+  currentPhotoSrc,
+  name = "photo",
+  label,
+  emptyHint = "Без фото останется картинка категории.",
+  required = false,
+}: {
+  currentPhotoSrc?: string;
+  name?: string;
+  label?: string;
+  emptyHint?: string;
+  required?: boolean;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const previewUrlRef = useRef<string | null>(null);
   const inputId = useId();
@@ -103,6 +115,12 @@ export function PhotoField({ currentPhotoSrc }: { currentPhotoSrc?: string }) {
 
   return (
     <div className="flex flex-col gap-2">
+      {label ? (
+        <p className="text-sm font-medium text-ink">
+          {label}
+          {required ? <span className="text-leaf"> *</span> : null}
+        </p>
+      ) : null}
       <div
         tabIndex={0}
         onDrop={(event) => {
@@ -135,7 +153,7 @@ export function PhotoField({ currentPhotoSrc }: { currentPhotoSrc?: string }) {
         ) : currentPhotoSrc && !preview ? (
           <p className="mt-1 text-xs text-leaf">Сейчас в карточке — текущее фото. Новое заменит его.</p>
         ) : (
-          <p className="mt-1 text-xs text-leaf">Без фото останется картинка категории.</p>
+          <p className="mt-1 text-xs text-leaf">{emptyHint}</p>
         )}
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -152,9 +170,10 @@ export function PhotoField({ currentPhotoSrc }: { currentPhotoSrc?: string }) {
         <input
           id={inputId}
           ref={inputRef}
-          name="photo"
+          name={name}
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          required={required}
           className="sr-only"
           onChange={(event) => {
             const file = event.target.files?.[0] ?? null;

@@ -13,6 +13,10 @@ import {
   type PriceOfferSide,
 } from "@/domain/orders/price-deal";
 import {
+  addItemAfterPhoto,
+  removeItemAfterPhotos,
+} from "@/server/repositories/item-repository";
+import {
   acceptOrderBySchool,
   applyOrderTransition,
   claimItemOrder,
@@ -26,6 +30,7 @@ import {
   notifyPriceOffered,
   notifyRepairAwaitingConfirm,
 } from "@/server/services/order-notify";
+import { removeUploadedPhoto, saveUploadedPhoto } from "@/server/storage/item-photos";
 
 export type OrderActor = {
   id: string;
@@ -221,7 +226,11 @@ export async function acceptOrderProposal(
   return { ok: true, orderId: order.id, itemId: order.item.id };
 }
 
-export async function advanceOrder(actor: OrderActor, orderId: string): Promise<OrderResult> {
+export async function advanceOrder(
+  actor: OrderActor,
+  orderId: string,
+  afterPhoto: File,
+): Promise<OrderResult> {
   const order = await findOrderForMaster(orderId);
   if (!order) return { ok: false, error: "Заказ не найден" };
   if (!canManageOrder(actor, order)) return { ok: false, error: "Это заказ другого фрилансера" };
@@ -233,7 +242,17 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
     };
   }
 
+  const saved = await saveUploadedPhoto(afterPhoto);
+  if (!saved.ok) return { ok: false, error: saved.error };
+
+  const rollbackAfterPhoto = async () => {
+    await removeItemAfterPhotos(order.item.id).catch(() => undefined);
+    await removeUploadedPhoto(saved.name);
+  };
+
   try {
+    await addItemAfterPhoto({ itemId: order.item.id, path: saved.name });
+
     // Старые заказы: цена уже подтверждена, но статус ещё ASSIGNED — сначала в работу.
     if (order.status === "ASSIGNED" && order.schoolAcceptedAt) {
       const start = planOrderAdvance("ASSIGNED", order.item.status);
@@ -247,7 +266,10 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
         actorId: actor.id,
         comment: start.comment,
       });
-      if (!started) return { ok: false, error: "Статус заказа уже изменился" };
+      if (!started) {
+        await rollbackAfterPhoto();
+        return { ok: false, error: "Статус заказа уже изменился" };
+      }
       // Сразу завершаем ремонт по кнопке «Завершить заказ».
       const finish = planOrderAdvance("IN_PROGRESS", start.itemTo ?? "IN_REPAIR");
       const done = await applyOrderTransition({
@@ -262,7 +284,10 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
         actualMaterialsKop: order.plannedMaterialsKop,
         actualMinutes: order.plannedMinutes,
       });
-      if (!done) return { ok: false, error: "Не удалось завершить заказ" };
+      if (!done) {
+        await rollbackAfterPhoto();
+        return { ok: false, error: "Не удалось завершить заказ" };
+      }
       await notifyRepairAwaitingConfirm({
         itemId: order.item.id,
         institutionId: order.item.institutionId,
@@ -285,14 +310,18 @@ export async function advanceOrder(actor: OrderActor, orderId: string): Promise<
         plan.orderTo === "COMPLETED" ? order.plannedMaterialsKop : undefined,
       actualMinutes: plan.orderTo === "COMPLETED" ? order.plannedMinutes : undefined,
     });
-    if (!ok) return { ok: false, error: "Статус заказа уже изменился" };
+    if (!ok) {
+      await rollbackAfterPhoto();
+      return { ok: false, error: "Статус заказа уже изменился" };
+    }
     await notifyRepairAwaitingConfirm({
-        itemId: order.item.id,
-        institutionId: order.item.institutionId,
-        actorId: actor.id,
-      });
-      return { ok: true, orderId: order.id, itemId: order.item.id };
+      itemId: order.item.id,
+      institutionId: order.item.institutionId,
+      actorId: actor.id,
+    });
+    return { ok: true, orderId: order.id, itemId: order.item.id };
   } catch (error) {
+    await rollbackAfterPhoto();
     return { ok: false, error: error instanceof Error ? error.message : "Нельзя продвинуть заказ" };
   }
 }

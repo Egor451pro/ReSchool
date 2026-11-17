@@ -103,6 +103,13 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
   const lineTotal = item.newUnitPriceKop * item.quantity;
   const photos = item.photos;
   const order = item.orders[0] ?? null;
+  const beforePhoto =
+    photos.find((photo) => photo.role === "BEFORE") ?? photos[0] ?? null;
+  const afterPhoto =
+    photos.find((photo) => photo.role === "AFTER") ??
+    (photos.length > 1 ? photos[photos.length - 1] : null);
+  const showBeforeAfter =
+    item.status === "CLOSED" && Boolean(beforePhoto && afterPhoto && beforePhoto.id !== afterPhoto.id);
 
   const canChat =
     Boolean(order) &&
@@ -142,10 +149,10 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)_minmax(0,22rem)]">
           <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
             <div className="overflow-hidden rounded-3xl">
-              {item.status === "CLOSED" && photos.length >= 2 ? (
+              {showBeforeAfter && beforePhoto && afterPhoto ? (
                 <BeforeAfterSlider
-                  beforeSrc={itemPhotoSrc(photos[0])}
-                  afterSrc={itemPhotoSrc(photos[photos.length - 1])}
+                  beforeSrc={itemPhotoSrc(beforePhoto)}
+                  afterSrc={itemPhotoSrc(afterPhoto)}
                   savingLabel={
                     order?.snapshot?.propertyBudgetKop != null
                       ? `+${formatByn(order.snapshot.propertyBudgetKop)}`

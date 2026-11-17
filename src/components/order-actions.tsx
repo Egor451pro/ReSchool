@@ -7,6 +7,7 @@ import {
   unrepairableOrderAction,
   type OrderFormState,
 } from "@/app/actions/orders";
+import { PhotoField } from "@/components/photo-field";
 import type { OrderStatus } from "@/domain/orders/labels";
 import { orderStatusLabels } from "@/domain/orders/labels";
 import type { ItemStatus } from "@/domain/items/labels";
@@ -49,6 +50,25 @@ function ActionButton({
   );
 }
 
+function FinishOrderForm({ orderId }: { orderId: string }) {
+  const [state, formAction, pending] = useActionState(advanceOrderAction, initialState);
+  return (
+    <form action={formAction} className="flex flex-col gap-3">
+      <input type="hidden" name="orderId" value={orderId} />
+      <PhotoField
+        name="afterPhoto"
+        label="Фото после ремонта"
+        emptyHint="Без фото «после» заказ завершить нельзя."
+        required
+      />
+      {state.error ? <p className="text-xs text-ink">{state.error}</p> : null}
+      <button type="submit" disabled={pending} className="btn-primary w-full">
+        {pending ? "Завершаем…" : "Завершить заказ"}
+      </button>
+    </form>
+  );
+}
+
 export function OrderActions({
   orderId,
   orderStatus,
@@ -84,18 +104,12 @@ export function OrderActions({
       ) : null}
 
       {canFinish ? (
-        <div className="flex flex-col gap-2 rounded-2xl border border-mint/50 bg-mint/10 p-3">
+        <div className="flex flex-col gap-3 rounded-2xl border border-mint/50 bg-mint/10 p-3">
           <p className="text-sm leading-6 text-ink">
-            Ремонт идёт. Когда закончите — завершите заказ, завхоз подтвердит закрытие и придёт
-            выплата.
+            Ремонт идёт. Загрузите фото «после» и завершите заказ — завхоз подтвердит закрытие, и
+            придёт выплата.
           </p>
-          <ActionButton
-            action={advanceOrderAction}
-            orderId={orderId}
-            label="Завершить заказ"
-            pendingLabel="Завершаем…"
-            size="md"
-          />
+          <FinishOrderForm orderId={orderId} />
         </div>
       ) : null}
 

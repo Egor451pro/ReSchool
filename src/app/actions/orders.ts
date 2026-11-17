@@ -83,13 +83,23 @@ export async function acceptOrderAction(
   redirect(result.itemId ? `/cabinet/items/${result.itemId}` : "/cabinet");
 }
 
+function readAfterPhoto(formData: FormData): File | null {
+  const value = formData.get("afterPhoto");
+  if (!(value instanceof File) || value.size === 0) return null;
+  return value;
+}
+
 export async function advanceOrderAction(
   _state: OrderFormState,
   formData: FormData,
 ): Promise<OrderFormState> {
   const actor = await requireRolesFresh(["FREELANCER", "PLATFORM_ADMIN"]);
   const orderId = text(formData, "orderId");
-  const result = await advanceOrder(actor, orderId);
+  const afterPhoto = readAfterPhoto(formData);
+  if (!afterPhoto) {
+    return { error: "Приложите фото после ремонта — без него заказ не завершить" };
+  }
+  const result = await advanceOrder(actor, orderId, afterPhoto);
   if (!result.ok) return { error: result.error };
   revalidateOrderViews({ orderId, itemId: result.itemId });
   redirect(`/orders/${orderId}`);

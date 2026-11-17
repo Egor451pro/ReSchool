@@ -184,7 +184,7 @@ export async function findItemCard(id: string) {
       photos: {
         orderBy: { sort: "asc" },
         take: 8,
-        select: { id: true, path: true, sort: true },
+        select: { id: true, path: true, sort: true, role: true },
       },
       orders: {
         where: { status: { not: "CANCELLED" } },
@@ -301,7 +301,7 @@ export function createListedItem(input: {
       newUnitPriceKop: input.newUnitPriceKop,
       repairBudgetKop: input.repairBudgetKop,
       listedById: input.listedById,
-      photos: { create: { path: input.photoPath, sort: 0 } },
+      photos: { create: { path: input.photoPath, sort: 0, role: "BEFORE" } },
       events: {
         create: {
           fromStatus: "NONE",
@@ -357,7 +357,7 @@ export async function updateListedItem(input: {
     if (input.nextPhotoPath) {
       await tx.itemPhoto.deleteMany({ where: { itemId: input.id } });
       await tx.itemPhoto.create({
-        data: { itemId: input.id, path: input.nextPhotoPath, sort: 0 },
+        data: { itemId: input.id, path: input.nextPhotoPath, sort: 0, role: "BEFORE" },
       });
       return { updated: true, removedPhotoPaths: current.photos.map((photo) => photo.path) };
     }
@@ -370,6 +370,23 @@ export async function updateListedItem(input: {
     }
 
     return { updated: true, removedPhotoPaths: [] };
+  });
+}
+
+/** Фото «после» при завершении ремонта — не трогает BEFORE. */
+export async function addItemAfterPhoto(input: { itemId: string; path: string }) {
+  await prisma.itemPhoto.deleteMany({
+    where: { itemId: input.itemId, role: "AFTER" },
+  });
+  return prisma.itemPhoto.create({
+    data: { itemId: input.itemId, path: input.path, sort: 1, role: "AFTER" },
+    select: { id: true },
+  });
+}
+
+export async function removeItemAfterPhotos(itemId: string) {
+  return prisma.itemPhoto.deleteMany({
+    where: { itemId, role: "AFTER" },
   });
 }
 
