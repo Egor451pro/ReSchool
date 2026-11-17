@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { BeforeAfterSlider } from "@/components/before-after-slider";
 import {
   DEMO_STORY,
   DEMO_WALKTHROUGH_STEPS,
@@ -280,28 +281,12 @@ function DemoScene({ step, active }: { step: DemoStep; active: boolean }) {
     case "photos":
       return (
         <SceneShell screenLabel={step.screenLabel} role={step.role}>
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            <figure className="overflow-hidden rounded-xl border border-line">
-              <DemoImg
-                src={DEMO_STORY.images.before}
-                alt="До ремонта"
-                className="h-28 w-full sm:h-36"
-              />
-              <figcaption className="bg-surface px-2 py-1.5 text-center text-[11px] text-leaf">
-                До
-              </figcaption>
-            </figure>
-            <figure className="overflow-hidden rounded-xl border border-line ring-1 ring-mint/40">
-              <DemoImg
-                src={DEMO_STORY.images.after}
-                alt="После ремонта"
-                className="h-28 w-full sm:h-36"
-              />
-              <figcaption className="bg-surface px-2 py-1.5 text-center text-[11px] font-medium text-ink">
-                После
-              </figcaption>
-            </figure>
-          </div>
+          <BeforeAfterSlider
+            beforeSrc={DEMO_STORY.images.before}
+            afterSrc={DEMO_STORY.images.after}
+            savingLabel={`+${DEMO_STORY.savingByn} BYN`}
+            className="rounded-xl sm:rounded-2xl"
+          />
         </SceneShell>
       );
     case "act":

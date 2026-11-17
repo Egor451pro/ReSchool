@@ -225,6 +225,9 @@ export async function findItemCard(id: string) {
               actor: { select: { id: true, fullName: true, role: true } },
             },
           },
+          snapshot: {
+            select: { propertyBudgetKop: true },
+          },
         },
       },
       events: {

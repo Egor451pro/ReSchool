@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/back-link";
+import { BeforeAfterSlider } from "@/components/before-after-slider";
 import { ConfirmRepairButton } from "@/components/confirm-repair-button";
 import { DocumentLinks } from "@/components/document-links";
 import { OrderActions } from "@/components/order-actions";
@@ -141,7 +142,17 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)_minmax(0,22rem)]">
           <aside className="flex flex-col gap-5 lg:sticky lg:top-24">
             <div className="overflow-hidden rounded-3xl">
-              {photos.length > 0 ? (
+              {item.status === "CLOSED" && photos.length >= 2 ? (
+                <BeforeAfterSlider
+                  beforeSrc={itemPhotoSrc(photos[0])}
+                  afterSrc={itemPhotoSrc(photos[photos.length - 1])}
+                  savingLabel={
+                    order?.snapshot?.propertyBudgetKop != null
+                      ? `+${formatByn(order.snapshot.propertyBudgetKop)}`
+                      : undefined
+                  }
+                />
+              ) : photos.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
