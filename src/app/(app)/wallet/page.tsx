@@ -1,4 +1,4 @@
-﻿import { PageHeader } from "@/components/ui/page-header";
+import { PageHeader } from "@/components/ui/page-header";
 import { PageShell, Surface } from "@/components/ui/surface";
 import { formatByn } from "@/domain/economy/money";
 import { requireRoles } from "@/server/auth/current-user";
@@ -24,7 +24,7 @@ export default async function WalletPage() {
         description="Симуляция выплат за подтверждённые ремонты."
       />
 
-      <Surface tone="accent" className="flex flex-col gap-2 shadow-[0_16px_40px_rgba(47,36,28,0.16)]">
+      <Surface tone="accent" className="flex flex-col gap-2 shadow-[0_16px_40px_rgba(0, 59, 70,0.16)]">
         <p className="panel-accent-muted text-sm">Баланс</p>
         <p className="text-3xl font-semibold">{formatByn(wallet?.balanceKop ?? 0)}</p>
       </Surface>

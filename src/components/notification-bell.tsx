@@ -173,7 +173,7 @@ export function NotificationBell({
       </button>
 
       {open ? (
-        <div className="absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_16px_40px_rgba(47,36,28,0.14)]">
+        <div className="absolute right-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_16px_40px_rgba(0, 59, 70,0.14)]">
           <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
             <p className="text-sm font-semibold text-ink">Уведомления</p>
             <button
@@ -228,7 +228,7 @@ export function NotificationBell({
       {toast ? (
         <button
           type="button"
-          className="fixed bottom-4 right-4 z-[60] max-w-sm rounded-2xl border border-line bg-surface px-4 py-3 text-left shadow-[0_16px_40px_rgba(47,36,28,0.18)]"
+          className="fixed bottom-4 right-4 z-[60] max-w-sm rounded-2xl border border-line bg-surface px-4 py-3 text-left shadow-[0_16px_40px_rgba(0, 59, 70,0.18)]"
           onClick={() => openItem(toast)}
         >
           <p className="text-sm font-semibold text-ink">{toast.title}</p>

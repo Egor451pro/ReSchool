@@ -140,19 +140,19 @@ export function RoleLoginPicker({
                 }}
                 className={
                   card.accent
-                    ? "flex flex-col gap-2 rounded-2xl border border-mint bg-mint px-4 py-4 text-left text-[#2f241c] shadow-[var(--shadow-soft)] transition hover:opacity-95 sm:rounded-3xl sm:px-5 sm:py-5"
+                    ? "flex flex-col gap-2 rounded-2xl border border-mint bg-mint px-4 py-4 text-left text-on-mint shadow-[var(--shadow-soft)] transition hover:opacity-95 sm:rounded-3xl sm:px-5 sm:py-5"
                     : "flex flex-col gap-2 rounded-2xl border border-line bg-surface px-4 py-4 text-left text-ink shadow-[var(--shadow-soft)] transition hover:border-mint hover:bg-muted/60 sm:rounded-3xl sm:px-5 sm:py-5"
                 }
               >
                 <span className="text-lg font-semibold">{card.title}</span>
                 <span
-                  className={`text-sm leading-6 ${card.accent ? "text-[#2f241c]/70" : "text-leaf"}`}
+                  className={`text-sm leading-6 ${card.accent ? "text-on-mint/70" : "text-leaf"}`}
                 >
                   {card.text}
                 </span>
                 {count > 0 ? (
                   <span
-                    className={`text-xs font-medium ${card.accent ? "text-[#2f241c]/80" : "text-gold"}`}
+                    className={`text-xs font-medium ${card.accent ? "text-on-mint/80" : "text-gold"}`}
                   >
                     Аккаунтов: {count}
                   </span>

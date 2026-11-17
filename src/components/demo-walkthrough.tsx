@@ -143,7 +143,7 @@ function DemoScene({ step, active }: { step: DemoStep; active: boolean }) {
               <p className="text-xs leading-5 text-leaf">
                 Шатается ножка, сколы лака, нужна укрепка и покрытие.
               </p>
-              <div className="h-9 rounded-xl bg-mint/85 text-center text-xs font-semibold leading-9 text-[#2f241c]">
+              <div className="h-9 rounded-xl bg-mint/85 text-center text-xs font-semibold leading-9 text-on-mint">
                 Опубликовать
               </div>
             </div>
@@ -189,7 +189,7 @@ function DemoScene({ step, active }: { step: DemoStep; active: boolean }) {
                 <p className="text-xs text-leaf">Вам подходит · дерево</p>
                 <p className="text-xs font-medium text-ink">ориентир 45–60 BYN</p>
               </div>
-              <span className="hidden rounded-lg bg-mint px-2 py-1 text-[10px] font-semibold text-[#2f241c] sm:inline">
+              <span className="hidden rounded-lg bg-mint px-2 py-1 text-[10px] font-semibold text-on-mint sm:inline">
                 Взять
               </span>
             </div>
@@ -217,7 +217,7 @@ function DemoScene({ step, active }: { step: DemoStep; active: boolean }) {
                 Включая материалы. Срок — до пятницы.
               </p>
             </div>
-            <div className="h-9 rounded-xl bg-mint/85 text-center text-xs font-semibold leading-9 text-[#2f241c]">
+            <div className="h-9 rounded-xl bg-mint/85 text-center text-xs font-semibold leading-9 text-on-mint">
               Отправить предложение
             </div>
           </div>
@@ -251,7 +251,7 @@ function DemoScene({ step, active }: { step: DemoStep; active: boolean }) {
                 <span
                   className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
                     row.accent
-                      ? "bg-mint text-[#2f241c]"
+                      ? "bg-mint text-on-mint"
                       : "bg-surface text-ink ring-1 ring-line"
                   }`}
                 >
@@ -320,7 +320,7 @@ function DemoScene({ step, active }: { step: DemoStep; active: boolean }) {
               <span className="text-leaf">Статус предмета</span>
               <span className="font-semibold text-ink">CLOSED</span>
             </div>
-            <div className="h-9 rounded-xl bg-mint/85 text-center text-xs font-semibold leading-9 text-[#2f241c]">
+            <div className="h-9 rounded-xl bg-mint/85 text-center text-xs font-semibold leading-9 text-on-mint">
               Подтвердить получение
             </div>
           </div>
@@ -541,7 +541,7 @@ export function DemoWalkthrough({
               }}
               className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
                 i === index
-                  ? "bg-mint text-[#2f241c]"
+                  ? "bg-mint text-on-mint"
                   : "bg-muted text-leaf hover:text-ink"
               }`}
             >

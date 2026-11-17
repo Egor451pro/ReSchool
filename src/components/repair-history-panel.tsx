@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { ItemTile, type ItemTileData } from "@/components/item-tile";
@@ -29,7 +29,7 @@ export function RepairHistoryPanel({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3 text-left shadow-[0_6px_18px_rgba(47,36,28,0.03)] hover:border-mint"
+        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3 text-left shadow-[0_6px_18px_rgba(0, 59, 70,0.03)] hover:border-mint"
       >
         <span className="font-semibold text-ink">{title}</span>
         <span className="text-sm text-leaf">

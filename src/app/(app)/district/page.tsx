@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { EconomyBars } from "@/components/economy-bars";
 import { formatByn } from "@/domain/economy/money";
 import { requireRoles } from "@/server/auth/current-user";
@@ -28,7 +28,7 @@ export default async function DistrictPage() {
         </div>
         <Link
           href="/district/calculator"
-          className="panel-accent inline-flex h-10 items-center justify-center rounded-2xl px-4 text-sm font-medium shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90"
+          className="panel-accent inline-flex h-10 items-center justify-center rounded-2xl px-4 text-sm font-medium shadow-[0_8px_20px_rgba(0, 59, 70,0.12)] transition-colors duration-300 hover:opacity-90"
         >
           Калькулятор
         </Link>
@@ -153,7 +153,7 @@ export default async function DistrictPage() {
 
 function Metric({ value, label }: { value: string; label: string }) {
   return (
-    <div className="panel-accent rounded-3xl px-4 py-3 shadow-[0_12px_28px_rgba(47,36,28,0.14)] transition-colors duration-300">
+    <div className="panel-accent rounded-3xl px-4 py-3 shadow-[0_12px_28px_rgba(0, 59, 70,0.14)] transition-colors duration-300">
       <p className="text-2xl font-semibold tabular-nums">{value}</p>
       <p className="panel-accent-muted text-sm">{label}</p>
     </div>
@@ -162,7 +162,7 @@ function Metric({ value, label }: { value: string; label: string }) {
 
 function MoneyMetric({ value, label }: { value: number; label: string }) {
   return (
-    <div className="rounded-3xl border border-line bg-surface px-4 py-3 shadow-[0_8px_24px_rgba(47,36,28,0.04)]">
+    <div className="rounded-3xl border border-line bg-surface px-4 py-3 shadow-[0_8px_24px_rgba(0, 59, 70,0.04)]">
       <p className="text-xl font-semibold tabular-nums text-ink">{formatByn(value)}</p>
       <p className="text-sm text-leaf">{label}</p>
     </div>

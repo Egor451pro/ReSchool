@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useActionState, type ReactNode } from "react";
 import { publishRequestAction, type CabinetFormState } from "@/app/actions/cabinet";
@@ -67,7 +67,7 @@ export function RequestForm({ categories }: { categories: { id: string; name: st
       <button
         type="submit"
         disabled={pending}
-        className="panel-accent h-11 rounded-2xl px-4 text-sm font-medium shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90 disabled:opacity-60"
+        className="panel-accent h-11 rounded-2xl px-4 text-sm font-medium shadow-[0_8px_20px_rgba(0, 59, 70,0.12)] transition-colors duration-300 hover:opacity-90 disabled:opacity-60"
       >
         {pending ? "Сохраняем…" : "Добавить запрос"}
       </button>

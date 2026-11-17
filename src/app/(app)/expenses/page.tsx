@@ -25,7 +25,7 @@ export default async function ExpensesPage() {
         <Surface
           tone="accent"
           as="section"
-          className="shadow-[0_16px_40px_rgba(47,36,28,0.16)]"
+          className="shadow-[0_16px_40px_rgba(0, 59, 70,0.16)]"
         >
           <details className="group">
             <summary className="flex cursor-pointer list-none flex-col gap-2 [&::-webkit-details-marker]:hidden">

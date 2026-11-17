@@ -1,4 +1,4 @@
-﻿import { Suspense } from "react";
+import { Suspense } from "react";
 import { DemoWalkthroughTrigger } from "@/components/demo-walkthrough";
 import { HomeStart } from "@/components/home-start";
 import { SiteHeader } from "@/components/site-header";
@@ -27,7 +27,7 @@ export default function Home() {
 
         <section
           aria-labelledby="home-login-heading"
-          className="rounded-[1.75rem] border-2 border-line-strong bg-surface p-4 shadow-[0_16px_40px_rgba(47,36,28,0.08)] sm:rounded-[2rem] sm:p-6"
+          className="rounded-[1.75rem] border-2 border-line-strong bg-surface p-4 shadow-[0_16px_40px_rgba(0, 59, 70,0.08)] sm:rounded-[2rem] sm:p-6"
         >
           <div className="mb-4 flex flex-col gap-1 sm:mb-5">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gold">

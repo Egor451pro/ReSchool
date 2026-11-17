@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useActionState } from "react";
 import { withdrawItemAction, type CabinetFormState } from "@/app/actions/cabinet";
@@ -9,7 +9,7 @@ export function WithdrawItemForm({ itemId }: { itemId: string }) {
   const [state, action, pending] = useActionState(withdrawItemAction, initialState);
 
   return (
-    <form action={action} className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgba(47,36,28,0.03)]">
+    <form action={action} className="flex flex-col gap-3 rounded-3xl border border-line bg-surface p-4 shadow-[0_8px_24px_rgba(0, 59, 70,0.03)]">
       <input type="hidden" name="itemId" value={itemId} />
       <p className="text-sm text-leaf">
         Снятие закрывает карточку. Чтобы вернуть вещь в каталог, её публикуют заново.

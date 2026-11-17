@@ -114,13 +114,13 @@ export function SimpleCalculator({ scenarios }: { scenarios: SimpleScenario[] })
               onClick={() => selectKind(row.kind)}
               className={
                 selected
-                  ? "rounded-2xl border border-mint bg-mint px-4 py-2 text-sm font-medium text-[#2f241c]"
+                  ? "rounded-2xl border border-mint bg-mint px-4 py-2 text-sm font-medium text-on-mint"
                   : "rounded-2xl border border-line bg-surface px-4 py-2 text-sm font-medium text-ink hover:border-mint"
               }
             >
               {row.title}
               {row.shownOnDashboard ? (
-                <span className={`ml-2 text-xs ${selected ? "text-[#2f241c]/70" : "text-leaf"}`}>
+                <span className={`ml-2 text-xs ${selected ? "text-on-mint/70" : "text-leaf"}`}>
                   на дашборде
                 </span>
               ) : null}
@@ -192,7 +192,7 @@ export function SimpleCalculator({ scenarios }: { scenarios: SimpleScenario[] })
           <button
             type="submit"
             disabled={pending}
-            className="panel-accent h-10 self-start rounded-2xl px-4 text-sm font-medium shadow-[0_8px_20px_rgba(47,36,28,0.12)] transition-colors duration-300 hover:opacity-90 disabled:opacity-60"
+            className="panel-accent h-10 self-start rounded-2xl px-4 text-sm font-medium shadow-[0_8px_20px_rgba(0, 59, 70,0.12)] transition-colors duration-300 hover:opacity-90 disabled:opacity-60"
           >
             {pending ? "Сохраняем…" : "Сохранить сценарий"}
           </button>

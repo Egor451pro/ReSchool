@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
 import {
@@ -288,7 +288,7 @@ export function OrderChat({
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-mint text-[#2f241c] shadow-[0_6px_16px_rgba(47,36,28,0.18)] transition hover:opacity-90 disabled:opacity-55"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-mint text-on-mint shadow-[0_6px_16px_rgba(0, 59, 70,0.18)] transition hover:opacity-90 disabled:opacity-55"
           aria-label={pending ? "Отправляем" : "Отправить"}
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>

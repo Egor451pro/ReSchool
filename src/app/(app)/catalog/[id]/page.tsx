@@ -224,7 +224,7 @@ export default async function ItemCardPage({ params }: { params: Promise<{ id: s
               order &&
               user.role === "DONOR_STAFF" &&
               user.institutionId === item.institutionId ? (
-                <div className="panel-accent max-w-md rounded-3xl border p-4 shadow-[0_12px_28px_rgba(47,36,28,0.14)]">
+                <div className="panel-accent max-w-md rounded-3xl border p-4 shadow-[0_12px_28px_rgba(0, 59, 70,0.14)]">
                   <p className="panel-accent-muted text-sm">
                     Фрилансер закрыл заказ. Подтвердите закрытие, чтобы завершить работу и
                     начислить выплату.
